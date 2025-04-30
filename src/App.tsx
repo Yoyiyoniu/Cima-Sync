@@ -44,7 +44,7 @@ function App() {
   }
 
   return (
-    <main className="flex flex-col gap-5 p-4 relative">
+    <main className="flex flex-col gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900">
       <img src={img} alt="" className="blur absolute" />
       <div className="p-5 relative z-10 flex flex-col items-center justify-center">
         <form className="flex flex-col gap-3 mb-8">
