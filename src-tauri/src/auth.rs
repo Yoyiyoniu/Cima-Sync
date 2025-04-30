@@ -205,14 +205,22 @@ fn send_login(
         Ok(res) => {
             let elapsed = start_time.elapsed();
             let status = res.status();
-
+            let body = res.text()?;
+            
             if status.is_success() {
-                println!("🎉 Datos enviados en {:.2} segundos", elapsed.as_secs_f32());
+                // Verificar si el título es correcto
+                if body.contains("<title>Login Successful</title>") {
+                    println!("🎉 Datos enviados en {:.2} segundos", elapsed.as_secs_f32());
+                    Ok(status)
+                } else {
+                    println!("❌ Error: El título de la página no coincide");
+                    println!("⚠️ Es posible que las credenciales sean incorrectas");
+                    Ok(reqwest::StatusCode::UNAUTHORIZED)
+                }
             } else {
                 println!("❌ Error al enviar datos. Código: {}", status);
+                Ok(status)
             }
-
-            Ok(status)
         }
         Err(e) => Err(e.into()),
     }
