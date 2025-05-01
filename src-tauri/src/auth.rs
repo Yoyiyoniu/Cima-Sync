@@ -206,7 +206,7 @@ fn send_login(
             let elapsed = start_time.elapsed();
             let status = res.status();
             let body = res.text()?;
-            
+
             if status.is_success() {
                 // Verificar si el título es correcto
                 if body.contains("<title>Login Successful</title>") {
