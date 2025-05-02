@@ -4,7 +4,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 const ERROR_NO_CONEXION: &str = "No se detecta conexión a internet.";
-const ERROR_PORTAL_NO_DISPONIBLE: &str = "No estas conectado al internet UABC.";
+const ERROR_PORTAL_NO_DISPONIBLE: &str = "No estas en el wifi UABC o ya estas conectado.";
 const ERROR_CREDENCIALES: &str = "Credenciales invalidas.";
 const ERROR_TIEMPO_ESPERA: &str = "Tiempo de espera agotado.";
 const ERROR_GENERAL: &str = "Ocurrió un error al conectarse a la red UABC.";

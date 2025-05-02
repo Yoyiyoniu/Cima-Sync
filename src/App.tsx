@@ -1,9 +1,13 @@
-import { FormEvent, useState } from "react";
-import img from "./assets/img/Logo.avif";
-import { Input } from "./components/Input";
-import "./css/Global.css"
-import GithubIcon from "./assets/icons/GithubIcon";
+import { FormEvent, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { Input } from "./components/Input";
+
+import img from "./assets/img/Logo.avif";
+import GithubIcon from "./assets/icons/GithubIcon";
+
+import "./css/Global.css"
+
+import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
 
 function App() {
   const [email, setEmail] = useState("");
@@ -13,6 +17,24 @@ function App() {
   const [success, setSuccess] = useState(false);
   const [rememberSession, setRememberSession] = useState(false);
 
+
+  useEffect(() => {
+    async function loadCredentials() {
+      try {
+        const result = await getCredentials();
+        if (result) {
+          const { email, password } = result;
+          setEmail(email);
+          setPassword(password);
+          setRememberSession(true);
+        } 
+      } catch (error) {
+        console.error("Error loading credentials:", error);
+      }
+    }
+    loadCredentials();
+  }, [])
+
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
 
@@ -21,6 +43,11 @@ function App() {
     setLoading(true);
 
     try {
+      if (rememberSession) {
+        await saveCredentials({email: email, password: password});
+      } else {
+        clearCredentials();
+      }
       const res = await invoke("login_once", {
         email: email,
         password: password,
