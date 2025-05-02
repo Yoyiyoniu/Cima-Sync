@@ -151,7 +151,7 @@ function App() {
       <div className="fixed bottom-4 right-4">
         <button
           onClick={() => {
-            window.open("https://github.com/yoyiyoniu/uabc_auto_auth", "_blank");
+            window.open("https://github.com/Yoyiyoniu/uabc-captive-portal-bypass", "_blank");
           }}
           className="p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors duration-200">
           <GithubIcon width={30} height={30} />
