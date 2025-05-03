@@ -12,9 +12,14 @@
   "app": {
     "windows": [
       {
-        "title": "UABC auto login | by yoyiyoniu",
+        "title": "UABC auto login | By Yoyiyoniu",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "browserExtensionsEnabled": false,
+        "center": true,
+        "zoomHotkeysEnabled": false,
+        "allowLinkPreview": false,
+        "devtools": false
       }
     ],
     "security": {
@@ -34,7 +39,9 @@
   },
   "plugins": {
     "sql": {
-      "preload": ["sqlite:uabc_auto_auth_credentials.db"]
+      "preload": [
+        "sqlite:uabc_auto_auth_credentials.db"
+      ]
     }
   }
 }

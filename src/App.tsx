@@ -9,7 +9,10 @@ import StopIcon from "./assets/icons/StopIcon";
 import "./css/Global.css"
 
 import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
-import { Toast } from "./components/Toast";
+import { disableContextMenu } from "./hooks/disableContextMenu";
+
+import { openUrl } from '@tauri-apps/plugin-opener';
+
 
 function App() {
   const [email, setEmail] = useState("");
@@ -18,8 +21,9 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   const [rememberSession, setRememberSession] = useState(false);
-  const [success, setSuccess] = useState(true);
+  const [success, setSuccess] = useState(false);
 
+  disableContextMenu();
 
   useEffect(() => {
     async function loadCredentials() {
@@ -30,7 +34,7 @@ function App() {
           setEmail(email);
           setPassword(password);
           setRememberSession(true);
-        } 
+        }
       } catch (error) {
         console.error("Error loading credentials:", error);
       }
@@ -51,12 +55,12 @@ function App() {
       await invoke("login_once", {
         email: email,
         password: password,
-      }).then( async (res) => { 
+      }).then(async (res) => {
         console.log(res);
         setSuccess(true);
         if (rememberSession) {
-          await saveCredentials({email: email, password: password});
-  
+          await saveCredentials({ email: email, password: password });
+
           await invoke("start_auth", {
             email: email,
             password: password,
@@ -172,8 +176,9 @@ function App() {
       </div>
       <div className="fixed bottom-4 right-4">
         <button
-          onClick={() => {
-            window.open("https://github.com/Yoyiyoniu/uabc-captive-portal-bypass", "_blank");
+          title="Abrir proyecto de github"
+          onClick={async () => {
+            await openUrl('https://github.com/Yoyiyoniu/uabc-captive-portal-bypass');
           }}
           className="p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors duration-200">
           <GithubIcon width={30} height={30} />
