@@ -9,11 +9,15 @@ const ERROR_CREDENCIALES: &str = "Credenciales invalidas.";
 const ERROR_TIEMPO_ESPERA: &str = "Tiempo de espera agotado.";
 const ERROR_GENERAL: &str = "Ocurrió un error al conectarse a la red UABC.";
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
 pub struct Auth {
     email: String,
     password: String,
     check_interval: Duration,
     success_interval: Duration,
+    should_stop: Arc<AtomicBool>,
 }
 
 impl Auth {
@@ -23,6 +27,7 @@ impl Auth {
             password: password.to_string(),
             check_interval: Duration::from_secs(5),
             success_interval: Duration::from_secs(30),
+            should_stop: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -90,8 +95,9 @@ impl Auth {
 
     pub fn start_monitoring(&self) -> Result<(), Box<dyn std::error::Error>> {
         println!("🔄 Iniciando monitoreo de conexión...");
+        self.should_stop.store(false, Ordering::SeqCst);
 
-        loop {
+        while !self.should_stop.load(Ordering::SeqCst) {
             match self.login() {
                 Ok(true) => {
                     println!(
@@ -111,6 +117,13 @@ impl Auth {
 
             println!("\n---------------------------------------------");
         }
+        println!("🛑 Monitoreo detenido");
+        Ok(())
+    }
+
+    pub fn stop_monitoring(&self) {
+        self.should_stop.store(true, Ordering::SeqCst);
+        println!("⏹️ Señal de detención enviada");
     }
 }
 

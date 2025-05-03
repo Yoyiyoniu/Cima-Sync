@@ -4,6 +4,7 @@ import { Input } from "./components/Input";
 
 import img from "./assets/img/Logo.avif";
 import GithubIcon from "./assets/icons/GithubIcon";
+import StopIcon from "./assets/icons/StopIcon";
 
 import "./css/Global.css"
 
@@ -43,31 +44,34 @@ function App() {
     setLoading(true);
 
     try {
-      if (rememberSession) {
-        await saveCredentials({email: email, password: password});
-      } else {
-        clearCredentials();
-      }
-      const res = await invoke("login_once", {
+      if (!rememberSession) clearCredentials();
+
+      await invoke("login_once", {
         email: email,
         password: password,
+      }).then( async (res) => { 
+        console.log(res);
+        setSuccess(true);
+        if (rememberSession) {
+          await saveCredentials({email: email, password: password});
+  
+          await invoke("start_auth", {
+            email: email,
+            password: password,
+          });
+        }
       });
-
-      console.log(res);
-      setSuccess(true);
-
-      if (rememberSession) {
-        await invoke("start_auth", {
-          email: email,
-          password: password,
-        });
-      }
     } catch (error) {
       console.error(error);
       setError(String(error));
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleLogout() {
+    await invoke("stop_auth");
+    setSuccess(false);
   }
 
   return (
@@ -133,20 +137,37 @@ function App() {
                 </svg>
               </div>
             </div>
-            <label className="ml-2 text-sm text-gray-300 cursor-pointer select-none">
+            <label title="Mantener sesión activa" className="ml-2 text-sm text-gray-300 cursor-pointer select-none">
               Mantener sesión activa
             </label>
           </div>
         </form>
-        <button
-          onClick={(e) => handleLogin(e)}
-          disabled={loading || success || !email || !password}
-          className="w-full h-11 flex items-center justify-center rounded-md font-medium
-                      bg-[#006633] hover:bg-[#005528] text-white 
-                        disabled:opacity-70 disabled:cursor-not-allowed
-                        transition-colors duration-200 shadow-sm cursor-pointer">
-          {loading ? "Conectando..." : success ? "Conectado" : "Iniciar sesión"}
-        </button>
+        <div className="flex w-full gap-2">
+          <button
+            title="Iniciar sesión"
+            onClick={(e) => handleLogin(e)}
+            disabled={loading || success || !email || !password}
+            className="w-full h-11 flex items-center justify-center rounded-md font-medium
+                        bg-[#006633] hover:bg-[#005528] text-white 
+                          disabled:opacity-70 disabled:cursor-not-allowed
+                          transition-colors duration-200 shadow-sm cursor-pointer">
+            {loading ? "Conectando..." : success ? "Conectado" : "Iniciar sesión"}
+          </button>
+          {
+            success && (
+              <button
+                title="Detener sesión"
+                onClick={handleLogout}
+                type="button"
+                className="h-11 px-4 flex items-center justify-center rounded-md font-medium
+                          bg-red-600 hover:bg-red-700 text-white
+                          disabled:opacity-70 disabled:cursor-not-allowed
+                          transition-all duration-300 shadow-sm cursor-pointer">
+                <StopIcon />
+              </button>
+            )
+          }
+      </div>
       </div>
       <div className="fixed bottom-4 right-4">
         <button
