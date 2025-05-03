@@ -5,7 +5,6 @@ import { Input } from "./components/Input";
 import img from "./assets/img/Logo.avif";
 import StopIcon from "./assets/icons/StopIcon";
 
-import "./css/Global.css"
 
 import { clearCredentials, saveCredentials } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
@@ -13,6 +12,7 @@ import { disableContextMenu } from "./hooks/disableContextMenu";
 import { OpenGithub } from "./components/OpenGithub";
 import { loadLocalCredentials } from "./hooks/loadLocalCredentials";
 
+import "./css/Global.css"
 
 function App() {
   const {
@@ -21,22 +21,17 @@ function App() {
     rememberSession: savedRememberSession
   } = loadLocalCredentials();
 
-  // Luego inicializamos los estados con esos valores
-  const [email, setEmail] = useState(savedEmail);
-  const [password, setPassword] = useState(savedPassword);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [{ email, password }, setCredentials] = useState({ email: savedEmail, password: savedPassword });
+  const [{ error, loading, success }, setAppState] = useState<AppState>({ loading: false, error: null, success: false });
+
   const [rememberSession, setRememberSession] = useState(savedRememberSession);
-  const [success, setSuccess] = useState(false);
 
   disableContextMenu();
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
 
-    setError(null);
-    setSuccess(false);
-    setLoading(true);
+    setAppState({ loading: true, error: null, success: false });
 
     try {
       if (!rememberSession) clearCredentials();
@@ -46,7 +41,7 @@ function App() {
         password: password,
       }).then(async (res) => {
         console.log(res);
-        setSuccess(true);
+        setAppState((prev) => ({ ...prev, success: true }))
         if (rememberSession) {
           await saveCredentials({ email: email, password: password });
 
@@ -58,15 +53,15 @@ function App() {
       });
     } catch (error) {
       console.error(error);
-      setError(String(error));
+      setAppState((prev) => ({ ...prev, error: "Error al iniciar sesión" }));
     } finally {
-      setLoading(false);
+      setAppState((prev) => ({ ...prev, loading: false }));
     }
   }
 
   async function handleLogout() {
     await invoke("stop_auth");
-    setSuccess(false);
+    setAppState({ loading: false, error: null, success: false });
   }
 
   return (
@@ -89,7 +84,7 @@ function App() {
             label="Correo"
             placeholder="me@uabc.edu.mx"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
             disabled={loading || success}
           />
           <Input
@@ -98,7 +93,7 @@ function App() {
             label="Contraseña"
             placeholder="•••••••••••••"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
             disabled={loading || success}
           />
           <div className="flex items-center">
