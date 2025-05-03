@@ -1,16 +1,15 @@
 import { FormEvent, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+
+import { clearCredentials, saveCredentials } from "./controller/DbController";
+import { disableContextMenu } from "./hooks/disableContextMenu";
+import { loadLocalCredentials } from "./hooks/loadLocalCredentials";
+
+import { OpenGithub } from "./components/OpenGithub";
 import { Input } from "./components/Input";
 
 import img from "./assets/img/Logo.avif";
 import StopIcon from "./assets/icons/StopIcon";
-
-
-import { clearCredentials, saveCredentials } from "./controller/DbController";
-import { disableContextMenu } from "./hooks/disableContextMenu";
-
-import { OpenGithub } from "./components/OpenGithub";
-import { loadLocalCredentials } from "./hooks/loadLocalCredentials";
 
 import "./css/Global.css"
 
