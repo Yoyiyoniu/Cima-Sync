@@ -9,7 +9,7 @@ lazy_static::lazy_static! {
 }
 
 #[tauri::command]
-fn start_auth(email: &str, password: &str) -> String {
+fn auto_auth(email: &str, password: &str) -> String {
     let auth = Auth::new(email, password);
     let auth_clone = Auth::new(email, password);
     *CURRENT_AUTH.lock().unwrap() = Some(auth);
@@ -35,7 +35,7 @@ fn stop_auth() -> String {
 }
 
 #[tauri::command]
-fn login_once(email: &str, password: &str) -> Result<String, String> {
+fn login(email: &str, password: &str) -> Result<String, String> {
     let auth = Auth::new(email, password);
     match auth.login() {
         Ok(true) => Ok(format!("Login exitoso para: {}", email)),
@@ -50,7 +50,7 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         // declare this a command that can be called from the frontend
-        .invoke_handler(tauri::generate_handler![start_auth, login_once, stop_auth])
+        .invoke_handler(tauri::generate_handler![auto_auth, login, stop_auth])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

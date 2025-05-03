@@ -1,46 +1,35 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Input } from "./components/Input";
 
 import img from "./assets/img/Logo.avif";
-import GithubIcon from "./assets/icons/GithubIcon";
 import StopIcon from "./assets/icons/StopIcon";
 
 import "./css/Global.css"
 
-import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
+import { clearCredentials, saveCredentials } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
 
-import { openUrl } from '@tauri-apps/plugin-opener';
+import { OpenGithub } from "./components/OpenGithub";
+import { loadLocalCredentials } from "./hooks/loadLocalCredentials";
 
 
 function App() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    email: savedEmail,
+    password: savedPassword,
+    rememberSession: savedRememberSession
+  } = loadLocalCredentials();
+
+  // Luego inicializamos los estados con esos valores
+  const [email, setEmail] = useState(savedEmail);
+  const [password, setPassword] = useState(savedPassword);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [rememberSession, setRememberSession] = useState(false);
+  const [rememberSession, setRememberSession] = useState(savedRememberSession);
   const [success, setSuccess] = useState(false);
 
   disableContextMenu();
-
-  useEffect(() => {
-    async function loadCredentials() {
-      try {
-        const result = await getCredentials();
-        if (result) {
-          const { email, password } = result;
-          setEmail(email);
-          setPassword(password);
-          setRememberSession(true);
-        }
-      } catch (error) {
-        console.error("Error loading credentials:", error);
-      }
-    }
-    loadCredentials();
-  }, [])
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
@@ -52,7 +41,7 @@ function App() {
     try {
       if (!rememberSession) clearCredentials();
 
-      await invoke("login_once", {
+      await invoke("login", {
         email: email,
         password: password,
       }).then(async (res) => {
@@ -61,7 +50,7 @@ function App() {
         if (rememberSession) {
           await saveCredentials({ email: email, password: password });
 
-          await invoke("start_auth", {
+          await invoke("auto_auth", {
             email: email,
             password: password,
           });
@@ -89,19 +78,11 @@ function App() {
             <h1 className="text-2xl font-medium">Inicio de sesión automático</h1>
             <p>Sistema Institucional UABC'nt</p>
           </div>
-
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3">
-              {error}
-            </div>
-          )}
-
           {success && (
             <div className="bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3">
               Conexión establecida correctamente.
             </div>
           )}
-
           <Input
             id="email"
             type="email"
@@ -147,6 +128,11 @@ function App() {
               Mantener sesión activa
             </label>
           </div>
+          {error && (
+            <div className="bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3">
+              {error}
+            </div>
+          )}
         </form>
         <div className="flex w-full gap-2 relative">
           <button
@@ -174,16 +160,7 @@ function App() {
           </button>
         </div>
       </div>
-      <div className="fixed bottom-4 right-4">
-        <button
-          title="Abrir proyecto de github"
-          onClick={async () => {
-            await openUrl('https://github.com/Yoyiyoniu/uabc-captive-portal-bypass');
-          }}
-          className="p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors duration-200">
-          <GithubIcon width={30} height={30} />
-        </button>
-      </div>
+      <OpenGithub />
     </main>
   );
 }
