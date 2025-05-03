@@ -9,14 +9,16 @@ import StopIcon from "./assets/icons/StopIcon";
 import "./css/Global.css"
 
 import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
+import { Toast } from "./components/Toast";
 
 function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+
   const [rememberSession, setRememberSession] = useState(false);
+  const [success, setSuccess] = useState(true);
 
 
   useEffect(() => {
@@ -142,32 +144,31 @@ function App() {
             </label>
           </div>
         </form>
-        <div className="flex w-full gap-2">
+        <div className="flex w-full gap-2 relative">
           <button
             title="Iniciar sesión"
             onClick={(e) => handleLogin(e)}
             disabled={loading || success || !email || !password}
-            className="w-full h-11 flex items-center justify-center rounded-md font-medium
+            className={`h-11 flex items-center justify-center rounded-md font-medium
                         bg-[#006633] hover:bg-[#005528] text-white 
-                          disabled:opacity-70 disabled:cursor-not-allowed
-                          transition-colors duration-200 shadow-sm cursor-pointer">
+                        disabled:opacity-70 disabled:cursor-not-allowed
+                        transition-all duration-300 shadow-sm cursor-pointer
+                        ${success ? 'w-[calc(100%-60px)]' : 'w-full'}`}>
             {loading ? "Conectando..." : success ? "Conectado" : "Iniciar sesión"}
           </button>
-          {
-            success && (
-              <button
-                title="Detener sesión"
-                onClick={handleLogout}
-                type="button"
-                className="h-11 px-4 flex items-center justify-center rounded-md font-medium
-                          bg-red-600 hover:bg-red-700 text-white
-                          disabled:opacity-70 disabled:cursor-not-allowed
-                          transition-all duration-300 shadow-sm cursor-pointer">
-                <StopIcon />
-              </button>
-            )
-          }
-      </div>
+          <button
+            title="Detener sesión"
+            onClick={handleLogout}
+            type="button"
+            className={`h-11 px-4 flex items-center justify-center rounded-md font-medium
+                      bg-red-600 hover:bg-red-700 text-white
+                      disabled:opacity-70 disabled:cursor-not-allowed
+                      transition-all duration-300 shadow-sm cursor-pointer
+                      absolute right-0
+                      ${success ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full'}`}>
+            <StopIcon />
+          </button>
+        </div>
       </div>
       <div className="fixed bottom-4 right-4">
         <button
