@@ -1,8 +1,12 @@
 mod auth;
+mod tray;
+
 use crate::auth::Auth;
-use std::thread;
-use std::sync::Mutex;
+use crate::tray::system_tray;
+
 use std::sync::Arc;
+use std::sync::Mutex;
+use std::thread;
 
 lazy_static::lazy_static! {
     static ref CURRENT_AUTH: Arc<Mutex<Option<Auth>>> = Arc::new(Mutex::new(None));
@@ -14,11 +18,9 @@ fn auto_auth(email: &str, password: &str) -> String {
     let auth_clone = Auth::new(email, password);
     *CURRENT_AUTH.lock().unwrap() = Some(auth);
 
-    thread::spawn(move || {
-        match auth_clone.start_monitoring() {
-            Ok(_) => println!("Proceso de monitoreo finalizado"),
-            Err(e) => eprintln!("Error en el proceso de monitoreo: {}", e),
-        }
+    thread::spawn(move || match auth_clone.start_monitoring() {
+        Ok(_) => println!("Proceso de monitoreo finalizado"),
+        Err(e) => eprintln!("Error en el proceso de monitoreo: {}", e),
     });
 
     format!("Proceso de autenticación iniciado para: {}", email)
@@ -49,7 +51,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
-        // declare this a command that can be called from the frontend
+        .setup(|app| system_tray(app))
         .invoke_handler(tauri::generate_handler![auto_auth, login, stop_auth])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
