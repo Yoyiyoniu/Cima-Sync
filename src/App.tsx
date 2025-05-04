@@ -50,9 +50,9 @@ function App() {
           });
         }
       });
-    } catch (error) {
-      console.error(error);
-      setAppState((prev) => ({ ...prev, error: "Error al iniciar sesión" }));
+    } catch (err) {
+      console.error(err);
+      setAppState((prev) => ({ ...prev, error: String(err) }));
     } finally {
       setAppState((prev) => ({ ...prev, loading: false }));
     }

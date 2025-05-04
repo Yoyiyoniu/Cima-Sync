@@ -4,6 +4,7 @@ node_modules/
 # Optional npm and yarn cache directory
 .npm/
 .yarn/
+dist/*
 
 # Output of 'npm pack'
 *.tgz
