@@ -1,7 +1,7 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
-import { clearCredentials, saveCredentials } from "./controller/DbController";
+import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
 import { loadLocalCredentials } from "./hooks/loadLocalCredentials";
 
@@ -14,18 +14,29 @@ import StopIcon from "./assets/icons/StopIcon";
 import "./css/Global.css"
 
 function App() {
-  const {
-    email: savedEmail,
-    password: savedPassword,
-    rememberSession: savedRememberSession
-  } = loadLocalCredentials();
 
-  const [{ email, password }, setCredentials] = useState({ email: savedEmail, password: savedPassword });
+  const [{ email, password }, setCredentials] = useState({ email: "", password: "" });
   const [{ error, loading, success }, setAppState] = useState<AppState>({ loading: false, error: null, success: false });
 
-  const [rememberSession, setRememberSession] = useState(savedRememberSession);
+  const [rememberSession, setRememberSession] = useState(false);
 
   disableContextMenu();
+
+  useEffect(() => {
+    async function loadCredentials() {
+      try {
+        const result = await getCredentials();
+        if (result) {
+          const { email, password } = result;
+          setCredentials({ email, password });
+          setRememberSession(true);
+        }
+      } catch (error) {
+        console.error("Error loading credentials:", error);
+      }
+    }
+    loadCredentials();
+  }, []);
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();

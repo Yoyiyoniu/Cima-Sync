@@ -6,8 +6,8 @@ use tauri::{
 
 pub fn system_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let quit_i = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
-    let minimize_i = MenuItem::with_id(app, "minimize", "Minimizar", true, None::<&str>)?;
-    let maximize_i = MenuItem::with_id(app, "maximize", "Maximizar", true, None::<&str>)?;
+    let minimize_i = MenuItem::with_id(app, "minimize", "Minimizar ventana", true, None::<&str>)?;
+    let maximize_i = MenuItem::with_id(app, "maximize", "Maximizar ventana", true, None::<&str>)?;
 
     let menu = Menu::with_items(app, &[&minimize_i, &maximize_i, &quit_i])?;
 

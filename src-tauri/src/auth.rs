@@ -9,6 +9,9 @@ const ERROR_CREDENCIALES: &str = "Credenciales invalidas.";
 const ERROR_TIEMPO_ESPERA: &str = "Tiempo de espera agotado.";
 const ERROR_GENERAL: &str = "Ocurrió un error al conectarse a la red UABC.";
 
+const MONITORING_INTERVAL: Duration = Duration::from_secs(120);
+const SUCCESS_INTERVAL: Duration = Duration::from_secs(10);
+
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
@@ -25,8 +28,8 @@ impl Auth {
         Auth {
             email: email.to_string(),
             password: password.to_string(),
-            check_interval: Duration::from_secs(5),
-            success_interval: Duration::from_secs(30),
+            check_interval: MONITORING_INTERVAL,
+            success_interval: SUCCESS_INTERVAL,
             should_stop: Arc::new(AtomicBool::new(false)),
         }
     }
