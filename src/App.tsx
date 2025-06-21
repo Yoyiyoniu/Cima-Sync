@@ -3,7 +3,6 @@ import { invoke } from "@tauri-apps/api/core";
 
 import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
-import { loadLocalCredentials } from "./hooks/loadLocalCredentials";
 
 import { OpenGithub } from "./components/OpenGithub";
 import { Input } from "./components/Input";

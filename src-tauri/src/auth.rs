@@ -35,10 +35,10 @@ impl Auth {
     }
 
     pub fn login(&self) -> Result<bool, Box<dyn std::error::Error>> {
-        println!("👤 Usuario: {}", self.email);
+        println!("Usuario: {}", self.email);
 
         let start_time = Instant::now();
-        print!("🔍 Verificando conexión... ");
+        print!("Verificando conexión... ");
 
         match check_uabc_connection() {
             Ok(is_direct_access) => {
@@ -49,14 +49,14 @@ impl Auth {
                         "✓ Conexión establecida en {:.2} segundos.",
                         elapsed.as_secs_f32()
                     );
-                    println!("🌐 Conectado a la red UABC.");
+                    println!("Conectado a la red UABC.");
                     Ok(true)
                 } else {
                     println!(
-                        "\n📡 Portal detectado en {:.2} segundos.",
+                        "\nPortal detectado en {:.2} segundos.",
                         elapsed.as_secs_f32()
                     );
-                    println!("🔐 Iniciando sesión...");
+                    println!("Iniciando sesión...");
 
                     let login_start = Instant::now();
                     match auto_login(&self.email, &self.password) {
@@ -64,7 +64,7 @@ impl Auth {
                             let login_elapsed = login_start.elapsed();
                             if success {
                                 println!(
-                                    "✅ Sesión iniciada en {:.2} segundos.",
+                                    "Sesión iniciada en {:.2} segundos.",
                                     login_elapsed.as_secs_f32()
                                 );
                                 Ok(true)
@@ -97,21 +97,21 @@ impl Auth {
     }
 
     pub fn start_monitoring(&self) -> Result<(), Box<dyn std::error::Error>> {
-        println!("🔄 Iniciando monitoreo de conexión...");
+        println!("Iniciando monitoreo de conexión...");
         self.should_stop.store(false, Ordering::SeqCst);
 
         while !self.should_stop.load(Ordering::SeqCst) {
             match self.login() {
                 Ok(true) => {
                     println!(
-                        "⏲️  Próxima verificación en {} segundos.",
+                        "Próxima verificación en {} segundos.",
                         self.success_interval.as_secs()
                     );
                     thread::sleep(self.success_interval);
                 }
                 Ok(false) | Err(_) => {
                     println!(
-                        "⏲️  Reintentando en {} segundos.",
+                        "Reintentando en {} segundos.",
                         self.check_interval.as_secs()
                     );
                     thread::sleep(self.check_interval);
@@ -120,13 +120,13 @@ impl Auth {
 
             println!("\n---------------------------------------------");
         }
-        println!("🛑 Monitoreo detenido");
+        println!("Monitoreo detenido");
         Ok(())
     }
 
     pub fn stop_monitoring(&self) {
         self.should_stop.store(true, Ordering::SeqCst);
-        println!("⏹️ Señal de detención enviada");
+        println!("Señal de detención enviada");
     }
 }
 
@@ -167,27 +167,27 @@ fn auto_login(username: &str, password: &str) -> Result<bool, Box<dyn std::error
     match res {
         Ok(local_id) => {
             let id_time = start_time.elapsed();
-            println!("🔑 ID obtenido en {:.2} segundos", id_time.as_secs_f32());
+            println!("ID obtenido en {:.2} segundos", id_time.as_secs_f32());
 
             match send_login(username, password, &local_id) {
                 Ok(status) => {
                     if status == reqwest::StatusCode::OK {
-                        println!("📨 Solicitud enviada correctamente");
+                        println!("Solicitud enviada correctamente");
 
                         if verify_connection_after_login() {
                             return Ok(true);
                         } else {
-                            println!("⚠️ Solicitud enviada pero sin conexión activa");
+                            println!("Solicitud enviada pero sin conexión activa");
                             return Ok(false);
                         }
                     } else {
-                        println!("⚠️ Respuesta inesperada del servidor: {}", status);
+                        println!("Respuesta inesperada del servidor: {}", status);
                         Ok(false)
                     }
                 }
                 Err(e) => {
                     if e.to_string().contains("certificate") && verify_connection_after_login() {
-                        println!("🔄 Conexión establecida");
+                        println!("Conexión establecida");
                         return Ok(true);
                     }
 
@@ -214,7 +214,7 @@ fn send_login(
     form.insert("username", email);
     form.insert("password", password);
 
-    println!("📤 Enviando datos...");
+    println!("Enviando datos...");
     let start_time = Instant::now();
 
     match client.post("https://pcw.uabc.mx/").form(&form).send() {
@@ -226,15 +226,15 @@ fn send_login(
             if status.is_success() {
                 // Verificar si el título es correcto
                 if body.contains("<title>Login Successful</title>") {
-                    println!("🎉 Datos enviados en {:.2} segundos", elapsed.as_secs_f32());
+                    println!("Datos enviados en {:.2} segundos", elapsed.as_secs_f32());
                     Ok(status)
                 } else {
-                    println!("❌ Error: El título de la página no coincide");
-                    println!("⚠️ Es posible que las credenciales sean incorrectas");
+                    println!("Error: El título de la página no coincide");
+                    println!("Es posible que las credenciales sean incorrectas");
                     Ok(reqwest::StatusCode::UNAUTHORIZED)
                 }
             } else {
-                println!("❌ Error al enviar datos. Código: {}", status);
+                println!("Error al enviar datos. Código: {}", status);
                 Ok(status)
             }
         }
@@ -258,9 +258,9 @@ fn verify_connection_after_login() -> bool {
                 println!(
                     "Resultado: {}",
                     if success {
-                        "✅ Conectado"
+                        "Conectado"
                     } else {
-                        "❌ Sin conexión"
+                        "Sin conexión"
                     }
                 );
                 success
@@ -271,21 +271,21 @@ fn verify_connection_after_login() -> bool {
                     println!(
                         "Resultado (alternativo): {}",
                         if success {
-                            "✅ Conectado"
+                            "Conectado"
                         } else {
-                            "❌ Sin conexión"
+                            "Sin conexión"
                         }
                     );
                     success
                 }
                 Err(_) => {
-                    println!("❌ No se detecta conexión a internet");
+                    println!("No se detecta conexión a internet");
                     false
                 }
             },
         },
         Err(_) => {
-            println!("❌ Error al verificar conexión");
+            println!("Error al verificar conexión");
             false
         }
     }
