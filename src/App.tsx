@@ -4,7 +4,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
 
-import { OpenGithub } from "./components/OpenGithub";
 import { Input } from "./components/Input";
 
 import img from "./assets/img/Logo.avif";
@@ -74,10 +73,10 @@ function App() {
   }
 
   return (
-    <main className="flex flex-col gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900">
+    <main className="flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden">
       <img src={img} alt="" className="blur absolute" />
-      <div className="p-5 relative z-10 flex flex-col items-center justify-center">
-        <form className="flex flex-col gap-3 mb-8">
+      <div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
+        <form className="w-full max-w-sm flex flex-col gap-3 mb-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-medium">Inicio de sesión automático</h1>
             <p>Sistema Institucional UABC'nt</p>
@@ -164,7 +163,6 @@ function App() {
           </button>
         </div>
       </div>
-      <OpenGithub />
     </main>
   );
 }
