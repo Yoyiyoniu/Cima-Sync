@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "uabc-auto-auth",
+  "productName": "cima-sync",
   "version": "1.0.0",
-  "identifier": "com.uabc.auto_auth",
+  "identifier": "com.cima.uabc-sync",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "UABC auto login | By Yoyiyoniu",
+        "title": "Cima Sync | Cimarrones siempre conectados",
         "width": 800,
         "height": 600,
+        "minWidth": 550,
+        "minHeight": 600,
         "browserExtensionsEnabled": false,
         "center": true,
         "zoomHotkeysEnabled": false,
