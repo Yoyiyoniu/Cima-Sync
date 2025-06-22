@@ -23,7 +23,7 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 lazy_static = "1.4.0"
-reqwest = { version = "0.12.15", features = ["blocking"] }
+reqwest = { version = "0.12.15", features = ["blocking", "rustls-tls"], default-features = false }
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 
 

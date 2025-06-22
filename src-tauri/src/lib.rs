@@ -1,7 +1,9 @@
 mod auth;
+#[cfg(desktop)]
 mod tray;
 
 use crate::auth::Auth;
+#[cfg(desktop)]
 use crate::tray::system_tray;
 
 use std::sync::Arc;
@@ -51,7 +53,17 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
-        .setup(|app| system_tray(app))
+        .setup(|app| {
+            #[cfg(desktop)]
+            {
+                system_tray(app)?;
+            }
+            #[cfg(not(desktop))]
+            {
+                let _ = app; // Silence unused warning on mobile
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![auto_auth, login, stop_auth])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
