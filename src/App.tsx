@@ -1,6 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-
 import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
 
@@ -10,6 +9,32 @@ import img from "./assets/img/Logo.avif";
 import StopIcon from "./assets/icons/StopIcon";
 
 import "./css/Global.css"
+
+import { getInterfaces, NetworkInterface } from "tauri-plugin-network-api";
+import { z } from "zod";
+
+// Esquema para validar las interfaces de red
+const NetworkInterfaceSchema = z.object({
+  name: z.string(),
+  v4_addrs: z.array(z.object({
+    ip: z.string(),
+    ip_octets: z.array(z.number()),
+    prefix: z.number(),
+    netmask: z.string(),
+    netmask_octets: z.array(z.number()),
+    network: z.string().nullable(),
+    broadcast: z.string().nullable()
+  })),
+  v6_addrs: z.array(z.object({
+    ip: z.string(),
+    ip_octets: z.array(z.number()),
+    prefix: z.number().nullable(),
+    netmask: z.string().nullable(),
+    netmask_octets: z.array(z.number()).nullable(),
+    network: z.string().nullable(),
+    broadcast: z.string().nullable()
+  }))
+});
 
 function App() {
 
@@ -21,6 +46,18 @@ function App() {
   disableContextMenu();
 
   useEffect(() => {
+
+    const getInterfacesView = async () => {
+      getInterfaces().then((ifaces: Array<Object>) => {
+        const parsed = z.array(NetworkInterfaceSchema).safeParse(ifaces);
+        if (parsed.success) {
+          console.log(JSON.stringify(parsed.data.map(iface => iface.name), null, 2));
+        } else {
+          console.log(parsed.error.toString());
+        }
+      });
+    }
+
     async function loadCredentials() {
       try {
         const result = await getCredentials();
@@ -33,6 +70,8 @@ function App() {
         console.error("Error loading credentials:", error);
       }
     }
+
+    getInterfacesView();
     loadCredentials();
   }, []);
 
@@ -137,7 +176,7 @@ function App() {
             </div>
           )}
         </form>
-        <div className="flex w-full gap-2 relative">
+        <div className="flex w-full max-w-sm justify-center gap-2 relative">
           <button
             title="Iniciar sesión"
             onClick={(e) => handleLogin(e)}
@@ -146,19 +185,19 @@ function App() {
                         bg-[#006633] hover:bg-[#005528] text-white 
                         disabled:opacity-70 disabled:cursor-not-allowed
                         transition-all duration-300 shadow-sm cursor-pointer
-                        ${success ? 'w-[calc(100%-60px)]' : 'w-full'}`}>
+                        w-full`}>
             {loading ? "Conectando..." : success ? "Conectado" : "Iniciar sesión"}
           </button>
           <button
             title="Detener sesión"
             onClick={handleLogout}
             type="button"
-            className={`h-11 px-4 flex items-center justify-center rounded-md font-medium
+            className={`h-11 flex items-center justify-center rounded-md font-medium
                       bg-red-600 hover:bg-red-700 text-white
                       disabled:opacity-70 disabled:cursor-not-allowed
                       transition-all duration-300 shadow-sm cursor-pointer
-                      absolute right-0
-                      ${success ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full'}`}>
+                      absolute right-0 w-10
+                      ${success ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
             <StopIcon />
           </button>
         </div>
