@@ -10,30 +10,6 @@ import StopIcon from "./assets/icons/StopIcon";
 
 import "./css/Global.css"
 
-import { getInterfaces } from "tauri-plugin-network-api";
-import { z } from "zod";
-
-const NetworkInterfaceSchema = z.object({
-  name: z.string(),
-  v4_addrs: z.array(z.object({
-    ip: z.string(),
-    ip_octets: z.array(z.number()),
-    prefix: z.number(),
-    netmask: z.string(),
-    netmask_octets: z.array(z.number()),
-    network: z.string().nullable(),
-    broadcast: z.string().nullable()
-  })),
-  v6_addrs: z.array(z.object({
-    ip: z.string(),
-    ip_octets: z.array(z.number()),
-    prefix: z.number().nullable(),
-    netmask: z.string().nullable(),
-    netmask_octets: z.array(z.number()).nullable(),
-    network: z.string().nullable(),
-    broadcast: z.string().nullable()
-  }))
-});
 
 function App() {
 
@@ -45,58 +21,6 @@ function App() {
   disableContextMenu();
 
   useEffect(() => {
-
-    const getInterfacesView = async () => {
-      getInterfaces().then((ifaces: Array<Object>) => {
-        const parsed = z.array(NetworkInterfaceSchema).safeParse(ifaces);
-        if (parsed.success) {
-          // Identificar la interfaz de internet activa (no localhost)
-          const activeInterface = parsed.data.find(iface =>
-            iface.v4_addrs.some(addr =>
-              !addr.ip.startsWith('127.') &&
-              !addr.ip.startsWith('169.254.') &&
-              !addr.ip.startsWith('10.') &&
-              !addr.ip.startsWith('172.') &&
-              !addr.ip.startsWith('192.168.')
-            )
-          );
-
-          if (activeInterface) {
-            const activeAddr = activeInterface.v4_addrs.find(addr =>
-              !addr.ip.startsWith('127.') &&
-              !addr.ip.startsWith('169.254.') &&
-              !addr.ip.startsWith('10.') &&
-              !addr.ip.startsWith('172.') &&
-              !addr.ip.startsWith('192.168.')
-            );
-
-            if (activeAddr) {
-              // Determinar si es Ethernet o WiFi basado en el nombre de la interfaz
-              const interfaceName = activeInterface.name.toLowerCase();
-              let connectionType = "Desconocido";
-
-              if (interfaceName.includes('ethernet') || interfaceName.includes('lan') || interfaceName.includes('cable')) {
-                connectionType = "Ethernet";
-              } else if (interfaceName.includes('wifi') || interfaceName.includes('wireless') || interfaceName.includes('wi-fi')) {
-                connectionType = "WiFi";
-              } else if (interfaceName.includes('wlan')) {
-                connectionType = "WiFi";
-              } else {
-                connectionType = "Ethernet"; // Por defecto asumimos Ethernet
-              }
-
-              console.log(`Conexión: ${connectionType}`);
-              console.log(`Interfaz: ${activeInterface.name}`);
-            }
-          } else {
-            console.log("No se detectó conexión de internet activa");
-          }
-
-        } else {
-          console.log("Error al obtener información de red:", parsed.error.toString());
-        }
-      });
-    }
 
     async function loadCredentials() {
       try {
@@ -111,7 +35,6 @@ function App() {
       }
     }
 
-    getInterfacesView();
     loadCredentials();
   }, []);
 
