@@ -5,15 +5,27 @@ interface ModalProps {
     modalText: string;
     title: string;
     setShowModal: (show: boolean) => void;
-    handleModalRedirect: () => void;
+    handleModalFunction: () => void | Promise<void>;
 }
 
-export const Modal = ({ setShowModal, handleModalRedirect, modalText, title }: ModalProps) => {
+export const Modal = ({ setShowModal, handleModalFunction, modalText, title }: ModalProps) => {
     const [isClosing, setIsClosing] = useState(false);
 
     const handleClose = () => {
         setIsClosing(true);
         setTimeout(() => {
+            setShowModal(false);
+        }, 280);
+    };
+
+    const handleConfirm = async () => {
+        setIsClosing(true);
+        setTimeout(async () => {
+            try {
+                await handleModalFunction();
+            } catch (error) {
+                console.error('Error en la función del modal:', error);
+            }
             setShowModal(false);
         }, 280);
     };
@@ -37,7 +49,7 @@ export const Modal = ({ setShowModal, handleModalRedirect, modalText, title }: M
                             Cancelar
                         </button>
                         <button
-                            onClick={handleModalRedirect}
+                            onClick={handleConfirm}
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
                         >
                             Continuar

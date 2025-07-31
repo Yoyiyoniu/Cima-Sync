@@ -4,6 +4,8 @@ import XIcon from "../assets/icons/XIcon"
 import GithubIcon from "../assets/icons/GithubIcon";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Modal } from "./Modal";
+import { removeDatabase } from "../controller/DbController";
+import TrashIcon from "../assets/icons/TrashIcon";
 
 
 const appInfo = Object.freeze({
@@ -17,6 +19,7 @@ const appInfo = Object.freeze({
 export const SettingsMenu = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [showGithubModal, setShowGithubModal] = useState(false);
+    const [showRemoveDatabaseModal, setShowRemoveDatabaseModal] = useState(false);
 
     // Accessibility: Closeable by pressing escape or clicking outside
     useEffect(() => {
@@ -33,8 +36,12 @@ export const SettingsMenu = () => {
     }, []);
 
     const handleGithubRedirect = async () => {
-        setShowGithubModal(false);
         await openUrl('https://github.com/Yoyiyoniu/cima-sync');
+    };
+
+    const handleRemoveDatabase = async () => {
+        await removeDatabase();
+        window.location.reload();
     };
 
     return (
@@ -60,7 +67,17 @@ export const SettingsMenu = () => {
                     title="Saldrás de la aplicación"
                     modalText="Serás redirigido a la página web de GitHub para ver el código fuente del proyecto. ¿Deseas continuar?"
                     setShowModal={setShowGithubModal}
-                    handleModalRedirect={handleGithubRedirect} />
+                    handleModalFunction={handleGithubRedirect} />
+            )}
+
+            {/* Modal de confirmación para eliminar la base de datos */}
+
+            {showRemoveDatabaseModal && (
+                <Modal
+                    title="Eliminar datos"
+                    modalText="¿Estás seguro de querer eliminar los datos de la aplicación? Esta acción no se puede deshacer."
+                    setShowModal={setShowRemoveDatabaseModal}
+                    handleModalFunction={handleRemoveDatabase} />
             )}
 
             {/* Panel deslizante */}
@@ -100,7 +117,7 @@ export const SettingsMenu = () => {
                         <div className="space-y-4">
                             <h2 className="text-lg font-semibold text-white">Configuración</h2>
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between w-full p-2 transition-colors duration-200 hover:bg-white/10 rounded-md">
                                     <div className="flex items-center gap-2">
                                         <p className="text-white/80">Auto-inicio</p>
                                         <span className="bg-green-900 text-white text-xs font-bold px-2 py-1 rounded-full">Beta</span>
@@ -110,6 +127,16 @@ export const SettingsMenu = () => {
                                         <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
                                 </div>
+                                {/* remove sqlite database */}
+                                <button
+                                    type="button"
+                                    className="flex items-center justify-between cursor-pointer rounded-md w-full p-2 hover:bg-red-500/20 transition-colors duration-200"
+                                    onClick={() => {
+                                        setShowRemoveDatabaseModal(true);
+                                    }}>
+                                    <p className="text-white/80">Eliminar datos</p>
+                                    <TrashIcon />
+                                </button>
                             </div>
                         </div>
 
@@ -123,6 +150,7 @@ export const SettingsMenu = () => {
                             </div>
                         </div>
                     </div>
+
                     {/* Github source code */}
                     <button
                         title="Abrir proyecto de github"

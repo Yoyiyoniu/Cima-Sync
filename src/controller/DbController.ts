@@ -47,3 +47,13 @@ export async function clearCredentials() {
         console.error(error);
     }
 }
+
+export async function removeDatabase() {
+    try {
+        const db = await Database.load(sqlite);
+        await db.execute("DROP TABLE IF EXISTS credentials");
+        await db.execute("DROP TABLE IF EXISTS settings");
+    } catch (error) {
+        console.error(error);
+    }
+}
