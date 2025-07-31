@@ -1,7 +1,7 @@
 [package]
-name = "uabc_auto_auth"
+name = "cima-sync"
 version = "0.1.0"
-description = "A Tauri App"
+description = "A Cima Sync App"
 authors = ["Rodrigo Gibran Felix Leon", "Yoyiyoniu 8)"]
 edition = "2021"
 
@@ -11,7 +11,7 @@ edition = "2021"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "uabc_auto_auth_lib"
+name = "cima_sync_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

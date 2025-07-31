@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    uabc_auto_auth_lib::run()
+    cima_sync_lib::run()
 }

@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "cima-sync",
   "version": "1.0.0",
-  "identifier": "com.cima.uabc-sync",
+  "identifier": "com.cima-sync",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Cima Sync | Cimarrones siempre conectados",
-        "width": 800,
-        "height": 600,
+        "width": 600,
+        "height": 800,
         "minWidth": 550,
         "minHeight": 600,
         "browserExtensionsEnabled": false,
@@ -42,7 +42,7 @@
   "plugins": {
     "sql": {
       "preload": [
-        "sqlite:uabc_auto_auth_credentials.db"
+        "sqlite:cima-sync.db"
       ]
     }
   }

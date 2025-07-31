@@ -1,5 +1,5 @@
 {
-  "name": "uabc_auto_auth",
+  "name": "cima-sync",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -17,8 +17,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^4.1.4",
-    "tauri-plugin-network-api": "^2.0.5",
-    "zod": "^3.25.67"
+    "tauri-plugin-network-api": "^2.0.5"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

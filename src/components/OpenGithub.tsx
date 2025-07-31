@@ -7,7 +7,7 @@ export const OpenGithub = () => {
             <button
                 title="Abrir proyecto de github"
                 onClick={async () => {
-                    await openUrl('https://github.com/Yoyiyoniu/uabc-captive-portal-bypass');
+                    await openUrl('https://github.com/Yoyiyoniu/cima-sync');
                 }}
                 className="p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors duration-200">
                 <GithubIcon width={30} height={30} />
