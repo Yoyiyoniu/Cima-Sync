@@ -3,6 +3,7 @@ import OptionsIcon from "../assets/icons/OptionsIcon"
 import XIcon from "../assets/icons/XIcon"
 import GithubIcon from "../assets/icons/GithubIcon";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { Modal } from "./Modal";
 
 
 const appInfo = Object.freeze({
@@ -15,12 +16,14 @@ const appInfo = Object.freeze({
 
 export const SettingsMenu = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const [showGithubModal, setShowGithubModal] = useState(false);
 
     // Accessibility: Closeable by pressing escape or clicking outside
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 setIsOpen(false);
+                setShowGithubModal(false);
             }
         };
         window.addEventListener('keydown', handleEscape);
@@ -28,6 +31,11 @@ export const SettingsMenu = () => {
             window.removeEventListener('keydown', handleEscape);
         };
     }, []);
+
+    const handleGithubRedirect = async () => {
+        setShowGithubModal(false);
+        await openUrl('https://github.com/Yoyiyoniu/cima-sync');
+    };
 
     return (
         <>
@@ -44,6 +52,15 @@ export const SettingsMenu = () => {
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
                     onClick={() => setIsOpen(false)}
                 />
+            )}
+
+            {/* Modal de confirmación para GitHub */}
+            {showGithubModal && (
+                <Modal
+                    title="Saldrás de la aplicación"
+                    modalText="Serás redirigido a la página web de GitHub para ver el código fuente del proyecto. ¿Deseas continuar?"
+                    setShowModal={setShowGithubModal}
+                    handleModalRedirect={handleGithubRedirect} />
             )}
 
             {/* Panel deslizante */}
@@ -109,9 +126,7 @@ export const SettingsMenu = () => {
                     {/* Github source code */}
                     <button
                         title="Abrir proyecto de github"
-                        onClick={async () => {
-                            await openUrl('https://github.com/Yoyiyoniu/cima-sync');
-                        }}
+                        onClick={() => setShowGithubModal(true)}
                         className="p-2 mb-3 rounded-full bg-black/40 hover:bg-black/60 transition-colors duration-200 flex items-center gap-2">
                         <GithubIcon width={30} height={30} />
                         <p className="text-white/80 text-sm">Ver proyecto en Github</p>
