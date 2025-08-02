@@ -10,6 +10,8 @@
     "opener:default",
     "sql:default",
     "sql:allow-execute",
-    "network:allow-get-interfaces"
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
   ]
 }

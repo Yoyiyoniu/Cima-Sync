@@ -6,6 +6,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { Modal } from "./Modal";
 import { removeDatabase } from "../controller/DbController";
 import TrashIcon from "../assets/icons/TrashIcon";
+import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
 
 
 const appInfo = Object.freeze({
@@ -20,6 +21,20 @@ export const SettingsMenu = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [showGithubModal, setShowGithubModal] = useState(false);
     const [showRemoveDatabaseModal, setShowRemoveDatabaseModal] = useState(false);
+    const [autoRunEnabled, setAutoRunEnabled] = useState(false);
+
+    // Cargar el estado del auto-run al montar el componente
+    useEffect(() => {
+        const loadAutoRunState = async () => {
+            try {
+                const enabled = await isEnabled();
+                setAutoRunEnabled(enabled);
+            } catch (error) {
+                console.error('Error al cargar el estado del auto-run:', error);
+            }
+        };
+        loadAutoRunState();
+    }, []);
 
     // Accessibility: Closeable by pressing escape or clicking outside
     useEffect(() => {
@@ -42,6 +57,21 @@ export const SettingsMenu = () => {
     const handleRemoveDatabase = async () => {
         await removeDatabase();
         window.location.reload();
+    };
+
+    const handleAutoRunToggle = async () => {
+        try {
+            if (autoRunEnabled) {
+                await disable();
+                setAutoRunEnabled(false);
+            } else {
+                await enable();
+                setAutoRunEnabled(true);
+            }
+        } catch (error) {
+            setAutoRunEnabled(!autoRunEnabled);
+            console.error('Error al cambiar el estado del auto-run:', error);
+        }
     };
 
     return (
@@ -123,7 +153,12 @@ export const SettingsMenu = () => {
                                         <span className="bg-green-900 text-white text-xs font-bold px-2 py-1 rounded-full">Beta</span>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" className="sr-only peer" />
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={autoRunEnabled}
+                                            onChange={handleAutoRunToggle}
+                                        />
                                         <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
                                 </div>

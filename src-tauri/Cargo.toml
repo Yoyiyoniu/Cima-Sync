@@ -27,4 +27,7 @@ reqwest = { version = "0.12.15", features = ["blocking", "rustls-tls"], default-
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-network = "2.0.4"
 
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-autostart = "2"
+
 
