@@ -145,7 +145,27 @@ Las contribuciones son bienvenidas.
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+Este proyecto está bajo la **GNU General Public License v3 (GPLv3)**.
+
+**© 2024 Rodrigo Gibran Felix Leon**
+
+### 📋 Términos de la GPLv3:
+
+- **✅ Uso Libre**: Puedes usar, estudiar y compartir el software
+- **✅ Modificaciones**: Puedes modificar el código fuente
+- **⚠️ Copyleft**: Cualquier trabajo derivado debe usar la misma licencia GPLv3
+- **⚠️ Código Abierto**: Si distribuyes versiones modificadas, debes compartir el código fuente
+
+### 📄 Ver Licencia Completa
+
+Para ver los términos completos de la licencia, consulta el archivo [`LICENSE`](LICENSE) en este repositorio.
+
+### 🔗 Enlaces Útiles
+
+- [GNU General Public License v3](https://www.gnu.org/licenses/gpl-3.0.html)
+- [¿Qué es GPLv3?](https://www.gnu.org/licenses/gpl-3.0.html#WhatIsGPL)
+
+
 
 ---
 
