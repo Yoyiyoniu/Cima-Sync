@@ -8,6 +8,8 @@
 
 **Autenticación automática para la red WiFi de la Universidad Autónoma de Baja California**
 
+[![English Version](https://img.shields.io/badge/English_Version-007ACC?style=for-the-badge&logo=read-the-docs&logoColor=white)](README_EN.md)
+
 [![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://rust-lang.org)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org)
 [![Tauri](https://img.shields.io/badge/Tauri-FFC131?style=for-the-badge&logo=tauri&logoColor=black)](https://tauri.app)
