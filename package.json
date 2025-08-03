@@ -3,6 +3,21 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "description": "Autenticación automática para la red WiFi de la Universidad Autónoma de Baja California",
+  "author": "Rodrigo Gibran Felix Leon",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yoyiyoniu/Cima-Sync.git"
+  },
+  "keywords": [
+    "uabc",
+    "wifi",
+    "authentication",
+    "tauri",
+    "rust",
+    "react"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
