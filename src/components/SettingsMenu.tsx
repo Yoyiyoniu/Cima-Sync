@@ -8,6 +8,8 @@ import { removeDatabase } from "../controller/DbController";
 import TrashIcon from "../assets/icons/TrashIcon";
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
 
+import { platform } from '@tauri-apps/plugin-os';
+
 
 const appInfo = Object.freeze({
     name: "Cima Sync",
@@ -147,21 +149,65 @@ export const SettingsMenu = () => {
                         <div className="space-y-4">
                             <h2 className="text-lg font-semibold text-white">Configuración</h2>
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between w-full p-2 transition-colors duration-200 hover:bg-white/10 rounded-md">
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-white/80">Auto-inicio</p>
-                                        <span className="bg-green-900 text-white text-xs font-bold px-2 py-1 rounded-full">Beta</span>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={autoRunEnabled}
-                                            onChange={handleAutoRunToggle}
-                                        />
-                                        <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
+                                {
+                                    (platform() === 'windows' || platform() === 'macos') ?
+                                        (
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between w-full p-3 transition-colors duration-200 hover:bg-white/10 rounded-lg border border-white/10">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                                            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-white font-medium text-sm">Auto-inicio</p>
+                                                            <p className="text-white/60 text-xs">Iniciar con el sistema</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="relative inline-flex items-center cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="sr-only peer"
+                                                                checked={autoRunEnabled}
+                                                                onChange={handleAutoRunToggle}
+                                                            />
+                                                            <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) :
+                                        (
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between w-full p-3 transition-colors duration-200 hover:bg-white/10 rounded-lg border border-white/10">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                                            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-white font-medium">Auto-inicio</p>
+                                                            <p className="text-white/60 text-xs">Iniciar automáticamente con el sistema</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="bg-green-500/20 text-green-400 text-xs font-semibold px-2 py-1 rounded-full border border-green-500/30">Beta</span>
+                                                </div>
+                                                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                                                    <div className="flex items-start gap-2">
+                                                        <svg className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <p className="text-blue-300 text-xs leading-relaxed">
+                                                            Esta función solo está disponible en <span className="font-semibold">Windows</span> y <span className="font-semibold">macOS</span>.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                }
                                 {/* remove sqlite database */}
                                 <button
                                     type="button"
