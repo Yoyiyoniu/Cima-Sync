@@ -1,9 +1,7 @@
 mod auth;
-#[cfg(desktop)]
 mod tray;
 
 use crate::auth::Auth;
-#[cfg(desktop)]
 use crate::tray::system_tray;
 
 use std::sync::Arc;
@@ -51,6 +49,7 @@ fn login(email: &str, password: &str) -> Result<String, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--flag1", "--flag2"])
@@ -58,14 +57,7 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            #[cfg(desktop)]
-            {
-                system_tray(app)?;
-            }
-            #[cfg(not(desktop))]
-            {
-                let _ = app; // Silence unused warning on mobile
-            }
+            system_tray(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![auto_auth, login, stop_auth])

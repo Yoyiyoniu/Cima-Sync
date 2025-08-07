@@ -1,5 +1,6 @@
 import GithubIcon from "../assets/icons/GithubIcon";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ModalProps {
     modalText: string;
@@ -9,6 +10,7 @@ interface ModalProps {
 }
 
 export const Modal = ({ setShowModal, handleModalFunction, modalText, title }: ModalProps) => {
+    const { t } = useTranslation();
     const [isClosing, setIsClosing] = useState(false);
 
     const handleClose = () => {
@@ -36,23 +38,23 @@ export const Modal = ({ setShowModal, handleModalFunction, modalText, title }: M
                 <div className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 max-w-md mx-4 modal-content ${isClosing ? 'modal-content-closing' : ''}`}>
                     <div className="flex items-center gap-3 mb-4">
                         <GithubIcon width={24} height={24} className="text-white" />
-                        <h3 className="text-lg font-semibold text-white">{title}</h3>
+                        <h3 className="text-lg font-semibold text-white">{t(title)}</h3>
                     </div>
                     <p className="text-white/80 mb-6">
-                        {modalText}
+                        {t(modalText)}
                     </p>
                     <div className="flex gap-3 justify-end">
                         <button
                             onClick={handleClose}
                             className="px-4 py-2 text-white/70 hover:text-white transition-colors"
                         >
-                            Cancelar
+                            {t('Modal.cancel')}
                         </button>
                         <button
                             onClick={handleConfirm}
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
                         >
-                            Continuar
+                            {t('Modal.continue')}
                         </button>
                     </div>
                 </div>
