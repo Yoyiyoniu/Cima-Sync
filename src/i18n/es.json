@@ -1,14 +1,13 @@
 {
     "Settings": {
         "title": "Ajustes",
-        "description": "Descripción de los ajustes",
         "language": "Idioma",
         "language.es": "Español",
         "language.en": "Inglés",
         "github": "Ver proyecto en Github",
         "autoRun": {
-            "title": "Auto-inicio",
-            "description": "Descripción del auto-inicio"
+            "title": "Iniciar con el sistema",
+            "description": "Iniciar con el sistema"
         },
         "appInfo": {
             "title": "Información de la aplicación",
@@ -18,12 +17,12 @@
         },
         "config": {
             "title": "Configuración",
-            "description": "Descripción de la configuración"
+            "description": "Configuración de Cima Sync"
         },
         "help": {
             "title": "Ayuda",
-            "description1": "Descripción de la ayuda 1",
-            "description2": "Descripción de la ayuda 2"
+            "description1": "Aplicación para automatizar el proceso de autenticación en el portal cautivo de UABC.",
+            "description2": "Si tienes alguna duda, puedes contactar al desarrollador."
         },
         "removeDatabase": "Eliminar datos"
     },

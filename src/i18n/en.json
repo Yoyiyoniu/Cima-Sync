@@ -1,14 +1,13 @@
 {
     "Settings": {
         "title": "Settings",
-        "description": "Settings description",
         "language": "Language",
         "language.es": "Spanish",
         "language.en": "English",
         "github": "See project on Github",
         "autoRun": {
-            "title": "Auto-run",
-            "description": "Auto-run description"
+            "title": "Start with System",
+            "description": "Start with System"
         },
         "appInfo": {
             "title": "App info",
@@ -18,12 +17,12 @@
         },
         "config": {
             "title": "Configuration",
-            "description": "Configuration description"
+            "description": "Cima Sync configuration"
         },
         "help": {
             "title": "Help",
-            "description1": "Help description 1",
-            "description2": "Help description 2"
+            "description1": "Application to automate the authentication process in the captive portal of UABC.",
+            "description2": "If you have any questions, you can contact the developer."
         },
         "removeDatabase": "Delete app data"
     },
