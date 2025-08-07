@@ -1,0 +1,61 @@
+{
+    "Settings": {
+        "title": "Settings",
+        "description": "Settings description",
+        "language": "Language",
+        "language.es": "Spanish",
+        "language.en": "English",
+        "github": "See project on Github",
+        "autoRun": {
+            "title": "Auto-run",
+            "description": "Auto-run description"
+        },
+        "appInfo": {
+            "title": "App info",
+            "name": "Cima Sync",
+            "version": "1.0.0",
+            "description": "Tool to automate the authentication process in the captive portal of UABC."
+        },
+        "config": {
+            "title": "Configuration",
+            "description": "Configuration description"
+        },
+        "help": {
+            "title": "Help",
+            "description1": "Help description 1",
+            "description2": "Help description 2"
+        },
+        "removeDatabase": "Delete app data"
+    },
+    "App": {
+        "title": "Auto login",
+        "subtitle": "UABC Institutional System",
+        "success": "Connection established successfully.",
+        "email": "Email",
+        "password": "Password",
+        "remember": "Remember session",
+        "rememberTitle": "Keep session active",
+        "login": "Login",
+        "logout": "Logout",
+        "connecting": "Connecting...",
+        "connected": "Connected",
+        "error": "Error",
+        "autoLogin": "Automatic login"
+    },
+    "Input": {
+        "emailPlaceholder": "me@uabc.edu.mx",
+        "passwordPlaceholder": "•••••••••••••"
+    },
+    "Modal": {
+        "cancel": "Cancel",
+        "continue": "Continue",
+        "github": {
+            "title": "You're exiting the app",
+            "description": "You will be redirected to the GitHub page to see the project code. Do you want to continue?"
+        },
+        "removeDatabase": {
+            "title": "Remove database",
+            "description": "Are you sure you want to remove the database? This action cannot be undone."
+        }
+    }
+}
