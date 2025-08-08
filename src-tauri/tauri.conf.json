@@ -42,7 +42,8 @@
   "plugins": {
     "sql": {
       "preload": [
-        "sqlite:cima-sync.db"
+        "sqlite:cima-sync.db",
+        "sqlite:cima-config.db"
       ]
     }
   }

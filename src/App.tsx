@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
+import { clearCredentials, getCredentials, saveCredentials, getRememberSessionConfig, setRememberSessionConfig } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
 import { useTranslation } from "react-i18next";
 
@@ -23,21 +23,23 @@ function App() {
   disableContextMenu();
 
   useEffect(() => {
-
-    async function loadCredentials() {
+    async function bootstrap() {
       try {
-        const result = await getCredentials();
-        if (result) {
-          const { email, password } = result;
-          setCredentials({ email, password });
-          setRememberSession(true);
+        const remember = await getRememberSessionConfig();
+        setRememberSession(remember);
+        if (remember) {
+          const result = await getCredentials();
+          if (result) {
+            const { email, password } = result;
+            setCredentials({ email, password });
+          }
         }
       } catch (error) {
-        console.error("Error loading credentials:", error);
+        console.error("Error loading configuration/credentials:", error);
       }
     }
 
-    loadCredentials();
+    bootstrap();
   }, []);
 
   async function handleLogin(e: FormEvent) {
@@ -45,7 +47,8 @@ function App() {
     setAppState({ loading: true, error: null, success: false });
 
     try {
-      if (!rememberSession) clearCredentials();
+      await setRememberSessionConfig(rememberSession);
+      if (!rememberSession) await clearCredentials();
 
       await invoke("login", {
         email: email,
@@ -115,7 +118,14 @@ function App() {
                 type="checkbox"
                 id="remember"
                 checked={rememberSession}
-                onChange={(e) => setRememberSession(e.target.checked)}
+                onChange={async (e) => {
+                  const checked = e.target.checked;
+                  setRememberSession(checked);
+                  await setRememberSessionConfig(checked);
+                  if (!checked) {
+                    await clearCredentials();
+                  }
+                }}
                 disabled={loading || success}
                 className="peer h-4 w-4 appearance-none rounded border border-[#006633]/30 bg-black/40 
                         checked:bg-[#006633] checked:border-[#006633] 
