@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { clearCredentials, getCredentials, saveCredentials } from "./controller/DbController";
+import { clearCredentials, getCredentials, saveCredentials, getRememberSessionConfig, setRememberSessionConfig } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
+import { useTranslation } from "react-i18next";
 
 import { Input } from "./components/Input";
 
@@ -13,6 +14,7 @@ import { SettingsMenu } from "./components/SettingsMenu";
 
 function App() {
 
+  const { t } = useTranslation();
   const [{ email, password }, setCredentials] = useState({ email: "", password: "" });
   const [{ error, loading, success }, setAppState] = useState<AppState>({ loading: false, error: null, success: false });
 
@@ -21,21 +23,23 @@ function App() {
   disableContextMenu();
 
   useEffect(() => {
-
-    async function loadCredentials() {
+    async function bootstrap() {
       try {
-        const result = await getCredentials();
-        if (result) {
-          const { email, password } = result;
-          setCredentials({ email, password });
-          setRememberSession(true);
+        const remember = await getRememberSessionConfig();
+        setRememberSession(remember);
+        if (remember) {
+          const result = await getCredentials();
+          if (result) {
+            const { email, password } = result;
+            setCredentials({ email, password });
+          }
         }
       } catch (error) {
-        console.error("Error loading credentials:", error);
+        console.error("Error loading configuration/credentials:", error);
       }
     }
 
-    loadCredentials();
+    bootstrap();
   }, []);
 
   async function handleLogin(e: FormEvent) {
@@ -43,7 +47,8 @@ function App() {
     setAppState({ loading: true, error: null, success: false });
 
     try {
-      if (!rememberSession) clearCredentials();
+      await setRememberSessionConfig(rememberSession);
+      if (!rememberSession) await clearCredentials();
 
       await invoke("login", {
         email: email,
@@ -81,19 +86,19 @@ function App() {
       <div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
         <form className="w-full max-w-sm flex flex-col gap-3 mb-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-medium">Inicio de sesión automático</h1>
-            <p>Sistema Institucional UABC'nt</p>
+            <h1 className="text-2xl font-medium">{t('App.title')}</h1>
+            <p>{t('App.subtitle')}</p>
           </div>
           {success && (
             <div className="bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3">
-              Conexión establecida correctamente.
+              {t('App.success')}
             </div>
           )}
           <Input
             id="email"
             type="email"
-            label="Correo"
-            placeholder="me@uabc.edu.mx"
+            label={t('App.email')}
+            placeholder={t('Input.emailPlaceholder')}
             value={email}
             onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
             disabled={loading || success}
@@ -101,8 +106,8 @@ function App() {
           <Input
             id="password"
             type="password"
-            label="Contraseña"
-            placeholder="•••••••••••••"
+            label={t('App.password')}
+            placeholder={t('Input.passwordPlaceholder')}
             value={password}
             onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
             disabled={loading || success}
@@ -113,7 +118,14 @@ function App() {
                 type="checkbox"
                 id="remember"
                 checked={rememberSession}
-                onChange={(e) => setRememberSession(e.target.checked)}
+                onChange={async (e) => {
+                  const checked = e.target.checked;
+                  setRememberSession(checked);
+                  await setRememberSessionConfig(checked);
+                  if (!checked) {
+                    await clearCredentials();
+                  }
+                }}
                 disabled={loading || success}
                 className="peer h-4 w-4 appearance-none rounded border border-[#006633]/30 bg-black/40 
                         checked:bg-[#006633] checked:border-[#006633] 
@@ -130,18 +142,18 @@ function App() {
                 </svg>
               </div>
             </div>
-            <label title="Mantener sesión activa" className="ml-2 text-sm text-gray-300 cursor-pointer select-none">
-              Recordar sesión
+            <label title={t('App.rememberTitle')} className="ml-2 text-sm text-gray-300 cursor-pointer select-none">
+              {t('App.remember')}
             </label>
           </div>
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3">
-              {error}
+              {t('App.error')}: {error}
             </div>
           )}
           <div className="flex w-full max-w-sm justify-center gap-2 relative">
             <button
-              title="Iniciar sesión"
+              title={t('App.login')}
               onClick={(e) => handleLogin(e)}
               disabled={loading || success || !email || !password}
               className={`h-11 flex items-center justify-center rounded-md font-medium
@@ -149,10 +161,10 @@ function App() {
                         disabled:opacity-70 disabled:cursor-not-allowed
                         transition-all duration-300 shadow-sm cursor-pointer
                         w-full`}>
-              {loading ? "Conectando..." : success ? "Conectado" : "Iniciar sesión"}
+              {loading ? t('App.connecting') : success ? t('App.connected') : t('App.login')}
             </button>
             <button
-              title="Detener sesión"
+              title={t('App.logout')}
               onClick={handleLogout}
               type="button"
               className={`h-11 flex items-center justify-center rounded-md font-medium
