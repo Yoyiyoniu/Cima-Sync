@@ -3,10 +3,16 @@
 <div align="center">
 
 # Cima Sync - Cimarrones 24/7
+<br>
 
-<img src="src/assets/img/shots_so.png" width="300" alt="Cima Sync Logo">
+<img src="src/assets/img/cima_sync_aplication.png" width="300" alt="Cima Sync Logo">
+
+<br>
+<br>
 
 **Autenticación automática para la red WiFi de la Universidad Autónoma de Baja California**
+
+<br>
 
 [![English Version](https://img.shields.io/badge/English_Version-007ACC?style=for-the-badge&logo=read-the-docs&logoColor=white)](README_EN.md)
 
@@ -23,26 +29,26 @@
 
 ---
 
-## 📋 Descripción
+## Descripción
 
 **Cima Sync** es una aplicación de escritorio multiplataforma que automatiza el proceso de autenticación en el portal cautivo de la red WiFi de la Universidad Autónoma de Baja California (UABC). La aplicación detecta automáticamente cuando el usuario se conecta a la red UABC y realiza el login de forma transparente, eliminando la necesidad de ingresar manualmente las credenciales cada vez.
 
-### ✨ Características Principales
+### Características principales
 
 | Característica | Descripción |
 |----------------|-------------|
-| 🔄 **Autenticación Automática** | Login automático al conectarse a la red UABC |
-| 🔒 **Almacenamiento Seguro** | Guardado local de credenciales con encriptación |
-| ⚡ **Monitoreo Continuo** | Verificación periódica de la conexión |
-| 🛡️ **Multiplataforma** | Funciona en Windows, macOS y Linux |
-| 🚀 **Inicio Automático** | Opción para iniciar automáticamente al encender la PC |
+| Autenticación automática | Login automático al conectarse a la red UABC |
+| Almacenamiento seguro | Guardado local de credenciales con encriptación |
+| Monitoreo continuo | Verificación periódica de la conexión |
+| Multiplataforma | Funciona en Windows, macOS y Linux |
+| Inicio automático | Opción para iniciar automáticamente al encender la PC |
 
 
 ---
 
-## 🏗️ Arquitectura del Proyecto
+## Arquitectura del proyecto
 
-### 🛠️ Stack
+### Stack
 
 #### **Frontend**
 - **React 18**
@@ -55,35 +61,32 @@
 - **reqwest** - Cliente HTTP para Rust
 - **SQLite** - Guardar datos de forma local y encriptada
 
-### 📁 Estructura del Proyecto
+### Estructura del proyecto
 
 ```
 Cima-Sync/
 ├── 📁 src/                    # Frontend React + TypeScript
 │   ├── 📁 components/         # Componentes reutilizables
 │   ├── 📁 controller/         # Controladores de base de datos
-│   ├── 📁 hooks/             # Custom hooks
-│   └── 📁 assets/            # Imágenes e iconos
-├── 📁 src-tauri/             # Backend Rust + Tauri
-│   ├── 📁 src/
-│   │   ├── 🔧 auth.rs        # Lógica de autenticación
-│   │   ├── 🔧 lib.rs         # Lógica de ejecución de los procesos
-│   │   └── 🔧 tray.rs        # Gestión del tray icon
-│   └── 📄 Cargo.toml         # Dependencias de Rust
-└── 📄 package.json           # Dependencias de Node.js
+│   ├── 📁 hooks/              # Hooks personalizados
+│   └── 📁 assets/             # Imágenes e iconos
+├── 📁 src-tauri/              # Backend Rust + Tauri
+│   ├── 📁 src/                # Código fuente en Rust
+│   └── Cargo.toml             # Dependencias de Rust
+└── package.json               # Dependencias de Node.js
 ```
 
 ---
 
-## 🚀 Instalación y Uso
+## Instalación y uso
 
-### 📋 Prerrequisitos
+### Requisitos previos
 
 - **Rust** (versión 1.70+)
 - **Node.js** (versión 18+) o **Bun**
 - **Cargo** (incluido con Rust)
 
-### ⚙️ Instalación
+### Instalación
 
 #### 1. **Clonar el repositorio**
 ```bash
@@ -110,32 +113,30 @@ npm run tauri build
 
 ---
 
-## 🔒 Seguridad
+## Seguridad
 
-### 🔐 Almacenamiento de Credenciales
+### Almacenamiento de credenciales
 - Las credenciales se almacenan localmente en una base de datos SQLite
 - Los datos se encriptan antes de ser guardados
 
-### 🛡️ Certificados SSL
+### Certificados SSL
 - La aplicación maneja certificados SSL autofirmados del portal UABC
 - Se utilizan configuraciones seguras para las peticiones HTTP
 
 ---
 
-## 🛠️ Desarrollo
+## Desarrollo
 
-### 📜 Scripts Disponibles
+### Scripts disponibles
 
 | Comando | Descripción |
 |---------|-------------|
-| `npm run dev` | Servidor de desarrollo Vite |
 | `npm run tauri dev` | Aplicación Tauri en modo desarrollo |
-| `npm run build` | Build del frontend |
-| `npm run tauri android` | Aplicación Tauri en modo desarrollo android |
-| `npm run tauri build` | Build de la aplicación completa |
-| `npm run preview` | Preview del build |
+| `npm run tauri android dev` | Aplicación Tauri en modo desarrollo android |
+| `npm run tauri build` | Build de la app de escritorio |
+| `npm run tauri build android` | Build de la app de android |
 
-### 🏗️ Estructura de Desarrollo
+### Estructura de desarrollo
 
 - **Frontend**: `src/` - React + TypeScript + Tailwind CSS
 - **Backend**: `src-tauri/src/` - Rust + Tauri
@@ -143,52 +144,52 @@ npm run tauri build
 
 ---
 
-## 🤝 Contribución
+## Contribución
 
 Las contribuciones son bienvenidas. Para contribuir:
 
-1. 🍴 Haz un fork del proyecto
-2. 🌿 Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. 💾 Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. 📤 Push a la rama (`git push origin feature/AmazingFeature`)
-5. 🔄 Abre un Pull Request
+1. Haz un fork del proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit de tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
 
 ---
 
-## 📄 Licencia
+## Licencia
 
-Este proyecto está bajo la **GNU General Public License v3 (GPLv3)**.
+Este proyecto está bajo la **GNU General Public License v3 (GPLv3)**. Esta licencia se elige explícitamente para proteger el proyecto de cualquier intento de apropiación por parte de la UABC u otras entidades, asegurando que el código y sus derivados permanezcan libres bajo los términos de la GPLv3 y evitando problemas legales en el futuro.
 
 **© 2025 Rodrigo Gibran Felix Leon**
 
-### 📋 Términos de la GPLv3:
+### Términos de la GPLv3
 
 | Permiso | Descripción |
 |---------|-------------|
-| ✅ **Uso Libre** | Puedes usar, estudiar y compartir el software |
-| ✅ **Modificaciones** | Puedes modificar el código fuente |
-| ⚠️ **Copyleft** | Cualquier trabajo derivado debe usar la misma licencia GPLv3 |
-| ⚠️ **Código Abierto** | Si distribuyes versiones modificadas, debes compartir el código fuente |
+| Uso libre | Puedes usar, estudiar y compartir el software |
+| Modificaciones | Puedes modificar el código fuente |
+| Copyleft | Cualquier trabajo derivado debe usar la misma licencia GPLv3 |
+| Código abierto | Si distribuyes versiones modificadas, debes compartir el código fuente |
 
-### 📄 Ver Licencia Completa
+### Ver licencia completa
 
 Para ver los términos completos de la licencia, consulta el archivo [`LICENSE`](LICENSE) en este repositorio.
 
 ---
 
-## ⚠️ Descargo de Responsabilidad
+## Descargo de responsabilidad
 
 > El autor estaba cansado porque siempre se le desconectaba así que creó esta aplicación.
 
 ---
 
-## 👨‍💻 Autor
+## Autor
 
 <div align="center">
 
 **Rodrigo Gibran Felix Leon**
 
-🎓 Estudiante de la Universidad Autónoma de Baja California
+Estudiante de la Universidad Autónoma de Baja California
 
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Yoyiyoniu)
 
@@ -198,7 +199,7 @@ Para ver los términos completos de la licencia, consulta el archivo [`LICENSE`]
 
 <div align="center">
 
-**⭐ ¡No olvides darle una estrella al proyecto si te fue útil! ⭐**
+**¡No olvides darle una estrella al proyecto si te fue útil!**
 
 </div>
 

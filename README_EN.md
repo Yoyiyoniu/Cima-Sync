@@ -1,10 +1,20 @@
+
+
 <div align="center">
 
 # Cima Sync - Cimarrones 24/7
+<br>
 
-<img src="src/assets/img/shots_so.png" width="300" alt="Cima Sync Logo">
+<img src="src/assets/img/cima_sync_aplication.png" width="300" alt="Cima Sync Logo">
+
+<br>
+<br>
 
 **Automatic authentication for the WiFi network of the Autonomous University of Baja California**
+
+<br>
+
+[![Spanish Version](https://img.shields.io/badge/Spanish_Version-007ACC?style=for-the-badge&logo=read-the-docs&logoColor=white)](README.md)
 
 [![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://rust-lang.org)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org)
@@ -19,25 +29,26 @@
 
 ---
 
-## 📋 Description
+## Overview
 
-**Cima Sync** is a cross-platform desktop application that automates the authentication process for the captive portal of the WiFi network at the Autonomous University of Baja California (UABC). The application automatically detects when the user connects to the UABC network and performs login transparently, eliminating the need to manually enter credentials each time.
+**Cima Sync** is a cross-platform desktop application that automates the authentication process on the WiFi captive portal of the Autonomous University of Baja California (UABC). The app automatically detects when the user connects to the UABC network and logs in transparently, removing the need to manually enter credentials each time.
 
-### ✨ Main Features
+### Key Features
 
 | Feature | Description |
-|---------|-------------|
-| 🔄 **Automatic Authentication** | Automatic login when connecting to UABC network |
-| 🔒 **Secure Storage** | Local credential storage with encryption |
-| ⚡ **Continuous Monitoring** | Periodic connection verification |
-| 🛡️ **Cross-Platform** | Works on Windows, macOS and Linux |
-| 🚀 **Auto-Start** | Option to start automatically when PC boots |
+|----------------|-------------|
+| Automatic authentication | Auto login when connecting to the UABC network |
+| Secure storage | Local credential storage with encryption |
+| Continuous monitoring | Periodic connection checks |
+| Cross-platform | Works on Windows, macOS, and Linux |
+| Auto start | Option to launch automatically on system startup |
+
 
 ---
 
-## 🏗️ Project Architecture
+## Project Architecture
 
-### 🛠️ Stack
+### Stack
 
 #### **Frontend**
 - **React 18**
@@ -45,40 +56,37 @@
 - **Tailwind CSS**
 
 #### **Backend**
-- **Rust** - Authentication logic and networking
-- **Tauri 2** - Framework for cross-platform desktop applications
+- **Rust** - Authentication and networking logic
+- **Tauri 2** - Framework for cross-platform desktop apps
 - **reqwest** - HTTP client for Rust
-- **SQLite** - Store data locally and encrypted
+- **SQLite** - Local, encrypted data storage
 
-### 📁 Project Structure
+### Project Structure
 
 ```
 Cima-Sync/
 ├── 📁 src/                    # Frontend React + TypeScript
 │   ├── 📁 components/         # Reusable components
 │   ├── 📁 controller/         # Database controllers
-│   ├── 📁 hooks/             # Custom hooks
-│   └── 📁 assets/            # Images and icons
-├── 📁 src-tauri/             # Backend Rust + Tauri
-│   ├── 📁 src/
-│   │   ├── 🔧 auth.rs        # Authentication logic
-│   │   ├── 🔧 lib.rs         # Process execution logic
-│   │   └── 🔧 tray.rs        # Tray icon management
-│   └── 📄 Cargo.toml         # Rust dependencies
-└── 📄 package.json           # Node.js dependencies
+│   ├── 📁 hooks/              # Custom hooks
+│   └── 📁 assets/             # Images and icons
+├── 📁 src-tauri/              # Backend Rust + Tauri
+│   ├── 📁 src/                # Rust source code
+│   └── Cargo.toml             # Rust dependencies
+└── package.json               # Node.js dependencies
 ```
 
 ---
 
-## 🚀 Installation and Usage
+## Installation and Usage
 
-### 📋 Prerequisites
+### Prerequisites
 
 - **Rust** (version 1.70+)
 - **Node.js** (version 18+) or **Bun**
 - **Cargo** (included with Rust)
 
-### ⚙️ Installation
+### Installation
 
 #### 1. **Clone the repository**
 ```bash
@@ -94,7 +102,7 @@ npm install
 bun install
 ```
 
-#### 3. **Compile and run**
+#### 3. **Build and run**
 ```bash
 # Desktop development mode
 npm run tauri dev
@@ -105,32 +113,30 @@ npm run tauri build
 
 ---
 
-## 🔒 Security
+## Security
 
-### 🔐 Credential Storage
+### Credential storage
 - Credentials are stored locally in a SQLite database
 - Data is encrypted before being saved
 
-### 🛡️ SSL Certificates
-- The application handles self-signed SSL certificates from the UABC portal
+### SSL certificates
+- The application handles self-signed SSL certificates from the UABC captive portal
 - Secure configurations are used for HTTP requests
 
 ---
 
-## 🛠️ Development
+## Development
 
-### 📜 Available Scripts
+### Available scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Vite development server |
-| `npm run tauri dev` | Tauri application in development mode |
-| `npm run build` | Frontend build |
-| `npm run tauri android` | Tauri application in android development mode |
-| `npm run tauri build` | Complete application build |
-| `npm run preview` | Build preview |
+| `npm run tauri dev` | Tauri app in development mode |
+| `npm run tauri android dev` | Tauri Android app in development mode |
+| `npm run tauri build` | Desktop app production build |
+| `npm run tauri build android` | Android app production build |
 
-### 🏗️ Development Structure
+### Development layout
 
 - **Frontend**: `src/` - React + TypeScript + Tailwind CSS
 - **Backend**: `src-tauri/src/` - Rust + Tauri
@@ -138,52 +144,52 @@ npm run tauri build
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome. To contribute:
 
-1. 🍴 Fork the project
-2. 🌿 Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. 💾 Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. 📤 Push to the branch (`git push origin feature/AmazingFeature`)
-5. 🔄 Open a Pull Request
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
-## 📄 License
+## License
 
-This project is under the **GNU General Public License v3 (GPLv3)**.
+This project is licensed under the **GNU General Public License v3 (GPLv3)**. This license is explicitly chosen to protect the project from any attempt at appropriation by UABC or other entities, ensuring that the code and its derivatives remain free under the terms of the GPLv3 and helping prevent legal issues in the future.
 
 **© 2025 Rodrigo Gibran Felix Leon**
 
-### 📋 GPLv3 Terms:
+### GPLv3 terms
 
 | Permission | Description |
-|------------|-------------|
-| ✅ **Free Use** | You can use, study and share the software |
-| ✅ **Modifications** | You can modify the source code |
-| ⚠️ **Copyleft** | Any derivative work must use the same GPLv3 license |
-| ⚠️ **Open Source** | If you distribute modified versions, you must share the source code |
+|---------|-------------|
+| Free use | You can use, study, and share the software |
+| Modifications | You can modify the source code |
+| Copyleft | Any derivative work must use the same GPLv3 license |
+| Open source | If you distribute modified versions, you must share the source code |
 
-### 📄 View Complete License
+### View full license
 
-To see the complete license terms, check the [`LICENSE`](LICENSE) file in this repository.
-
----
-
-## ⚠️ Disclaimer
-
-> The author was tired because he kept getting disconnected so he created this application.
+To view the full license terms, see the [`LICENSE`](LICENSE) file in this repository.
 
 ---
 
-## 👨‍💻 Author
+## Disclaimer
+
+> The author was tired of constantly getting disconnected, so they built this app.
+
+---
+
+## Author
 
 <div align="center">
 
 **Rodrigo Gibran Felix Leon**
 
-🎓 Student at the Autonomous University of Baja California
+Student at the Autonomous University of Baja California
 
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Yoyiyoniu)
 
@@ -193,6 +199,7 @@ To see the complete license terms, check the [`LICENSE`](LICENSE) file in this r
 
 <div align="center">
 
-**⭐ Don't forget to give the project a star if it was useful to you! ⭐**
+**If this project helped you, please consider giving it a star!**
 
-</div> 
+</div>
+
