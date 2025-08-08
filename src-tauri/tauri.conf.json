@@ -25,7 +25,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'"
     }
   },
   "bundle": {
@@ -42,7 +42,8 @@
   "plugins": {
     "sql": {
       "preload": [
-        "sqlite:cima-sync.db"
+        "sqlite:cima-sync.db",
+        "sqlite:cima-config.db"
       ]
     }
   }

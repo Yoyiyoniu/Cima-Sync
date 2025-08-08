@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 interface InputWithIconProps {
     id: string
     type: string
@@ -19,10 +21,11 @@ export const Input = ({
     disabled = false,
     icon,
 }: InputWithIconProps) => {
+    const { t } = useTranslation();
     return (
         <div className="space-y-2">
             <label htmlFor={id} className="block text-white font-medium text-sm">
-                {label}
+                {t(label)}
             </label>
             <div className="relative">
                 {icon && (
@@ -33,7 +36,7 @@ export const Input = ({
                 <input
                     id={id}
                     type={type}
-                    placeholder={placeholder}
+                    placeholder={t(placeholder)}
                     value={value}
                     onChange={onChange}
                     required

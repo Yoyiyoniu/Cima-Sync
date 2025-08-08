@@ -1,0 +1,60 @@
+{
+    "Settings": {
+        "title": "Ajustes",
+        "language": "Idioma",
+        "language.es": "Español",
+        "language.en": "Inglés",
+        "github": "Ver proyecto en Github",
+        "autoRun": {
+            "title": "Iniciar con el sistema",
+            "description": "Iniciar con el sistema"
+        },
+        "appInfo": {
+            "title": "Información de la aplicación",
+            "name": "Cima Sync",
+            "version": "1.0.0",
+            "description": "Herramienta para automatizar el proceso de autenticación en el portal cautivo de UABC."
+        },
+        "config": {
+            "title": "Configuración",
+            "description": "Configuración de Cima Sync"
+        },
+        "help": {
+            "title": "Ayuda",
+            "description1": "Aplicación para automatizar el proceso de autenticación en el portal cautivo de UABC.",
+            "description2": "Si tienes alguna duda, puedes contactar al desarrollador."
+        },
+        "removeDatabase": "Eliminar datos"
+    },
+    "App": {
+        "title": "Inicio de sesión automático",
+        "subtitle": "Sistema Institucional UABC'nt",
+        "success": "Conexión establecida correctamente.",
+        "email": "Correo",
+        "password": "Contraseña",
+        "remember": "Recordar sesión",
+        "rememberTitle": "Mantener sesión activa",
+        "login": "Iniciar sesión",
+        "logout": "Detener sesión",
+        "connecting": "Conectando...",
+        "connected": "Conectado",
+        "error": "Error",
+        "autoLogin": "Inicio de sesión automático"
+    },
+    "Input": {
+        "emailPlaceholder": "me@uabc.edu.mx",
+        "passwordPlaceholder": "•••••••••••••"
+    },
+    "Modal": {
+        "cancel": "Cancelar",
+        "continue": "Continuar",
+        "github": {
+            "title": "Estás saliendo de la aplicación",
+            "description": "Serás redirigido a la página web de GitHub para ver el código fuente del proyecto. ¿Deseas continuar?"
+        },
+        "removeDatabase": {
+            "title": "Eliminar datos",
+            "description": "¿Estás seguro de querer eliminar los datos de la aplicación? Esta acción no se puede deshacer."
+        }
+    }
+}
