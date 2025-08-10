@@ -25,6 +25,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "framer-motion": "^11.0.0",
     "@tailwindcss/vite": "^4.1.4",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-autostart": "~2",

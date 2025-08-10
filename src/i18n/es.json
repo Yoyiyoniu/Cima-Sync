@@ -56,5 +56,23 @@
             "title": "Eliminar datos",
             "description": "¿Estás seguro de querer eliminar los datos de la aplicación? Esta acción no se puede deshacer."
         }
+    },
+    "Onboarding": {
+        "progress": "Paso {{current}} de {{total}}",
+        "prev": "Atrás",
+        "next": "Siguiente",
+        "finish": "Empezar",
+        "step1": {
+            "title": "Bienvenido a Cima Sync",
+            "description": "Esta app te ayuda a autenticarte automáticamente en el portal cautivo de UABC."
+        },
+        "step2": {
+            "title": "Guarda tu sesión si lo deseas",
+            "description": "Activa 'Recordar sesión' para que la app intente iniciar sesión automáticamente."
+        },
+        "step3": {
+            "title": "Privacidad",
+            "description": "Tus credenciales se guardan localmente y puedes borrar los datos desde Ajustes."
+        }
     }
 }

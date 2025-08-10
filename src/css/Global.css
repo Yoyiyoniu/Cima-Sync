@@ -3,3 +3,23 @@
 @layer theme;
 
 @import "./App.css" layer(theme); 
+
+@keyframes logo-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+    filter: blur(4px);
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-logo-pop {
+  animation: logo-pop 600ms ease-out both;
+}
