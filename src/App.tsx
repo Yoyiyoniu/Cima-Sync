@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { Input } from "./components/Input";
 
-import img from "./assets/img/Logo.avif";
+import img from "./assets/img/cima_sync_logo.png";
 import StopIcon from "./assets/icons/StopIcon";
 
 import "./css/Global.css"

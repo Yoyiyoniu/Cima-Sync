@@ -64,10 +64,37 @@ export async function getRememberSessionConfig(): Promise<boolean> {
     }
 }
 
+export async function setHasSeenOnboarding(hasSeen: boolean) {
+    try {
+        const db = await Database.load(sqliteConfig);
+        await db.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value INTEGER)");
+        await db.execute(
+            "INSERT INTO settings (key, value) VALUES ('has_seen_onboarding', $1) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            [hasSeen ? 1 : 0]
+        );
+    } catch (error) {
+        console.error("Error saving has_seen_onboarding:", error);
+    }
+}
+
+export async function getHasSeenOnboarding(): Promise<boolean> {
+    try {
+        const db = await Database.load(sqliteConfig);
+        await db.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value INTEGER)");
+        const rows = await db.select("SELECT value FROM settings WHERE key = 'has_seen_onboarding' LIMIT 1") as { value: number }[];
+        if (!rows || rows.length === 0) return false;
+        return rows[0].value === 1;
+    } catch (error) {
+        console.error("Error reading has_seen_onboarding:", error);
+        return false;
+    }
+}
+
 export async function clearConfig() {
     try {
         const db = await Database.load(sqliteConfig);
         await db.execute("DELETE FROM settings WHERE key ='remember_session'");
+        await db.execute("DELETE FROM settings WHERE key ='has_seen_onboarding'");
     } catch (error) {
         console.error(error);
     }

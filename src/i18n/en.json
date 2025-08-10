@@ -56,5 +56,23 @@
             "title": "Remove database",
             "description": "Are you sure you want to remove the database? This action cannot be undone."
         }
+    },
+    "Onboarding": {
+        "progress": "Step {{current}} of {{total}}",
+        "prev": "Back",
+        "next": "Next",
+        "finish": "Start",
+        "step1": {
+            "title": "Welcome to Cima Sync",
+            "description": "This app helps you authenticate automatically in UABC's captive portal."
+        },
+        "step2": {
+            "title": "Save your session if you want",
+            "description": "Enable 'Remember session' so the app tries to login automatically."
+        },
+        "step3": {
+            "title": "Privacy",
+            "description": "Your credentials are stored locally and you can wipe data from Settings."
+        }
     }
 }
