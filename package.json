@@ -21,8 +21,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:windows": "tsc && vite build --target win32",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:appimage": "./build-appimage.sh",
+    "build:linux": "./build-appimage.sh"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",
