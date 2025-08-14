@@ -11,6 +11,7 @@ import StopIcon from "./assets/icons/StopIcon";
 
 import "./css/Global.css"
 import { SettingsMenu } from "./components/SettingsMenu";
+import { CopyRightMenu } from "./components/ContactMe";
 
 function App() {
 
@@ -84,6 +85,7 @@ function App() {
       {/* Add Options Menu */}
       <SettingsMenu />
       <div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
+        <CopyRightMenu />
         <form className="w-full max-w-sm flex flex-col gap-3 mb-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-medium">{t('App.title')}</h1>

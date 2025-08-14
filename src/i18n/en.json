@@ -48,6 +48,8 @@
     "Modal": {
         "cancel": "Cancel",
         "continue": "Continue",
+        "thanks": "Thanks for your interest",
+        "thanksDescription": "If you are interested in working with us, click the button below",
         "github": {
             "title": "You're exiting the app",
             "description": "You will be redirected to the GitHub page to see the project code. Do you want to continue?"

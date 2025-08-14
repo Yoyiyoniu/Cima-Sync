@@ -11,7 +11,6 @@ form {
     }
 }
 
-/* Animaciones del Modal */
 .modal-backdrop {
     animation: fadeIn 0.3s ease-out;
 }
@@ -20,7 +19,6 @@ form {
     animation: slideIn 0.3s ease-out;
 }
 
-/* Animaciones de salida */
 .modal-backdrop-closing {
     animation: fadeOut 0.3s ease-in;
 }
