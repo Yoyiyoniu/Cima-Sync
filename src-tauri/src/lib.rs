@@ -13,20 +13,6 @@ lazy_static::lazy_static! {
 }
 
 #[tauri::command]
-fn auto_auth(email: &str, password: &str) -> String {
-    let auth = Auth::new(email, password);
-    let auth_clone = Auth::new(email, password);
-    *CURRENT_AUTH.lock().unwrap() = Some(auth);
-
-    thread::spawn(move || match auth_clone.start_monitoring() {
-        Ok(_) => println!("Proceso de monitoreo finalizado"),
-        Err(e) => eprintln!("Error en el proceso de monitoreo: {}", e),
-    });
-
-    format!("Proceso de autenticación iniciado para: {}", email)
-}
-
-#[tauri::command]
 fn stop_auth() -> String {
     if let Some(auth) = CURRENT_AUTH.lock().unwrap().as_ref() {
         auth.stop_monitoring();
@@ -36,12 +22,34 @@ fn stop_auth() -> String {
     }
 }
 
+fn convert_email(email: &str) -> String {
+    email.split('@').next().unwrap_or(email).to_string()
+}
+
+#[tauri::command]
+fn auto_auth(email: &str, password: &str) -> String {
+    let username = convert_email(email);
+
+    let auth = Auth::new(&username, password);
+    let auth_clone = Auth::new(&username, password);
+    *CURRENT_AUTH.lock().unwrap() = Some(auth);
+
+    thread::spawn(move || match auth_clone.start_monitoring() {
+        Ok(_) => println!("Proceso de monitoreo finalizado"),
+        Err(e) => eprintln!("Error en el proceso de monitoreo: {}", e),
+    });
+
+    format!("Proceso de autenticación iniciado para: {}", username)
+}
+
 #[tauri::command]
 fn login(email: &str, password: &str) -> Result<String, String> {
-    let auth = Auth::new(email, password);
+    let username = convert_email(email);
+
+    let auth = Auth::new(&username, password);
     match auth.login() {
-        Ok(true) => Ok(format!("Login exitoso para: {}", email)),
-        Ok(false) => Err(format!("Login fallido para: {}", email)),
+        Ok(true) => Ok(format!("Login exitoso para: {}", username)),
+        Ok(false) => Err(format!("Login fallido para: {}", username)),
         Err(e) => Err(format!("Error: {}", e)),
     }
 }
