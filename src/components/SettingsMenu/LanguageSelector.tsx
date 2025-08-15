@@ -1,12 +1,12 @@
 import { useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { setLanguagePreference } from "../../controller/DbController";
 
 export const LanguageSelector = () => {
     const { i18n, t } = useTranslation();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Cerrar el dropdown al hacer click fuera
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -25,7 +25,8 @@ export const LanguageSelector = () => {
 
     const handleLanguageChange = async (language: string) => {
         try {
-            i18n.changeLanguage(language);
+            await i18n.changeLanguage(language);
+            await setLanguagePreference(language);
             setDropdownOpen(false);
         } catch (error) {
             console.error("Error saving language:", error);

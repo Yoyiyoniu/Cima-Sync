@@ -1,9 +1,11 @@
+#[cfg(desktop)]
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
     App, Manager,
 };
 
+#[cfg(desktop)]
 pub fn system_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let quit_i = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
     let minimize_i = MenuItem::with_id(app, "minimize", "Minimizar ventana", true, None::<&str>)?;

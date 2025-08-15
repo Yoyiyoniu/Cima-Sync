@@ -1,3 +1,3 @@
-package com.uabc.auto_auth
+package com.cima_sync
 
 class MainActivity : TauriActivity()

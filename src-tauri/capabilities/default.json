@@ -9,9 +9,6 @@
     "core:default",
     "opener:default",
     "sql:default",
-    "sql:allow-execute",
-    "autostart:allow-enable",
-    "autostart:allow-disable",
-    "autostart:allow-is-enabled"
+    "sql:allow-execute"
   ]
 }

@@ -48,6 +48,8 @@
     "Modal": {
         "cancel": "Cancelar",
         "continue": "Continuar",
+        "thanks": "Gracias por tu interés",
+        "thanksDescription": "Si te interesa trabajar con nosotros dale click en el botón de abajo",
         "github": {
             "title": "Estás saliendo de la aplicación",
             "description": "Serás redirigido a la página web de GitHub para ver el código fuente del proyecto. ¿Deseas continuar?"
@@ -62,9 +64,13 @@
         "prev": "Atrás",
         "next": "Siguiente",
         "finish": "Empezar",
+        "welcome": {
+            "title": "¡Bienvenido a Cima Sync!",
+            "subtitle": "Tu herramienta para la autenticación automática en UABC"
+        },
         "step1": {
             "title": "Bienvenido a Cima Sync",
-            "description": "Esta app te ayuda a autenticarte automáticamente en el portal cautivo de UABC."
+            "description": "Esta app te ayuda a autenticarte automáticamente en el portal cautivo de UABC. Selecciona tu idioma preferido para comenzar."
         },
         "step2": {
             "title": "Guarda tu sesión si lo deseas",
@@ -73,6 +79,10 @@
         "step3": {
             "title": "Privacidad",
             "description": "Tus credenciales se guardan localmente y puedes borrar los datos desde Ajustes."
+        },
+        "ready": {
+            "title": "¡Todo listo!",
+            "subtitle": "Comenzando tu experiencia con Cima Sync..."
         }
     }
 }
