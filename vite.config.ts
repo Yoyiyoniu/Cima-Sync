@@ -20,7 +20,7 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
-    host: host || false,
+    host: host || "0.0.0.0", // Permite conexiones desde cualquier IP en la red local
     hmr: host
       ? {
           protocol: "ws",
