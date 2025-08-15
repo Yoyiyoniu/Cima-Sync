@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { setLanguagePreference } from "../../controller/DbController";
 
 export const LanguageSelector = () => {
     const { i18n, t } = useTranslation();
@@ -24,7 +25,8 @@ export const LanguageSelector = () => {
 
     const handleLanguageChange = async (language: string) => {
         try {
-            i18n.changeLanguage(language);
+            await i18n.changeLanguage(language);
+            await setLanguagePreference(language);
             setDropdownOpen(false);
         } catch (error) {
             console.error("Error saving language:", error);

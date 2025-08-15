@@ -90,11 +90,39 @@ export async function getHasSeenOnboarding(): Promise<boolean> {
     }
 }
 
+export async function setLanguagePreference(language: string) {
+    try {
+        const db = await Database.load(sqliteConfig);
+        // Usar una tabla separada para configuraciones de texto para evitar conflictos de tipo
+        await db.execute("CREATE TABLE IF NOT EXISTS text_settings (key TEXT PRIMARY KEY, value TEXT)");
+        await db.execute(
+            "INSERT INTO text_settings (key, value) VALUES ('language', $1) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            [language]
+        );
+    } catch (error) {
+        console.error("Error saving language preference:", error);
+    }
+}
+
+export async function getLanguagePreference(): Promise<string> {
+    try {
+        const db = await Database.load(sqliteConfig);
+        await db.execute("CREATE TABLE IF NOT EXISTS text_settings (key TEXT PRIMARY KEY, value TEXT)");
+        const rows = await db.select("SELECT value FROM text_settings WHERE key = 'language' LIMIT 1") as { value: string }[];
+        if (!rows || rows.length === 0) return 'es'; // idioma por defecto
+        return rows[0].value;
+    } catch (error) {
+        console.error("Error reading language preference:", error);
+        return 'es'; // idioma por defecto en caso de error
+    }
+}
+
 export async function clearConfig() {
     try {
         const db = await Database.load(sqliteConfig);
         await db.execute("DELETE FROM settings WHERE key ='remember_session'");
         await db.execute("DELETE FROM settings WHERE key ='has_seen_onboarding'");
+        await db.execute("DELETE FROM text_settings WHERE key ='language'");
     } catch (error) {
         console.error(error);
     }
@@ -110,6 +138,7 @@ export async function removeDatabase() {
     try {
         const dbCfg = await Database.load(sqliteConfig);
         await dbCfg.execute("DROP TABLE IF EXISTS settings");
+        await dbCfg.execute("DROP TABLE IF EXISTS text_settings");
     } catch (error) {
         console.error(error);
     }

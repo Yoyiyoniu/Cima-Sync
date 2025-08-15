@@ -2,6 +2,7 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import es from "./i18n/es.json";
 import en from "./i18n/en.json";
+import { getLanguagePreference } from "./controller/DbController";
 
 const resources = {
     es: {
@@ -14,11 +15,12 @@ const resources = {
 
 async function initializeI18n() {
     try {
+        const savedLanguage = await getLanguagePreference();
         await i18n
             .use(initReactI18next)
             .init({
                 resources,
-                lng: 'es',
+                lng: savedLanguage,
                 fallbackLng: "es",
                 interpolation: {
                     escapeValue: false
