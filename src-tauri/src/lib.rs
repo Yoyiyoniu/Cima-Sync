@@ -1,7 +1,11 @@
 mod auth;
+
+#[cfg(desktop)]
 mod tray;
 
 use crate::auth::Auth;
+
+#[cfg(desktop)]
 use crate::tray::system_tray;
 
 use std::sync::Arc;
@@ -56,18 +60,25 @@ fn login(email: &str, password: &str) -> Result<String, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_autostart::init(
-            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec!["--flag1", "--flag2"])
-        ))
         .plugin(tauri_plugin_sql::Builder::new().build())
-        .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
-            system_tray(app)?;
-            Ok(())
-        })
+        .plugin(tauri_plugin_opener::init());
+
+    #[cfg(desktop)]
+    {
+        builder = builder
+            .plugin(tauri_plugin_autostart::init(
+                tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+                Some(vec!["--flag1", "--flag2"])
+            ))
+            .setup(|app| {
+                system_tray(app)?;
+                Ok(())
+            });
+    }
+
+    builder
         .invoke_handler(tauri::generate_handler![auto_auth, login, stop_auth])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
