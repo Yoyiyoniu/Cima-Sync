@@ -1,0 +1,59 @@
+/* Animaciones para la aplicación principal */
+.app-fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-fade-in.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animación para elementos individuales */
+.form-element {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-element.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Delay escalonado para elementos del formulario */
+.form-element:nth-child(1) { transition-delay: 0.1s; }
+.form-element:nth-child(2) { transition-delay: 0.2s; }
+.form-element:nth-child(3) { transition-delay: 0.3s; }
+.form-element:nth-child(4) { transition-delay: 0.4s; }
+.form-element:nth-child(5) { transition-delay: 0.5s; }
+.form-element:nth-child(6) { transition-delay: 0.6s; }
+.form-element:nth-child(7) { transition-delay: 0.7s; }
+.form-element:nth-child(8) { transition-delay: 0.8s; }
+
+/* Animación para el título */
+.app-title {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0.2s;
+}
+
+.app-title.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animación para el subtítulo */
+.app-subtitle {
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0.3s;
+}
+
+.app-subtitle.show {
+  opacity: 1;
+  transform: translateY(0);
+}

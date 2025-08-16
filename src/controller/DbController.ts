@@ -117,6 +117,8 @@ export async function getLanguagePreference(): Promise<string> {
     }
 }
 
+
+
 export async function clearConfig() {
     try {
         const db = await Database.load(sqliteConfig);

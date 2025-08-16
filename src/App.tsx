@@ -6,12 +6,13 @@ import { useTranslation } from "react-i18next";
 
 import { Input } from "./components/Input";
 
+import { SettingsMenu } from "./components/SettingsMenu";
+import { CopyRightMenu } from "./components/ContactMe";
+
 import img from "./assets/img/cima_sync_logo.png";
 import StopIcon from "./assets/icons/StopIcon";
 
 import "./css/Global.css"
-import { SettingsMenu } from "./components/SettingsMenu";
-import { CopyRightMenu } from "./components/ContactMe";
 
 function App() {
 
@@ -20,8 +21,17 @@ function App() {
   const [{ error, loading, success }, setAppState] = useState<AppState>({ loading: false, error: null, success: false });
 
   const [rememberSession, setRememberSession] = useState(false);
+  const [showApp, setShowApp] = useState(false);
 
   disableContextMenu();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowApp(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     async function bootstrap() {
@@ -80,7 +90,7 @@ function App() {
   }
 
   return (
-    <main className="flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden">
+    <main className={`app-fade-in ${showApp ? 'show' : ''} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}>
       <img src={img} alt="" className="blur absolute" />
       {/* Add Options Menu */}
       <SettingsMenu />
@@ -88,33 +98,37 @@ function App() {
         <CopyRightMenu />
         <form className="w-full max-w-sm flex flex-col gap-3 mb-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-medium">{t('App.title')}</h1>
-            <p>{t('App.subtitle')}</p>
+            <h1 className={`app-title ${showApp ? 'show' : ''} text-2xl font-medium`}>{t('App.title')}</h1>
+            <p className={`app-subtitle ${showApp ? 'show' : ''}`}>{t('App.subtitle')}</p>
           </div>
           {success && (
-            <div className="bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3">
+            <div className={`form-element ${showApp ? 'show' : ''} bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3`}>
               {t('App.success')}
             </div>
           )}
-          <Input
-            id="email"
-            type="email"
-            label={t('App.email')}
-            placeholder={t('Input.emailPlaceholder')}
-            value={email}
-            onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
-            disabled={loading || success}
-          />
-          <Input
-            id="password"
-            type="password"
-            label={t('App.password')}
-            placeholder={t('Input.passwordPlaceholder')}
-            value={password}
-            onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
-            disabled={loading || success}
-          />
-          <div className="flex items-center">
+          <div className={`form-element ${showApp ? 'show' : ''}`}>
+            <Input
+              id="email"
+              type="email"
+              label={t('App.email')}
+              placeholder={t('Input.emailPlaceholder')}
+              value={email}
+              onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+              disabled={loading || success}
+            />
+          </div>
+          <div className={`form-element ${showApp ? 'show' : ''}`}>
+            <Input
+              id="password"
+              type="password"
+              label={t('App.password')}
+              placeholder={t('Input.passwordPlaceholder')}
+              value={password}
+              onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+              disabled={loading || success}
+            />
+          </div>
+          <div className={`form-element ${showApp ? 'show' : ''} flex items-center`}>
             <div className="relative flex items-center">
               <input
                 type="checkbox"
@@ -149,11 +163,11 @@ function App() {
             </label>
           </div>
           {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3">
+            <div className={`form-element ${showApp ? 'show' : ''} bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}>
               {t('App.error')}: {error}
             </div>
           )}
-          <div className="flex w-full max-w-sm justify-center gap-2 relative">
+          <div className={`form-element ${showApp ? 'show' : ''} flex w-full max-w-sm justify-center gap-2 relative`}>
             <button
               title={t('App.login')}
               onClick={(e) => handleLogin(e)}
