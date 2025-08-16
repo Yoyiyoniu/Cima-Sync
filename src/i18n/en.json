@@ -24,7 +24,9 @@
             "description1": "Application to automate the authentication process in the captive portal of UABC.",
             "description2": "If you have any questions, you can contact the developer."
         },
-        "removeDatabase": "Delete app data"
+        "removeDatabase": "Delete app data",
+        "tour": "Guided tour",
+        "tour.description": "Show automatic tour when opening the app"
     },
     "App": {
         "title": "Auto login",
@@ -39,7 +41,8 @@
         "connecting": "Connecting...",
         "connected": "Connected",
         "error": "Error",
-        "autoLogin": "Automatic login"
+        "autoLogin": "Automatic login",
+        "helpButton": "📖 Need help?"
     },
     "Input": {
         "emailPlaceholder": "me@uabc.edu.mx",

@@ -5,31 +5,36 @@ import "./i18n";
 import { Onboarding } from "./components/Onboarding";
 import { SplashScreen } from "./components/SplashScreen";
 import { getHasSeenOnboarding, setHasSeenOnboarding } from "./controller/DbController";
+import { TourProvider, StepType } from "@reactour/tour";
+import { TourStep } from "./components/TourStep";
+import "./css/TourNavigation.css";
 
 const Main = () => {
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [appReady, setAppReady] = useState(false);
+  const [showTourFirstTime, setShowTourFirstTime] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    const initializeApp = async () => {
       try {
-        const seen = await getHasSeenOnboarding();
-        setShowOnboarding(!seen);
+        const seenOnboarding = await getHasSeenOnboarding();
+        setShowOnboarding(!seenOnboarding);
+        setShowTourFirstTime(false);
         setAppReady(true);
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error("Error initializing app:", error);
         setShowOnboarding(false);
+        setShowTourFirstTime(false);
         setAppReady(true);
       }
-    })();
-  }, []);
- 
-  if (!appReady) {
-    return null;
-  }
+    };
 
-  // Mostrar splash screen primero siempre
+    initializeApp();
+  }, []);
+
+  if (!appReady) return null;
+
   if (showSplash) {
     return (
       <React.StrictMode>
@@ -38,26 +43,84 @@ const Main = () => {
     );
   }
 
-  // Luego mostrar onboarding si es necesario
   if (showOnboarding) {
     return (
       <React.StrictMode>
         <Onboarding onFinish={async () => {
           await setHasSeenOnboarding(true);
           setShowOnboarding(false);
+          setShowTourFirstTime(true);
         }} />
       </React.StrictMode>
     );
   }
 
-  // Finalmente mostrar la aplicación principal
   return (
     <React.StrictMode>
-      <App />
+      <TourProvider 
+        steps={tourSteps}
+        showNavigation={false}
+        showBadge={true}
+        showDots={true}
+        disableInteraction={false}
+        disableDotsNavigation={false}
+        disableKeyboardNavigation={false}
+        styles={tourStyles}
+      >
+        <App showTourFirstTime={showTourFirstTime} />
+      </TourProvider>
     </React.StrictMode>
   );
 };
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <Main />
-);
+const tourSteps: StepType[] = [
+  {
+    selector: '.app-title',
+    content: <TourStep content="¡Bienvenido a Cima Sync! Esta aplicación te ayudará a conectarte automáticamente a la red de UABC." />,
+  },
+  {
+    selector: '#email',
+    content: <TourStep content="Aquí debes ingresar tu correo electrónico de UABC (ejemplo: tu.nombre@uabc.edu.mx) o tu nombre de usuario institucional." />,
+  },
+  {
+    selector: '#password',
+    content: <TourStep content="Ingresa tu contraseña de UABC. Esta se guardará de forma segura en tu dispositivo." />,
+  },
+  {
+    selector: '#remember',
+    content: <TourStep content="Marca esta casilla si quieres que la aplicación recuerde tu sesión y se conecte automáticamente en el futuro." />,
+  },
+  {
+    selector: 'button[title="Iniciar sesión"]',
+    content: <TourStep content="¡Perfecto! Ahora haz clic en este botón para conectarte a la red de UABC. La aplicación se encargará de todo automáticamente." />,
+  },
+];
+
+const tourStyles = {
+  popover: (base: any) => ({
+    ...base,
+    backgroundColor: '#1e293b',
+    color: 'white',
+    borderRadius: '8px',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
+    padding: '20px',
+  }),
+  badge: (base: any) => ({
+    ...base,
+    backgroundColor: '#006633',
+  }),
+  controls: (base: any) => ({
+    ...base,
+    color: 'white',
+  }),
+  arrow: (base: any) => ({
+    ...base,
+    color: '#1e293b',
+  }),
+  navigation: (base: any) => ({
+    ...base,
+    marginTop: '15px',
+  }),
+};
+
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(<Main />);

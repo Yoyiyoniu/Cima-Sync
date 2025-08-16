@@ -10,6 +10,7 @@ import { platform } from '@tauri-apps/plugin-os';
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "./SettingsMenu/LanguageSelector";
 import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
+import { TourConfig } from "./SettingsMenu/TourConfig";
 
 export const SettingsMenu = () => {
     const { t } = useTranslation();
@@ -107,6 +108,7 @@ export const SettingsMenu = () => {
                         <div className="space-y-4">
                             <h2 className="text-lg font-semibold text-white">{t('Settings.config.title')}</h2>
                             <div className="space-y-3">
+                                <TourConfig />
                                 {(currentPlatform === 'windows' || currentPlatform === 'macos') && <AutoStartConfig />}
                                 <button
                                     type="button"

@@ -24,7 +24,9 @@
             "description1": "Aplicación para automatizar el proceso de autenticación en el portal cautivo de UABC.",
             "description2": "Si tienes alguna duda, puedes contactar al desarrollador."
         },
-        "removeDatabase": "Eliminar datos"
+        "removeDatabase": "Eliminar datos",
+        "tour": "Tour guiado",
+        "tour.description": "Mostrar tour automático al abrir la app"
     },
     "App": {
         "title": "Inicio de sesión automático",
@@ -39,7 +41,8 @@
         "connecting": "Conectando...",
         "connected": "Conectado",
         "error": "Error",
-        "autoLogin": "Inicio de sesión automático"
+        "autoLogin": "Inicio de sesión automático",
+        "helpButton": "📖 ¿Necesitas ayuda?"
     },
     "Input": {
         "emailPlaceholder": "me@uabc.edu.mx",
