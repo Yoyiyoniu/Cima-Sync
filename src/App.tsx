@@ -8,6 +8,7 @@ import { useTour } from "@reactour/tour";
 import { Input } from "./components/Input";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { CopyRightMenu } from "./components/ContactMe";
+import { SuccessModal } from "./components/SuccessModal";
 
 import img from "./assets/img/cima_sync_logo.png";
 import StopIcon from "./assets/icons/StopIcon";
@@ -32,6 +33,7 @@ function App({ showTourFirstTime = false }: AppProps) {
   const [appState, setAppState] = useState<AppState>({ loading: false, error: null, success: false });
   const [rememberSession, setRememberSession] = useState(false);
   const [showApp, setShowApp] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   disableContextMenu();
 
@@ -78,6 +80,7 @@ function App({ showTourFirstTime = false }: AppProps) {
       await invoke("login", { email: credentials.email, password: credentials.password });
       
       setAppState(prev => ({ ...prev, success: true }));
+      setShowSuccessModal(true);
       
       if (rememberSession) {
         await saveCredentials(credentials);
@@ -217,6 +220,11 @@ function App({ showTourFirstTime = false }: AppProps) {
           </div>
         </form>
       </div>
+      
+      <SuccessModal 
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+      />
     </main>
   );
 }

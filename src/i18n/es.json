@@ -44,6 +44,11 @@
         "autoLogin": "Inicio de sesión automático",
         "helpButton": "📖 ¿Necesitas ayuda?"
     },
+    "SuccessModal": {
+        "title": "¡Inicio de sesión exitoso!",
+        "message": "Conexión establecida correctamente.",
+        "button": "Entendido"
+    },
     "Input": {
         "emailPlaceholder": "me@uabc.edu.mx",
         "passwordPlaceholder": "•••••••••••••"
