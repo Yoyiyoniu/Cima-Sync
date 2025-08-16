@@ -1,0 +1,118 @@
+/* Animaciones para la aplicación principal */
+.app-fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-fade-in.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animación para elementos individuales */
+.form-element {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-element.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Delay escalonado para elementos del formulario */
+.form-element:nth-child(1) { transition-delay: 0.1s; }
+.form-element:nth-child(2) { transition-delay: 0.2s; }
+.form-element:nth-child(3) { transition-delay: 0.3s; }
+.form-element:nth-child(4) { transition-delay: 0.4s; }
+.form-element:nth-child(5) { transition-delay: 0.5s; }
+.form-element:nth-child(6) { transition-delay: 0.6s; }
+.form-element:nth-child(7) { transition-delay: 0.7s; }
+.form-element:nth-child(8) { transition-delay: 0.8s; }
+
+/* Animación para el título */
+.app-title {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0.2s;
+}
+
+.app-title.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animación para el subtítulo */
+.app-subtitle {
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0.3s;
+}
+
+.app-subtitle.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animaciones para el modal de éxito */
+@keyframes successBounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+@keyframes checkmarkDraw {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(100%) skewX(-12deg);
+  }
+}
+
+.success-modal-enter {
+  animation: successBounce 1s ease-in-out;
+}
+
+.checkmark-animate {
+  animation: checkmarkDraw 0.7s ease-in-out forwards;
+}
+
+.progress-animate {
+  animation: progressFill 3s ease-in-out forwards;
+}
+
+.shine-effect {
+  animation: shine 1.5s ease-in-out;
+}
