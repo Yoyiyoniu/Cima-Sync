@@ -1,6 +1,5 @@
 # build
-AppDir/
-cima-sync-1.0.0-x86_64.AppImage
+OutApps/
 
 # dependency directories
 node_modules/
