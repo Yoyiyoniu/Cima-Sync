@@ -26,7 +26,8 @@
         },
         "removeDatabase": "Eliminar datos",
         "tour": "Tour guiado",
-        "tour.description": "Mostrar tour automático al abrir la app"
+        "tour.description": "Mostrar tour automático al abrir la app",
+        "tour.button": "Volver a realizar"
     },
     "App": {
         "title": "Inicio de sesión automático",

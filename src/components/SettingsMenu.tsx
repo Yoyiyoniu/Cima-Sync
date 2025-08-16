@@ -10,7 +10,7 @@ import { platform } from '@tauri-apps/plugin-os';
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "./SettingsMenu/LanguageSelector";
 import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
-import { TourConfig } from "./SettingsMenu/TourConfig";
+import { TourButton } from "./SettingsMenu/TourButton";
 
 export const SettingsMenu = () => {
     const { t } = useTranslation();
@@ -108,7 +108,6 @@ export const SettingsMenu = () => {
                         <div className="space-y-4">
                             <h2 className="text-lg font-semibold text-white">{t('Settings.config.title')}</h2>
                             <div className="space-y-3">
-                                <TourConfig />
                                 {(currentPlatform === 'windows' || currentPlatform === 'macos') && <AutoStartConfig />}
                                 <button
                                     type="button"
@@ -119,6 +118,11 @@ export const SettingsMenu = () => {
                                     <p className="text-white/80">{t('Settings.removeDatabase')}</p>
                                     <TrashIcon />
                                 </button>
+                                
+                                {/* Separación */}
+                                <div className="border-t border-white/20 my-4"></div>
+                                
+                                <TourButton onClose={() => setIsOpen(false)} />
                             </div>
                         </div>
 

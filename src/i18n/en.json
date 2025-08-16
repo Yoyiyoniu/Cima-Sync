@@ -26,7 +26,8 @@
         },
         "removeDatabase": "Delete app data",
         "tour": "Guided tour",
-        "tour.description": "Show automatic tour when opening the app"
+        "tour.description": "Show automatic tour when opening the app",
+        "tour.button": "Restart tour"
     },
     "App": {
         "title": "Auto login",

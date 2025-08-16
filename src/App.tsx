@@ -111,15 +111,6 @@ function App({ showTourFirstTime = false }: AppProps) {
       
       <SettingsMenu />
       
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
-        title={t('App.helpButton')}
-      >
-        📖
-      </button>
-      
       <div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
         <CopyRightMenu />
         <form className="w-full max-w-sm flex flex-col gap-3 mb-8">
