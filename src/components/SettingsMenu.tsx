@@ -58,12 +58,14 @@ export const SettingsMenu = () => {
     return (
         <>
             <button
+                type="button"
                 className="top-0 left-0 absolute bg-white/5 rounded-full p-2 hover:bg-white/20 transition-all duration-300 m-3"
                 onClick={() => setIsOpen(!isOpen)}
             >
                 <OptionsIcon width={30} height={30} className="text-white" />
             </button>
-            <div
+            <button
+                type="button"
                 className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 ${isOpen ? 'block' : 'hidden'}`}
                 onClick={() => setIsOpen(false)}
             />
@@ -88,6 +90,7 @@ export const SettingsMenu = () => {
                     <div className="flex items-center justify-between mb-6">
                         <h1 className="text-xl font-bold text-white">{t('Settings.title')}</h1>
                         <button
+                            type="button"
                             onClick={() => setIsOpen(false)}
                             className="text-white/70 hover:text-white transition-colors"
                         >
@@ -108,7 +111,7 @@ export const SettingsMenu = () => {
                         <div className="space-y-4">
                             <h2 className="text-lg font-semibold text-white">{t('Settings.config.title')}</h2>
                             <div className="space-y-3">
-                                {(currentPlatform === 'windows' || currentPlatform === 'macos') && <AutoStartConfig />}
+                                {(currentPlatform === 'windows' || currentPlatform === 'macos' || currentPlatform === 'linux') && <AutoStartConfig />}
                                 <button
                                     type="button"
                                     className="flex items-center justify-between cursor-pointer rounded-md w-full p-2 hover:bg-red-500/20 transition-colors duration-200"
@@ -136,6 +139,7 @@ export const SettingsMenu = () => {
                     </div>
                     <LanguageSelector />
                     <button
+                        type="button"
                         title="Abrir proyecto de github"
                         onClick={() => setShowGithubModal(true)}
                         className="p-2 mb-2 mt-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors duration-200 flex items-center gap-2">

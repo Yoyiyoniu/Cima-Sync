@@ -40,6 +40,7 @@ export const AutoStartConfig = () => {
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
                         <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <title>Auto-run</title>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                     </div>
