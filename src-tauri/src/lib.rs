@@ -1,11 +1,7 @@
 mod auth;
-
-#[cfg(desktop)]
 mod tray;
 
 use crate::auth::Auth;
-
-#[cfg(desktop)]
 use crate::tray::system_tray;
 
 use std::sync::Arc;
@@ -58,7 +54,6 @@ fn login(email: &str, password: &str) -> Result<String, String> {
     }
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
