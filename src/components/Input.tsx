@@ -21,11 +21,13 @@ export const Input = ({
     disabled = false,
     icon,
 }: InputWithIconProps) => {
-    const { t } = useTranslation();
+    useTranslation();
+    
+    
     return (
         <div className="space-y-2">
             <label htmlFor={id} className="block text-white font-medium text-sm">
-                {t(label)}
+                {label}
             </label>
             <div className="relative">
                 {icon && (
@@ -36,7 +38,7 @@ export const Input = ({
                 <input
                     id={id}
                     type={type}
-                    placeholder={t(placeholder)}
+                    placeholder={placeholder}
                     value={value}
                     onChange={onChange}
                     required

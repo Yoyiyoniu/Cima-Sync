@@ -9,8 +9,8 @@ const ERROR_CREDENCIALES: &str = "Credenciales invalidas.";
 const ERROR_TIEMPO_ESPERA: &str = "Tiempo de espera agotado.";
 const ERROR_GENERAL: &str = "Ocurrió un error al conectarse a la red UABC.";
 
-const MONITORING_INTERVAL: Duration = Duration::from_secs(120);
-const SUCCESS_INTERVAL: Duration = Duration::from_secs(10);
+const MONITORING_INTERVAL: Duration = Duration::from_secs(20);
+const SUCCESS_INTERVAL: Duration = Duration::from_secs(5);
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -35,8 +35,8 @@ impl Auth {
     }
 
     pub fn login(&self) -> Result<bool, Box<dyn std::error::Error>> {
-        println!("Usuario: {}", self.email);
-
+        println!("User: {}", self.email);
+ 
         let start_time = Instant::now();
         print!("Verificando conexión... ");
 
@@ -49,14 +49,14 @@ impl Auth {
                         "✓ Conexión establecida en {:.2} segundos.",
                         elapsed.as_secs_f32()
                     );
-                    println!("Conectado a la red UABC.");
+                    println!("Connected to UABC.");
                     Ok(true)
                 } else {
                     println!(
                         "\nPortal detectado en {:.2} segundos.",
                         elapsed.as_secs_f32()
                     );
-                    println!("Iniciando sesión...");
+                    println!("Starting session...");
 
                     let login_start = Instant::now();
                     match auto_login(&self.email, &self.password) {
@@ -64,7 +64,7 @@ impl Auth {
                             let login_elapsed = login_start.elapsed();
                             if success {
                                 println!(
-                                    "Sesión iniciada en {:.2} segundos.",
+                                    "Session started in {:.2} seconds.",
                                     login_elapsed.as_secs_f32()
                                 );
                                 Ok(true)
@@ -97,21 +97,21 @@ impl Auth {
     }
 
     pub fn start_monitoring(&self) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Iniciando monitoreo de conexión...");
+        println!("Starting connection monitoring...");
         self.should_stop.store(false, Ordering::SeqCst);
 
         while !self.should_stop.load(Ordering::SeqCst) {
             match self.login() {
                 Ok(true) => {
                     println!(
-                        "Próxima verificación en {} segundos.",
+                        "Next verification in {} seconds.",
                         self.success_interval.as_secs()
                     );
                     thread::sleep(self.success_interval);
                 }
                 Ok(false) | Err(_) => {
                     println!(
-                        "Reintentando en {} segundos.",
+                        "Retrying in {} seconds.",
                         self.check_interval.as_secs()
                     );
                     thread::sleep(self.check_interval);
@@ -120,13 +120,13 @@ impl Auth {
 
             println!("\n---------------------------------------------");
         }
-        println!("Monitoreo detenido");
+        println!("Connection monitoring stopped");
         Ok(())
     }
 
     pub fn stop_monitoring(&self) {
         self.should_stop.store(true, Ordering::SeqCst);
-        println!("Señal de detención enviada");
+        println!("Stop signal sent");
     }
 }
 
@@ -167,27 +167,27 @@ fn auto_login(username: &str, password: &str) -> Result<bool, Box<dyn std::error
     match res {
         Ok(local_id) => {
             let id_time = start_time.elapsed();
-            println!("ID obtenido en {:.2} segundos", id_time.as_secs_f32());
+            println!("ID obtained in {:.2} seconds", id_time.as_secs_f32());
 
             match send_login(username, password, &local_id) {
                 Ok(status) => {
                     if status == reqwest::StatusCode::OK {
-                        println!("Solicitud enviada correctamente");
+                        println!("Request sent successfully");
 
                         if verify_connection_after_login() {
                             return Ok(true);
                         } else {
-                            println!("Solicitud enviada pero sin conexión activa");
+                            println!("Request sent but no active connection");
                             return Ok(false);
                         }
                     } else {
-                        println!("Respuesta inesperada del servidor: {}", status);
+                        println!("Unexpected server response: {}", status);
                         Ok(false)
                     }
                 }
                 Err(e) => {
                     if e.to_string().contains("certificate") && verify_connection_after_login() {
-                        println!("Conexión establecida");
+                        println!("Connection established");
                         return Ok(true);
                     }
 
@@ -214,7 +214,7 @@ fn send_login(
     form.insert("username", email);
     form.insert("password", password);
 
-    println!("Enviando datos...");
+    println!("Sending data...");
     let start_time = Instant::now();
 
     match client.post("https://pcw.uabc.mx/").form(&form).send() {
@@ -226,15 +226,15 @@ fn send_login(
             if status.is_success() {
                 // Verificar si el título es correcto
                 if body.contains("<title>Login Successful</title>") {
-                    println!("Datos enviados en {:.2} segundos", elapsed.as_secs_f32());
+                    println!("Data sent in {:.2} seconds", elapsed.as_secs_f32());
                     Ok(status)
                 } else {
-                    println!("Error: El título de la página no coincide");
-                    println!("Es posible que las credenciales sean incorrectas");
+                    println!("Error: The page title does not match");
+                    println!("It is possible that the credentials are incorrect");
                     Ok(reqwest::StatusCode::UNAUTHORIZED)
                 }
             } else {
-                println!("Error al enviar datos. Código: {}", status);
+                println!("Error sending data. Code: {}", status);
                 Ok(status)
             }
         }
@@ -243,7 +243,7 @@ fn send_login(
 }
 
 fn verify_connection_after_login() -> bool {
-    println!("Verificando conexión...");
+    println!("Verifying connection...");
 
     thread::sleep(Duration::from_millis(500));
 
@@ -256,11 +256,11 @@ fn verify_connection_after_login() -> bool {
             Ok(response) => {
                 let success = response.status().is_success();
                 println!(
-                    "Resultado: {}",
+                    "Result: {}",
                     if success {
                         "Conectado"
                     } else {
-                        "Sin conexión"
+                        "No connection"
                     }
                 );
                 success
@@ -271,21 +271,21 @@ fn verify_connection_after_login() -> bool {
                     println!(
                         "Resultado (alternativo): {}",
                         if success {
-                            "Conectado"
+                            "Connected"
                         } else {
-                            "Sin conexión"
+                            "No connection"
                         }
                     );
                     success
                 }
                 Err(_) => {
-                    println!("No se detecta conexión a internet");
+                    println!("No internet connection detected");
                     false
                 }
             },
         },
         Err(_) => {
-            println!("Error al verificar conexión");
+            println!("Error verifying connection");
             false
         }
     }

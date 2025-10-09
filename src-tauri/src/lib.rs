@@ -1,8 +1,10 @@
 mod auth;
 mod tray;
+mod crypto;
 
 use crate::auth::Auth;
 use crate::tray::system_tray;
+use crate::crypto::{encrypt_text, decrypt_text, init_session_key, clear_session_key, set_session_key};
 
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -54,6 +56,32 @@ fn login(email: &str, password: &str) -> Result<String, String> {
     }
 }
 
+#[tauri::command]
+fn init_crypto() -> String {
+    init_session_key()
+}
+
+#[tauri::command]
+fn encrypt_credentials(plaintext: &str) -> Result<String, String> {
+    encrypt_text(plaintext)
+}
+
+#[tauri::command]
+fn decrypt_credentials(ciphertext: &str) -> Result<String, String> {
+    decrypt_text(ciphertext)
+}
+
+#[tauri::command]
+fn clear_crypto() {
+    clear_session_key();
+}
+
+#[tauri::command]
+fn set_crypto_key(key_b64: &str) -> Result<String, String> {
+    set_session_key(key_b64)?;
+    Ok("Clave de encriptación establecida correctamente".to_string())
+}
+
 pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
@@ -74,7 +102,7 @@ pub fn run() {
     }
 
     builder
-        .invoke_handler(tauri::generate_handler![auto_auth, login, stop_auth])
+        .invoke_handler(tauri::generate_handler![auto_auth, login, stop_auth, init_crypto, encrypt_credentials, decrypt_credentials, clear_crypto, set_crypto_key])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
