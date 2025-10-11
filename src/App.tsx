@@ -1,4 +1,5 @@
-import { type FormEvent, useEffect, useState, useId } from "react";
+/** biome-ignore-all lint/correctness/useUniqueElementIds: <explanation> */
+import { type FormEvent, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { clearCredentials, getCredentials, saveCredentials, getRememberSessionConfig, setRememberSessionConfig, initEncryption } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
@@ -29,15 +30,11 @@ interface AppState {
 function App({ showTourFirstTime = false }: AppProps) {
   const { t } = useTranslation();
   const { setIsOpen } = useTour();
-  const emailId = useId();
-  const passwordId = useId();
-  const rememberId = useId();
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [appState, setAppState] = useState<AppState>({ loading: false, error: null, success: false });
   const [rememberSession, setRememberSession] = useState(false);
-  const [showApp, setShowApp] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [credentialsLoaded, setCredentialsLoaded] = useState(false);
+  const [showApp, setShowApp] = useState(false);
 
   disableContextMenu();
 
@@ -53,21 +50,19 @@ function App({ showTourFirstTime = false }: AppProps) {
     return () => clearTimeout(timer);
   }, []);
 
-
   useEffect(() => {
     const bootstrap = async () => {
-      try {        
+      try {
         await initEncryption();
-        
+
         const remember = await getRememberSessionConfig();
         setRememberSession(remember);
-        
+
         const result = await getCredentials();
-        
+
         if (result) {
           setCredentials({ email: result.email, password: result.password });
         }
-        setCredentialsLoaded(true);
       } catch (error) {
         console.error("Error loading configuration:", error);
       }
@@ -82,7 +77,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
     try {
       await setRememberSessionConfig(rememberSession);
-      
+
       // Guardar credenciales ANTES del login si está marcado "Recordar sesión"
       if (rememberSession) {
         await saveCredentials(credentials);
@@ -91,17 +86,17 @@ function App({ showTourFirstTime = false }: AppProps) {
       }
 
       await invoke("login", { email: credentials.email, password: credentials.password });
-      
+
       setAppState(prev => ({ ...prev, success: true }));
       setShowSuccessModal(true);
-      
+
       if (rememberSession) {
         await invoke("auto_auth", { email: credentials.email, password: credentials.password });
       }
     } catch (error) {
       console.error("Login error:", error);
       setAppState(prev => ({ ...prev, error: String(error) }));
-      
+
     } finally {
       setAppState(prev => ({ ...prev, loading: false }));
     }
@@ -118,27 +113,13 @@ function App({ showTourFirstTime = false }: AppProps) {
     // No borrar las credenciales automáticamente, solo actualizar la configuración
   };
 
-  // Mostrar loading mientras se cargan las credenciales
-  if (!credentialsLoaded) {
-    return (
-      <main className="flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden">
-        <img src={img} alt="" className="blur absolute" />
-        <div className="relative z-10 text-center">
-          <h1 className="text-2xl font-medium mb-4">{t('App.title')}</h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006633] mx-auto"></div>
-          <p className="mt-4 text-gray-300">Cargando credenciales...</p>
-        </div>
-      </main>
-    );
-  }
-
 
   return (
     <main className={`app-fade-in ${showApp ? 'show' : ''} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}>
       <img src={img} alt="" className="blur absolute" />
-      
+
       <SettingsMenu />
-      
+
       <div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
         <CopyRightMenu />
         <form className="w-full max-w-sm flex flex-col gap-3 mb-8">
@@ -146,17 +127,16 @@ function App({ showTourFirstTime = false }: AppProps) {
             <h1 className={`app-title ${showApp ? 'show' : ''} text-2xl font-medium`}>{t('App.title')}</h1>
             <p className={`app-subtitle ${showApp ? 'show' : ''}`}>{t('App.subtitle')}</p>
           </div>
-          
+
           {appState.success && (
             <div className={`form-element ${showApp ? 'show' : ''} bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3`}>
               {t('App.success')}
             </div>
           )}
-          
+
           <div className={`form-element ${showApp ? 'show' : ''}`}>
             <Input
-              key={`email-${credentials.email}`}
-              id={emailId}
+              id="email"
               type="email"
               label={t('App.email')}
               placeholder={t('Input.emailPlaceholder')}
@@ -167,11 +147,10 @@ function App({ showTourFirstTime = false }: AppProps) {
               disabled={appState.loading || appState.success}
             />
           </div>
-          
+
           <div className={`form-element ${showApp ? 'show' : ''}`}>
             <Input
-              key={`password-${credentials.password}`}
-              id={passwordId}
+              id="password"
               type="password"
               label={t('App.password')}
               placeholder={t('Input.passwordPlaceholder')}
@@ -182,13 +161,12 @@ function App({ showTourFirstTime = false }: AppProps) {
               disabled={appState.loading || appState.success}
             />
           </div>
-          
+
           <div className={`form-element ${showApp ? 'show' : ''} flex items-center`}>
             <div className="relative flex items-center">
               <input
-                key={`remember-${rememberSession}`}
                 type="checkbox"
-                id={rememberId}
+                id="remember"
                 checked={rememberSession}
                 onChange={(e) => handleRememberChange(e.target.checked)}
                 disabled={appState.loading || appState.success}
@@ -207,19 +185,20 @@ function App({ showTourFirstTime = false }: AppProps) {
                 </svg>
               </div>
             </div>
-            <label htmlFor={rememberId} title={t('App.rememberTitle')} className="ml-2 text-sm text-gray-300 cursor-pointer select-none">
+            <label htmlFor="remember" title={t('App.rememberTitle')} className="ml-2 text-sm text-gray-300 cursor-pointer select-none">
               {t('App.remember')}
             </label>
           </div>
-          
+
           {appState.error && (
             <div className={`form-element ${showApp ? 'show' : ''} bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}>
               {t('App.error')}: {appState.error}
             </div>
           )}
-          
+
           <div className={`form-element ${showApp ? 'show' : ''} flex w-full max-w-sm justify-center gap-2 relative`}>
             <button
+              id="login-button"
               type="submit"
               title={t('App.login')}
               onClick={handleLogin}
@@ -247,8 +226,8 @@ function App({ showTourFirstTime = false }: AppProps) {
           </div>
         </form>
       </div>
-      
-      <SuccessModal 
+
+      <SuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
       />

@@ -52,7 +52,7 @@ fn login(email: &str, password: &str) -> Result<String, String> {
     match auth.login() {
         Ok(true) => Ok(format!("Login exitoso para: {}", username)),
         Ok(false) => Err(format!("Login fallido para: {}", username)),
-        Err(e) => Err(format!("Error: {}", e)),
+        Err(e) => Err(format!("{}", e)),
     }
 }
 
