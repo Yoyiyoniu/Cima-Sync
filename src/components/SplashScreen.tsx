@@ -18,7 +18,7 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
     // Cerrar splash screen después de 2 segundos totales
     const closeTimer = setTimeout(() => {
       onFinish();
-    }, 2000);
+    }, 800);
 
     return () => {
       clearTimeout(showTimer);
