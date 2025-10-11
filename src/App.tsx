@@ -1,6 +1,7 @@
-import { FormEvent, useEffect, useState } from "react";
+/** biome-ignore-all lint/correctness/useUniqueElementIds: <explanation> */
+import { type FormEvent, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { clearCredentials, getCredentials, saveCredentials, getRememberSessionConfig, setRememberSessionConfig } from "./controller/DbController";
+import { clearCredentials, getCredentials, saveCredentials, getRememberSessionConfig, setRememberSessionConfig, initEncryption } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
 import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
@@ -32,8 +33,8 @@ function App({ showTourFirstTime = false }: AppProps) {
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [appState, setAppState] = useState<AppState>({ loading: false, error: null, success: false });
   const [rememberSession, setRememberSession] = useState(false);
-  const [showApp, setShowApp] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showApp, setShowApp] = useState(false);
 
   disableContextMenu();
 
@@ -52,14 +53,15 @@ function App({ showTourFirstTime = false }: AppProps) {
   useEffect(() => {
     const bootstrap = async () => {
       try {
+        await initEncryption();
+
         const remember = await getRememberSessionConfig();
         setRememberSession(remember);
-        
-        if (remember) {
-          const result = await getCredentials();
-          if (result) {
-            setCredentials({ email: result.email, password: result.password });
-          }
+
+        const result = await getCredentials();
+
+        if (result) {
+          setCredentials({ email: result.email, password: result.password });
         }
       } catch (error) {
         console.error("Error loading configuration:", error);
@@ -75,20 +77,26 @@ function App({ showTourFirstTime = false }: AppProps) {
 
     try {
       await setRememberSessionConfig(rememberSession);
-      if (!rememberSession) await clearCredentials();
 
-      await invoke("login", { email: credentials.email, password: credentials.password });
-      
-      setAppState(prev => ({ ...prev, success: true }));
-      setShowSuccessModal(true);
-      
+      // Guardar credenciales ANTES del login si está marcado "Recordar sesión"
       if (rememberSession) {
         await saveCredentials(credentials);
+      } else {
+        await clearCredentials();
+      }
+
+      await invoke("login", { email: credentials.email, password: credentials.password });
+
+      setAppState(prev => ({ ...prev, success: true }));
+      setShowSuccessModal(true);
+
+      if (rememberSession) {
         await invoke("auto_auth", { email: credentials.email, password: credentials.password });
       }
     } catch (error) {
       console.error("Login error:", error);
       setAppState(prev => ({ ...prev, error: String(error) }));
+
     } finally {
       setAppState(prev => ({ ...prev, loading: false }));
     }
@@ -102,15 +110,16 @@ function App({ showTourFirstTime = false }: AppProps) {
   const handleRememberChange = async (checked: boolean) => {
     setRememberSession(checked);
     await setRememberSessionConfig(checked);
-    if (!checked) await clearCredentials();
+    // No borrar las credenciales automáticamente, solo actualizar la configuración
   };
+
 
   return (
     <main className={`app-fade-in ${showApp ? 'show' : ''} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}>
       <img src={img} alt="" className="blur absolute" />
-      
+
       <SettingsMenu />
-      
+
       <div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
         <CopyRightMenu />
         <form className="w-full max-w-sm flex flex-col gap-3 mb-8">
@@ -118,13 +127,13 @@ function App({ showTourFirstTime = false }: AppProps) {
             <h1 className={`app-title ${showApp ? 'show' : ''} text-2xl font-medium`}>{t('App.title')}</h1>
             <p className={`app-subtitle ${showApp ? 'show' : ''}`}>{t('App.subtitle')}</p>
           </div>
-          
+
           {appState.success && (
             <div className={`form-element ${showApp ? 'show' : ''} bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3`}>
               {t('App.success')}
             </div>
           )}
-          
+
           <div className={`form-element ${showApp ? 'show' : ''}`}>
             <Input
               id="email"
@@ -132,11 +141,13 @@ function App({ showTourFirstTime = false }: AppProps) {
               label={t('App.email')}
               placeholder={t('Input.emailPlaceholder')}
               value={credentials.email}
-              onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
+              onChange={(e) => {
+                setCredentials(prev => ({ ...prev, email: e.target.value }));
+              }}
               disabled={appState.loading || appState.success}
             />
           </div>
-          
+
           <div className={`form-element ${showApp ? 'show' : ''}`}>
             <Input
               id="password"
@@ -144,11 +155,13 @@ function App({ showTourFirstTime = false }: AppProps) {
               label={t('App.password')}
               placeholder={t('Input.passwordPlaceholder')}
               value={credentials.password}
-              onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
+              onChange={(e) => {
+                setCredentials(prev => ({ ...prev, password: e.target.value }));
+              }}
               disabled={appState.loading || appState.success}
             />
           </div>
-          
+
           <div className={`form-element ${showApp ? 'show' : ''} flex items-center`}>
             <div className="relative flex items-center">
               <input
@@ -163,7 +176,7 @@ function App({ showTourFirstTime = false }: AppProps) {
                           disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path
                     fillRule="evenodd"
                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -172,19 +185,21 @@ function App({ showTourFirstTime = false }: AppProps) {
                 </svg>
               </div>
             </div>
-            <label title={t('App.rememberTitle')} className="ml-2 text-sm text-gray-300 cursor-pointer select-none">
+            <label htmlFor="remember" title={t('App.rememberTitle')} className="ml-2 text-sm text-gray-300 cursor-pointer select-none">
               {t('App.remember')}
             </label>
           </div>
-          
+
           {appState.error && (
             <div className={`form-element ${showApp ? 'show' : ''} bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}>
               {t('App.error')}: {appState.error}
             </div>
           )}
-          
+
           <div className={`form-element ${showApp ? 'show' : ''} flex w-full max-w-sm justify-center gap-2 relative`}>
             <button
+              id="login-button"
+              type="submit"
               title={t('App.login')}
               onClick={handleLogin}
               disabled={appState.loading || appState.success || !credentials.email || !credentials.password}
@@ -211,8 +226,8 @@ function App({ showTourFirstTime = false }: AppProps) {
           </div>
         </form>
       </div>
-      
-      <SuccessModal 
+
+      <SuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
       />

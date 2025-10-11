@@ -132,9 +132,7 @@ npm run tauri build
 | Comando | Descripción |
 |---------|-------------|
 | `npm run tauri dev` | Aplicación Tauri en modo desarrollo |
-| `npm run tauri android dev` | Aplicación Tauri en modo desarrollo android |
 | `npm run tauri build` | Build de la app de escritorio |
-| `npm run tauri build android` | Build de la app de android |
 
 ### Estructura de desarrollo
 

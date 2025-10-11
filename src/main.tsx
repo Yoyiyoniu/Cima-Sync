@@ -5,7 +5,7 @@ import "./i18n";
 import { Onboarding } from "./components/Onboarding";
 import { SplashScreen } from "./components/SplashScreen";
 import { getHasSeenOnboarding, setHasSeenOnboarding } from "./controller/DbController";
-import { TourProvider, StepType } from "@reactour/tour";
+import { TourProvider, type StepType } from "@reactour/tour";
 import { TourStep } from "./components/TourStep";
 import "./css/TourNavigation.css";
 
@@ -57,7 +57,7 @@ const Main = () => {
 
   return (
     <React.StrictMode>
-      <TourProvider 
+      <TourProvider
         steps={tourSteps}
         showNavigation={false}
         showBadge={true}
@@ -91,13 +91,13 @@ const tourSteps: StepType[] = [
     content: <TourStep content="Marca esta casilla si quieres que la aplicación recuerde tu sesión y se conecte automáticamente en el futuro." />,
   },
   {
-    selector: 'button[title="Iniciar sesión"]',
+    selector: '#login-button',
     content: <TourStep content="¡Perfecto! Ahora haz clic en este botón para conectarte a la red de UABC. La aplicación se encargará de todo automáticamente." />,
   },
 ];
 
 const tourStyles = {
-  popover: (base: any) => ({
+  popover: (base: Record<string, unknown>) => ({
     ...base,
     backgroundColor: '#1e293b',
     color: 'white',
@@ -105,19 +105,19 @@ const tourStyles = {
     boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
     padding: '20px',
   }),
-  badge: (base: any) => ({
+  badge: (base: Record<string, unknown>) => ({
     ...base,
     backgroundColor: '#006633',
   }),
-  controls: (base: any) => ({
+  controls: (base: Record<string, unknown>) => ({
     ...base,
     color: 'white',
   }),
-  arrow: (base: any) => ({
+  arrow: (base: Record<string, unknown>) => ({
     ...base,
     color: '#1e293b',
   }),
-  navigation: (base: any) => ({
+  navigation: (base: Record<string, unknown>) => ({
     ...base,
     marginTop: '15px',
   }),

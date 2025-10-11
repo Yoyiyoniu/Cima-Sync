@@ -132,9 +132,7 @@ npm run tauri build
 | Command | Description |
 |---------|-------------|
 | `npm run tauri dev` | Tauri app in development mode |
-| `npm run tauri android dev` | Tauri Android app in development mode |
 | `npm run tauri build` | Desktop app production build |
-| `npm run tauri build android` | Android app production build |
 
 ### Development layout
 

@@ -242,7 +242,7 @@ export function Onboarding({ onFinish }: OnboardingProps) {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
                   >
-                    <label className="block text-white/90 text-sm font-medium mb-3">
+                    <label htmlFor="language" className="block text-white/90 text-sm font-medium mb-3">
                       {t('Settings.language')}
                     </label>
                                          <div className="relative language-dropdown">
@@ -258,6 +258,7 @@ export function Onboarding({ onFinish }: OnboardingProps) {
                           {i18n.language === 'es' ? t('Settings.language.es') : t('Settings.language.en')}
                         </span>
                         <motion.svg 
+                          aria-hidden="true"
                           className="w-5 h-5" 
                           fill="none" 
                           stroke="currentColor" 
@@ -391,6 +392,7 @@ const LanguageOption = ({ lang, flag, isSelected, onSelect }: LanguageOptionProp
       <span>{t(`Settings.language.${lang}`)}</span>
       {isSelected && (
                  <motion.svg
+           aria-hidden="true"
            className="w-4 h-4 ml-auto text-gray-400"
            fill="currentColor"
            viewBox="0 0 20 20"
