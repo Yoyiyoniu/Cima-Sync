@@ -5,7 +5,7 @@
 # Cima Sync - Cimarrones 24/7
 <br>
 
-<img src="src/assets/img/cima_sync_aplication.png" width="300" alt="Cima Sync Logo">
+<img src="src/assets/img/cima-sync-desktop.png" width="300" alt="Cima Sync Logo">
 
 <br>
 <br>
@@ -26,6 +26,16 @@
 [![GitHub forks](https://img.shields.io/github/forks/Yoyiyoniu/Cima-Sync?style=social)](https://github.com/Yoyiyoniu/Cima-Sync)
 
 </div>
+
+---
+
+## 🎉 Great News! - Official Implementation
+
+> **Thanks to the UABC community's interest, they contacted us to implement this application officially in the UABC Estudiantes app!** 
+> 
+> *(Don't worry, quality is abundant here dear student)*
+> 
+> As soon as it's implemented, I'll announce it on social media. Thank you so much for the support cimarrones! <3
 
 ---
 
