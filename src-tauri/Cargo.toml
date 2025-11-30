@@ -33,6 +33,8 @@ tauri-plugin-os = "2"
 aes-gcm = "0.9"
 base64 = "0.22"
 rand = "0.8"
+networkmanager = "0.5.0"
+dbus = "0.9.9"
 
 [target.'cfg(not(any(target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"

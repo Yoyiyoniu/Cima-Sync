@@ -1,6 +1,7 @@
 mod auth;
 mod tray;
 mod crypto;
+mod network_sync;
 
 use crate::auth::Auth;
 use crate::tray::system_tray;
@@ -83,6 +84,8 @@ fn set_crypto_key(key_b64: &str) -> Result<String, String> {
 }
 
 pub fn run() {
+    network_sync::start_network_monitor();
+
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
