@@ -41,6 +41,8 @@
         "logout": "Detener sesión",
         "connecting": "Conectando...",
         "connected": "Conectado",
+        "uabcConnection": "Conexión UABC",
+        "networkUnavailable": "Red UABC no disponible",
         "error": "Error",
         "autoLogin": "Inicio de sesión automático",
         "helpButton": "📖 ¿Necesitas ayuda?"

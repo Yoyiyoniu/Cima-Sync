@@ -41,6 +41,8 @@
         "logout": "Logout",
         "connecting": "Connecting...",
         "connected": "Connected",
+        "uabcConnection": "UABC Connection",
+        "networkUnavailable": "UABC Network Unavailable",
         "error": "Error",
         "autoLogin": "Automatic login",
         "helpButton": "📖 Need help?"
