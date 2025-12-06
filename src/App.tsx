@@ -184,7 +184,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
   return (
     <main className={`app-fade-in ${showApp ? 'show' : ''} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}>
-      <img src={img} alt="" className="blur absolute" />
+      <img src={img} alt="" className="blur absolute max-h-[800px] object-fit" />
 
       <SettingsMenu />
 
