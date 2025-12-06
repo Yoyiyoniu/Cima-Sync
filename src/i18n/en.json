@@ -45,11 +45,15 @@
         "networkUnavailable": "UABC Network Unavailable",
         "error": "Error",
         "autoLogin": "Automatic login",
-        "helpButton": "📖 Need help?"
+        "helpButton": "📖 Need help?",
+        "buyCoffee": "If you liked the app, support the development with a coffee",
+        "supportDevelopment": "Support development"
     },
     "SuccessModal": {
-        "title": "Login successful!",
+        "title": "All Ready!",
         "message": "Connection established successfully.",
+        "coffeeMessage": "Did the app help you? Buy me a coffee :)",
+        "buyCoffeeButton": "Buy a coffee",
         "button": "Got it"
     },
     "Input": {
@@ -64,6 +68,10 @@
         "github": {
             "title": "You're exiting the app",
             "description": "You will be redirected to the GitHub page to see the project code. Do you want to continue?"
+        },
+        "coffee": {
+            "title": "You're exiting the app",
+            "description": "You will be redirected to the Ko-fi page to support the app development. Do you want to continue?"
         },
         "removeDatabase": {
             "title": "Remove database",

@@ -12,11 +12,14 @@ import { LanguageSelector } from "./SettingsMenu/LanguageSelector";
 import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
 import { TourButton } from "./SettingsMenu/TourButton";
 
+import CoffeeIcon from "../assets/icons/CoffeeIcon";
+
 export const SettingsMenu = () => {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [showGithubModal, setShowGithubModal] = useState(false);
     const [showRemoveDatabaseModal, setShowRemoveDatabaseModal] = useState(false);
+    const [showCoffeeModal, setShowCoffeeModal] = useState(false);
     const [currentPlatform, setCurrentPlatform] = useState<string>('');
 
 
@@ -25,6 +28,7 @@ export const SettingsMenu = () => {
             if (e.key === 'Escape') {
                 setIsOpen(false);
                 setShowGithubModal(false);
+                setShowCoffeeModal(false);
             }
         };
         window.addEventListener('keydown', handleEscape);
@@ -48,6 +52,10 @@ export const SettingsMenu = () => {
 
     const handleGithubRedirect = async () => {
         await openUrl('https://github.com/Yoyiyoniu/cima-sync');
+    };
+
+    const handleCoffeeRedirect = async () => {
+        await openUrl("https://ko-fi.com/yoyiyo");
     };
 
     const handleRemoveDatabase = async () => {
@@ -78,6 +86,13 @@ export const SettingsMenu = () => {
                 handleModalFunction={handleGithubRedirect} />
 
             <Modal
+                showModal={showCoffeeModal}
+                title={t('Modal.coffee.title')}
+                modalText={t('Modal.coffee.description')}
+                setShowModal={setShowCoffeeModal}
+                handleModalFunction={handleCoffeeRedirect} />
+
+            <Modal
                 showModal={showRemoveDatabaseModal}
                 title={t('Modal.removeDatabase.title')}
                 modalText={t('Modal.removeDatabase.description')}
@@ -97,6 +112,28 @@ export const SettingsMenu = () => {
                             <XIcon />
                         </button>
                     </div>
+                    <button
+                        type="button"
+                        title={t('App.buyCoffee')}
+                        onClick={() => {
+                            setShowCoffeeModal(true);
+                        }}
+                        className="group relative mb-4 overflow-hidden rounded-lg bg-linear-to-r from-amber-500/20 via-amber-600/20 to-amber-500/20 border border-amber-500/40 hover:border-amber-400/60 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/20 p-3 w-full">
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <CoffeeIcon />
+                                <div className="absolute inset-0 bg-amber-400/30 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            </div>
+                            <div className="flex-1 text-left">
+                                <p className="text-white font-medium text-sm">{t('App.buyCoffee')}</p>
+                                <p className="text-amber-300/70 text-xs mt-0.5">{t('App.supportDevelopment')}</p>
+                            </div>
+                            <svg className="w-4 h-4 text-amber-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <title>Arrow</title>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </button>
                     <div className="flex-1 space-y-6">
                         <div className="space-y-4">
                             <h2 className="text-lg font-semibold text-white">{t('Settings.appInfo.title')}</h2>
@@ -121,10 +158,10 @@ export const SettingsMenu = () => {
                                     <p className="text-white/80">{t('Settings.removeDatabase')}</p>
                                     <TrashIcon />
                                 </button>
-                                
+
                                 {/* Separación */}
                                 <div className="border-t border-white/20 my-4"></div>
-                                
+
                                 <TourButton onClose={() => setIsOpen(false)} />
                             </div>
                         </div>
@@ -142,7 +179,7 @@ export const SettingsMenu = () => {
                         type="button"
                         title="Abrir proyecto de github"
                         onClick={() => setShowGithubModal(true)}
-                        className="p-2 mb-2 mt-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors duration-200 flex items-center gap-2">
+                        className="p-2 mb-2 mt-2 rounded-md bg-black/40 hover:bg-black/60 transition-colors duration-200 flex items-center gap-2 w-full">
                         <GithubIcon width={30} height={30} />
                         <p className="text-white/80 text-sm">{t('Settings.github')}</p>
                     </button>

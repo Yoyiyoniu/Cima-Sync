@@ -45,11 +45,15 @@
         "networkUnavailable": "Red UABC no disponible",
         "error": "Error",
         "autoLogin": "Inicio de sesión automático",
-        "helpButton": "📖 ¿Necesitas ayuda?"
+        "helpButton": "📖 ¿Necesitas ayuda?",
+        "buyCoffee": "Si te ha gustado la app, patrocíname un café",
+        "supportDevelopment": "Apoya el desarrollo"
     },
     "SuccessModal": {
-        "title": "¡Inicio de sesión exitoso!",
+        "title": "¡Todo Listo!",
         "message": "Conexión establecida correctamente.",
+        "coffeeMessage": "¿Te ha servido la app? ¡Patrociname un café :)",
+        "buyCoffeeButton": "Comprar un café",
         "button": "Entendido"
     },
     "Input": {
@@ -64,6 +68,10 @@
         "github": {
             "title": "Estás saliendo de la aplicación",
             "description": "Serás redirigido a la página web de GitHub para ver el código fuente del proyecto. ¿Deseas continuar?"
+        },
+        "coffee": {
+            "title": "Estás saliendo de la aplicación",
+            "description": "Serás redirigido a la página de Ko-fi para apoyar el desarrollo de la aplicación. ¿Deseas continuar?"
         },
         "removeDatabase": {
             "title": "Eliminar datos",

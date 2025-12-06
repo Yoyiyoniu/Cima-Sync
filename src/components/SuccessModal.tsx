@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import img from "../assets/img/cima_sync_logo.png";
 
 interface SuccessModalProps {
@@ -16,13 +17,6 @@ export const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
     if (isOpen) {
       setIsVisible(true);
       setIsAnimating(true);
-      
-      // Auto-close after 3 seconds
-      const timer = setTimeout(() => {
-        handleClose();
-      }, 3000);
-
-      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -32,6 +26,11 @@ export const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
       setIsVisible(false);
       onClose();
     }, 300);
+  };
+
+  const handleBuyCoffee = async () => {
+    // Cambiar este enlace por tu link de Ko-fi, Buy Me a Coffee, etc.
+    await openUrl("https://ko-fi.com/YOUR_USERNAME");
   };
 
   if (!isVisible) return null;
@@ -88,15 +87,22 @@ export const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
         <h3 className="text-xl font-bold text-white mb-2">
           {t('SuccessModal.title')}
         </h3>
-        <p className="text-green-300/80 mb-6">
+        <p className="text-green-300/80 mb-4">
           {t('SuccessModal.message')}
         </p>
-
-        {/* Barra de progreso */}
-        <div className="w-full bg-white/20 rounded-full h-1 mb-4">
-          <div className={`bg-green-500 h-1 rounded-full ${
-            isAnimating ? 'progress-animate' : ''
-          }`}></div>
+        
+        {/* Mensaje del café */}
+        <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+          <p className="text-white/90 text-sm mb-3">
+            {t('SuccessModal.coffeeMessage')}
+          </p>
+          <button
+            onClick={handleBuyCoffee}
+            className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 rounded-lg transition-all duration-200 hover:scale-105 text-sm font-medium flex items-center gap-2 mx-auto"
+          >
+            <span>☕</span>
+            {t('SuccessModal.buyCoffeeButton')}
+          </button>
         </div>
 
         {/* Botón de cerrar */}

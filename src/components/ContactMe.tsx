@@ -13,17 +13,17 @@ export const CopyRightMenu = () => {
   }, []);
 
   return (
-      <span>
-          <Modal 
-            title={t("Modal.thanks")}
-            modalText={t("Modal.thanksDescription")}
-            showModal={showModal}
-            setShowModal={setShowModal}
-            handleModalFunction={handleOpenUrl}
-          />
-          <button type="button" className="text-white/80 hover:text-white" onClick={() => setShowModal(true)}>
-            <p>Created by Honeyfix</p>
-          </button>
+    <span>
+      <Modal
+        title={t("Modal.thanks")}
+        modalText={t("Modal.thanksDescription")}
+        showModal={showModal}
+        setShowModal={setShowModal}
+        handleModalFunction={handleOpenUrl}
+      />
+      <button type="button" className="text-white/80 hover:text-white" onClick={() => setShowModal(true)}>
+        <p>Created by Honeyfix</p>
+      </button>
     </span>
   )
 }
