@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: <explanation> */
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { clearCredentials, getCredentials, saveCredentials, getRememberSessionConfig, setRememberSessionConfig, initEncryption } from "./controller/DbController";
 import { disableContextMenu } from "./hooks/disableContextMenu";
 import { useTranslation } from "react-i18next";
@@ -13,6 +14,7 @@ import { SuccessModal } from "./components/SuccessModal";
 
 import img from "./assets/img/cima_sync_logo.png";
 import StopIcon from "./assets/icons/StopIcon";
+import WifiIcon from "./assets/icons/WifiIcon";
 
 import "./css/Global.css"
 import "./css/AppAnimations.css"
@@ -35,6 +37,12 @@ function App({ showTourFirstTime = false }: AppProps) {
   const [rememberSession, setRememberSession] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showApp, setShowApp] = useState(false);
+  const [isUabcConnected, setIsUabcConnected] = useState(false);
+
+  const appStateRef = useRef(appState);
+  useEffect(() => {
+    appStateRef.current = appState;
+  }, [appState]);
 
   disableContextMenu();
 
@@ -69,6 +77,66 @@ function App({ showTourFirstTime = false }: AppProps) {
     };
 
     bootstrap();
+  }, []);
+
+  useEffect(() => {
+    const setupNetworkListener = async () => {
+      const unlisten = await listen('uabc-detected', async () => {
+        console.log("UABC Network detected via event");
+
+        // Evitar re-login si ya estamos conectados o cargando
+        if (appStateRef.current.success || appStateRef.current.loading) {
+          console.log("Already logged in or loading, skipping auto-login.");
+          return;
+        }
+
+        try {
+          const savedCreds = await getCredentials();
+          if (savedCreds && savedCreds.email && savedCreds.password) {
+            // Actualizar estado para mostrar que se está iniciando sesión
+            setAppState({ loading: true, error: null, success: false });
+            setCredentials({ email: savedCreds.email, password: savedCreds.password }); // Sincronizar UI
+
+            console.log("Auto-logging in...");
+
+            await invoke("login", { email: savedCreds.email, password: savedCreds.password });
+
+            setAppState(prev => ({ ...prev, success: true, loading: false }));
+            setShowSuccessModal(true);
+
+            // Iniciar auto_auth también si es necesario
+            await invoke("auto_auth", { email: savedCreds.email, password: savedCreds.password });
+
+          } else {
+            console.log("UABC detected but no credentials saved.");
+          }
+        } catch (error) {
+          console.error("Auto-login error:", error);
+          setAppState(prev => ({ ...prev, error: String(error), loading: false }));
+        }
+      });
+
+      return unlisten;
+    };
+
+    const setupStatusListener = async () => {
+      const unlisten = await listen('network-status', (event: any) => {
+        const payload = event.payload;
+        setIsUabcConnected(payload.is_uabc);
+      });
+      return unlisten;
+    }
+
+    let unlistenFn: (() => void) | undefined;
+    let unlistenStatusFn: (() => void) | undefined;
+
+    setupNetworkListener().then(fn => { unlistenFn = fn; });
+    setupStatusListener().then(fn => { unlistenStatusFn = fn; });
+
+    return () => {
+      if (unlistenFn) unlistenFn();
+      if (unlistenStatusFn) unlistenStatusFn();
+    };
   }, []);
 
   const handleLogin = async (e: FormEvent) => {
@@ -116,9 +184,16 @@ function App({ showTourFirstTime = false }: AppProps) {
 
   return (
     <main className={`app-fade-in ${showApp ? 'show' : ''} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}>
-      <img src={img} alt="" className="blur absolute" />
+      <img src={img} alt="" className="blur absolute max-h-[800px] object-fit" />
 
       <SettingsMenu />
+
+      <div className={`absolute top-4 right-4 flex items-center gap-2 z-50 app-fade-in ${showApp ? 'show' : ''} transition-colors duration-300`}>
+        <WifiIcon connected={isUabcConnected} className={`${isUabcConnected ? "text-green-400" : "text-gray-500"} w-5 h-5 transition-colors duration-300`} />
+        <span className={`text-xs font-medium ${isUabcConnected ? "text-green-400" : "text-gray-500"} transition-colors duration-300`}>
+          {isUabcConnected ? t('App.uabcConnection') : t('App.networkUnavailable')}
+        </span>
+      </div>
 
       <div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
         <CopyRightMenu />
@@ -200,15 +275,15 @@ function App({ showTourFirstTime = false }: AppProps) {
             <button
               id="login-button"
               type="submit"
-              title={t('App.login')}
+              title={!isUabcConnected ? t('App.networkUnavailable') : t('App.login')}
               onClick={handleLogin}
-              disabled={appState.loading || appState.success || !credentials.email || !credentials.password}
+              disabled={appState.loading || appState.success || !credentials.email || !credentials.password || !isUabcConnected}
               className="h-11 flex items-center justify-center rounded-md font-medium
                         bg-[#006633] hover:bg-[#005528] text-white 
                         disabled:opacity-70 disabled:cursor-not-allowed
                         transition-all duration-300 shadow-sm cursor-pointer w-full"
             >
-              {appState.loading ? t('App.connecting') : appState.success ? t('App.connected') : t('App.login')}
+              {appState.loading ? t('App.connecting') : appState.success ? t('App.connected') : !isUabcConnected ? t('App.networkUnavailable') : t('App.login')}
             </button>
             <button
               title={t('App.logout')}
