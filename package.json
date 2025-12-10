@@ -28,6 +28,7 @@
     "build:all": "./build-and-check.sh"
   },
   "dependencies": {
+    "@fontsource-variable/nunito": "^5.2.7",
     "@reactour/tour": "^3.8.0",
     "@tailwindcss/vite": "^4.1.17",
     "@tauri-apps/api": "^2.9.1",

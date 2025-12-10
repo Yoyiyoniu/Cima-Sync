@@ -16,6 +16,7 @@ import img from "./assets/img/cima_sync_logo.png";
 import StopIcon from "./assets/icons/StopIcon";
 import WifiIcon from "./assets/icons/WifiIcon";
 
+import '@fontsource-variable/nunito';
 import "./css/Global.css"
 import "./css/AppAnimations.css"
 
