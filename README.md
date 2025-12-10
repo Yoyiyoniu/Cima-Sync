@@ -48,7 +48,7 @@
 | Característica | Descripción |
 |----------------|-------------|
 | Autenticación automática | Login automático al conectarse a la red UABC |
-| Almacenamiento seguro | Guardado local de credenciales con encriptación |
+| Almacenamiento seguro | Uso de Keyring/Llavero del sistema operativo (encriptación nativa) |
 | Monitoreo continuo | Verificación periódica de la conexión |
 | Multiplataforma | Funciona en Windows, macOS y Linux |
 | Inicio automático | Opción para iniciar automáticamente al encender la PC |
@@ -69,7 +69,8 @@
 - **Rust** - Lógica de autenticación y networking
 - **Tauri 2** - Framework para aplicaciones de escritorio multiplataforma
 - **reqwest** - Cliente HTTP para Rust
-- **SQLite** - Guardar datos de forma local y encriptada
+- **Keyring** - Gestión segura de credenciales nativa
+- **SQLite** - Configuración de la aplicación
 
 ### Estructura del proyecto
 
@@ -126,8 +127,7 @@ npm run tauri build
 ## Seguridad
 
 ### Almacenamiento de credenciales
-- Las credenciales se almacenan localmente en una base de datos SQLite
-- Los datos se encriptan antes de ser guardados
+- Las credenciales se almacenan de forma segura utilizando el llavero nativo del sistema operativo (Windows Credential Manager, macOS Keychain, Linux Secret Service).
 
 ### Certificados SSL
 - La aplicación maneja certificados SSL autofirmados del portal UABC

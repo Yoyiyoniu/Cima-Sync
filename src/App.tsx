@@ -45,7 +45,7 @@ function App({ showTourFirstTime = false }: AppProps) {
     appStateRef.current = appState;
   }, [appState]);
 
-  disableContextMenu();
+  // disableContextMenu();
 
   useEffect(() => {
     if (showTourFirstTime) {
@@ -69,7 +69,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
         const result = await getCredentials();
 
-        if (result) {
+        if (result && result.email && result.password) {
           setCredentials({ email: result.email, password: result.password });
         }
       } catch (error) {

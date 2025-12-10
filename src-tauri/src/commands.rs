@@ -1,4 +1,8 @@
-use crate::crypto::{encrypt_text, decrypt_text, init_session_key, clear_session_key, set_session_key};
+use crate::crypto::{
+    init_crypto_system, clear_stored_key,
+    save_credentials_to_keyring, get_credentials_from_keyring, clear_credentials_from_keyring,
+    UserCredentials
+};
 
 use crate::auth::Auth;
 
@@ -50,29 +54,47 @@ pub fn login(email: &str, password: &str) -> Result<String, String> {
 }
 
 
-// ENCRYPTION COMMANDS
+// ENCRYPTION & CREDENTIALS COMMANDS
 #[tauri::command]
-pub fn init_crypto() -> String {
-    init_session_key()
+pub fn init_crypto() -> Result<String, String> {
+    init_crypto_system()?;
+    Ok("Sistema de encriptación inicializado".to_string())
 }
 
 #[tauri::command]
+pub fn save_credentials(email: &str, password: &str) -> Result<(), String> {
+    save_credentials_to_keyring(email, password)
+}
+
+#[tauri::command]
+pub fn get_credentials() -> Result<UserCredentials, String> {
+    get_credentials_from_keyring()
+}
+
+#[tauri::command]
+pub fn delete_credentials() -> Result<(), String> {
+    clear_credentials_from_keyring()
+}
+
+#[tauri::command]
+pub fn clear_crypto() -> Result<(), String> {
+    clear_stored_key()
+}
+
+// Legacy / Deprecated placeholders para evitar errores si el frontend viejo llama
+#[tauri::command]
 pub fn encrypt_credentials(plaintext: &str) -> Result<String, String> {
-    encrypt_text(plaintext)
+    // Si aun se llama por error, retorna dummy o implementa si es necesario.
+    // Pero la idea es migrar. Dejaré implementación base por si acaso.
+    crate::crypto::encrypt_text(plaintext)
 }
 
 #[tauri::command]
 pub fn decrypt_credentials(ciphertext: &str) -> Result<String, String> {
-    decrypt_text(ciphertext)
+    crate::crypto::decrypt_text(ciphertext)
 }
 
 #[tauri::command]
-pub fn clear_crypto() {
-    clear_session_key();
-}
-
-#[tauri::command]
-pub fn set_crypto_key(key_b64: &str) -> Result<String, String> {
-    set_session_key(key_b64)?;
-    Ok("Clave de encriptación establecida correctamente".to_string())
+pub fn set_crypto_key(_key_b64: &str) -> Result<String, String> {
+    Ok("Comando obsoleto".to_string())
 }
