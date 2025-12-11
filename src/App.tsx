@@ -45,7 +45,7 @@ function App({ showTourFirstTime = false }: AppProps) {
     appStateRef.current = appState;
   }, [appState]);
 
-  // disableContextMenu();
+  disableContextMenu();
 
   useEffect(() => {
     if (showTourFirstTime) {
