@@ -62,6 +62,7 @@ if [ "$DEBIAN_OK" = true ] || [ "$RPM_OK" = true ] || [ "$APPIMAGE_OK" = true ];
     if [ "$APPIMAGE_OK" = true ]; then
         APPIMAGE_FILE="./src-tauri/target/release/bundle/appimage/cima-sync_1.0.0_amd64.AppImage"
         cp "$APPIMAGE_FILE" "$RELEASE_DIR/" && chmod +x "$RELEASE_DIR/cima-sync_1.0.0_amd64.AppImage" && echo -e "${GREEN}✓ Copied AppImage${NC}" || echo -e "${RED}✗ Failed to copy AppImage${NC}"
+        cp -R ./src-tauri/target/release/bundle/appimage/cima-sync.AppDir "$RELEASE_DIR/" && echo -e "${GREEN}✓ Copied AppDir${NC}" || echo -e "${RED}✗ Failed to copy AppDir${NC}"
     fi
     
     echo -e "${GREEN}✓ Files copied to $RELEASE_DIR${NC}"
