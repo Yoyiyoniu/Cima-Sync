@@ -5,6 +5,7 @@ use crate::crypto::{
 };
 
 use crate::auth::Auth;
+use crate::network_controller::network_sync::get_current_network_status;
 
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -97,4 +98,11 @@ pub fn decrypt_credentials(ciphertext: &str) -> Result<String, String> {
 #[tauri::command]
 pub fn set_crypto_key(_key_b64: &str) -> Result<String, String> {
     Ok("Comando obsoleto".to_string())
+}
+
+// NETWORK STATUS COMMANDS
+
+#[tauri::command]
+pub fn get_network_status() -> serde_json::Value {
+    get_current_network_status()
 }

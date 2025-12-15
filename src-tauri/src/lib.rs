@@ -18,7 +18,8 @@ use crate::commands::{
     set_crypto_key,
     save_credentials,
     get_credentials,
-    delete_credentials
+    delete_credentials,
+    get_network_status
 };
 
 pub fn run() {
@@ -62,7 +63,8 @@ pub fn run() {
             set_crypto_key,
             save_credentials,
             get_credentials,
-            delete_credentials
+            delete_credentials,
+            get_network_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

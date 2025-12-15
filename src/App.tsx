@@ -121,10 +121,20 @@ function App({ showTourFirstTime = false }: AppProps) {
     };
 
     const setupStatusListener = async () => {
+      // 1. Escuchar cambios de red en tiempo real
       const unlisten = await listen('network-status', (event: any) => {
         const payload = event.payload;
-        setIsUabcConnected(payload.is_uabc);
+        setIsUabcConnected(!!payload.is_uabc);
       });
+
+      // 2. Consultar el estado actual por si el evento inicial ya se emitió
+      try {
+        const status: any = await invoke("get_network_status");
+        setIsUabcConnected(!!status.is_uabc);
+      } catch (error) {
+        console.error("Error fetching initial network status:", error);
+      }
+
       return unlisten;
     }
 

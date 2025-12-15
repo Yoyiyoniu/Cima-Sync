@@ -1,17 +1,19 @@
 use netwatcher::{watch_interfaces, Interface, Update};
 use std::collections::HashMap;
+use std::process::Command;
 use std::sync::{Arc, Mutex, Once};
-use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
-use std::process::Command;
 use tauri::Emitter;
+use lazy_static::lazy_static;
 
 static MONITOR_ONCE: Once = Once::new();
 
-// NETWORK SYNC CONFIGURATION
+lazy_static! {
+    static ref LAST_STATE: Arc<Mutex<Option<WifiState>>> = Arc::new(Mutex::new(None));
+}
+
 const SSID_RETRY_DELAY_MS: u64 = 500;
-const THREAD_KEEP_ALIVE_TIMEOUT_SECS: u64 = 3600;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct WifiState {
@@ -22,116 +24,92 @@ struct WifiState {
 
 impl WifiState {
     fn from_interfaces(interfaces: &HashMap<u32, Interface>) -> Option<Self> {
+        interfaces.values()
+            .filter(|iface| !iface.ips.is_empty() && is_wifi_interface(&iface.name))
+            .find_map(|iface| {
+                let ipv4 = iface.ips.iter()
+                    .map(|ip| ip.ip.to_string())
+                    .find(|ip_str| !ip_str.starts_with("fe80:") && !ip_str.starts_with("169.254."))?;
 
-        for interface in interfaces.values() {
-            if interface.ips.is_empty() || !is_wifi_interface(&interface.name) {
-                continue;
-            }
-
-            // Filtrar IPs IPv4 válidas (excluyendo IPv6 link-local y APIPA)
-            let ipv4 = interface
-                .ips
-                .iter()
-                .find(|ip| {
-                    let ip_str = ip.ip.to_string();
-                    !ip_str.starts_with("fe80:") && !ip_str.starts_with("169.254.")
+                Some(WifiState {
+                    interface: iface.name.clone(),
+                    ssid: get_wifi_ssid(&iface.name),
+                    ipv4: Some(ipv4),
                 })
-                .map(|ip| ip.ip.to_string());
-
-            if ipv4.is_some() {
-                return Some(WifiState {
-                    interface: interface.name.clone(),
-                    ssid: get_wifi_ssid(&interface.name),
-                    ipv4,
-                });
-            }
-        }
-        None
-        
+            })
     }
 }
 
-/// Obtiene el SSID de una interfaz WiFi usando comandos del sistema
-/// En Linux intenta primero con iwgetid, luego con nmcli como fallback
+#[inline]
+fn check_is_uabc(ssid: &Option<String>) -> bool {
+    ssid.as_ref().map(|s| s.contains("UABC")).unwrap_or(false)
+}
+
+fn create_status_payload(ssid: Option<String>) -> serde_json::Value {
+    let is_uabc = check_is_uabc(&ssid);
+    let connected = ssid.is_some();
+    
+    serde_json::json!({
+        "connected": connected,
+        "ssid": ssid,
+        "is_uabc": is_uabc
+    })
+}
+
+pub fn get_current_network_status() -> serde_json::Value {
+    let ssid = LAST_STATE.lock().unwrap()
+        .as_ref()
+        .and_then(|state| state.ssid.clone());
+    create_status_payload(ssid)
+}
+
 fn get_wifi_ssid(interface_name: &str) -> Option<String> {
     #[cfg(target_os = "linux")]
     {
-        Command::new("iwgetid")
-            .arg("-r")
+        if let Ok(output) = Command::new("iwgetid")
             .arg(interface_name)
+            .arg("--raw")
             .output()
-            .ok()
-            .filter(|o| o.status.success())
-            .and_then(|o| String::from_utf8(o.stdout).ok())
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .or_else(|| {
-                // Fallback: usar nmcli si iwgetid no está disponible
-                Command::new("nmcli")
-                    .args(&["-t", "-f", "active,ssid", "dev", "wifi"])
-                    .output()
-                    .ok()
-                    .filter(|o| o.status.success())
-                    .and_then(|o| String::from_utf8(o.stdout).ok())
-                    .and_then(|output| {
-                        output
-                            .lines()
-                            .find(|l| l.starts_with("yes:"))
-                            .and_then(|l| l.split(':').nth(1))
-                            .map(|s| s.trim().to_string())
-                            .filter(|s| !s.is_empty())
-                    })
-            })
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        Command::new("netsh")
-            .args(&["wlan", "show", "interfaces"])
-            .output()
-            .ok()
-            .filter(|o| o.status.success())
-            .and_then(|o| String::from_utf8_lossy(&o.stdout).lines().find_map(|line| {
-                if line.trim().starts_with("SSID") {
-                    line.split(':').nth(1)
-                        .map(|s| s.trim().to_string())
-                        .filter(|s| !s.is_empty() && s != "N/A")
-                } else {
-                    None
+        {
+            if output.status.success() {
+                let ssid = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                if !ssid.is_empty() {
+                    return Some(ssid);
                 }
-            }))
-    }
+            }
+        }
 
-    #[cfg(target_os = "macos")]
-    {
-        Command::new("/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport")
-            .arg("-I")
+        if let Ok(output) = Command::new("nmcli")
+            .args(["-t", "-f", "active,ssid,device", "dev", "wifi"])
             .output()
-            .ok()
-            .filter(|o| o.status.success())
-            .and_then(|o| String::from_utf8_lossy(&o.stdout).lines().find_map(|line| {
-                if line.trim().starts_with("SSID:") {
-                    line.split(':').nth(1)
-                        .map(|s| s.trim().to_string())
-                        .filter(|s| !s.is_empty())
-                } else {
-                    None
+        {
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                for line in stdout.lines() {
+                    let parts: Vec<&str> = line.split(':').collect();
+                    if parts.len() >= 3 && parts[0] == "yes" && parts[2] == interface_name {
+                        let ssid = parts[1].trim().to_string();
+                        if !ssid.is_empty() {
+                            return Some(ssid);
+                        }
+                    }
                 }
-            }))
+            }
+        }
+
+        Some("SSID no disponible".to_string())
     }
 
-    #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
+    #[cfg(not(target_os = "linux"))]
     {
-        None
+        eprintln!("[network-sync] get_wifi_ssid no está implementado para este sistema operativo; usando fallback genérico");
+        Some("SSID no disponible".to_string())
     }
 }
 
-/// Detecta si una interfaz es WiFi
 #[inline]
 fn is_wifi_interface(name: &str) -> bool {
     let name_lower = name.to_lowercase();
-    let name_bytes = name_lower.as_bytes();
-    let name_len = name_bytes.len();
 
     #[cfg(target_os = "windows")]
     {
@@ -143,31 +121,29 @@ fn is_wifi_interface(name: &str) -> bool {
 
     #[cfg(target_os = "linux")]
     {
-        (name_len >= 4 && name_bytes.starts_with(b"wlan"))
-            || (name_len >= 3 && name_bytes.starts_with(b"wlp"))
-            || (name_len >= 4 && name_bytes.starts_with(b"wifi"))
+        name_lower.starts_with("wlan")
+            || name_lower.starts_with("wlp")
+            || name_lower.starts_with("wifi")
             || name_lower.contains("wireless")
     }
 
     #[cfg(target_os = "macos")]
     {
-        (name_len >= 2 && name_bytes.starts_with(b"en")
-            && name_len == 3 && (name_bytes[2] == b'0' || name_bytes[2] == b'1'))
+        matches!(name, "en0" | "en1")
             || name_lower.contains("wifi")
             || name_lower.contains("wireless")
     }
 
     #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
     {
-        (name_len >= 4 && name_bytes.starts_with(b"wlan"))
-            || (name_len >= 3 && name_bytes.starts_with(b"wlp"))
-            || (name_len >= 4 && name_bytes.starts_with(b"wifi"))
+        name_lower.starts_with("wlan")
+            || name_lower.starts_with("wlp")
+            || name_lower.starts_with("wifi")
             || name_lower.starts_with("wi-fi")
             || name_lower.contains("wireless")
     }
 }
 
-/// Inicia el monitor de red
 pub fn start_network_monitor(app: tauri::AppHandle) {
     MONITOR_ONCE.call_once(|| {
         thread::spawn(move || monitor_loop(app));
@@ -175,14 +151,10 @@ pub fn start_network_monitor(app: tauri::AppHandle) {
 }
 
 fn monitor_loop(app: tauri::AppHandle) {
-    let last_state = Arc::new(Mutex::new(Option::<WifiState>::None));
     let is_first_update = Arc::new(Mutex::new(true));
 
-    let last_state_clone = Arc::clone(&last_state);
-    let is_first_update_clone = Arc::clone(&is_first_update);
-
     let _handle = match watch_interfaces(move |update: Update| {
-        handle_network_update(update, &last_state_clone, &is_first_update_clone, &app);
+        handle_network_update(update, &is_first_update, &app);
     }) {
         Ok(handle) => handle,
         Err(err) => {
@@ -191,40 +163,28 @@ fn monitor_loop(app: tauri::AppHandle) {
         }
     };
 
-    // Usar un channel que nunca recibe nada para mantener el thread vivo
-    // El handle del monitor debe permanecer en scope para que funcione
-    let (_sender, receiver) = mpsc::channel::<()>();
     loop {
-        if receiver.recv_timeout(Duration::from_secs(THREAD_KEEP_ALIVE_TIMEOUT_SECS)).is_ok() {
-            break;
-        }
+        thread::park();
     }
 }
 
 fn emit_network_status(app: &tauri::AppHandle, ssid: Option<String>) {
-    let is_uabc = ssid.as_ref().map(|s| s.contains("UABC")).unwrap_or(false);
-    let connected = ssid.is_some();
-    
-    let payload = serde_json::json!({
-        "connected": connected,
-        "ssid": ssid,
-        "is_uabc": is_uabc
-    });
+    let is_uabc = check_is_uabc(&ssid);
+    let payload = create_status_payload(ssid);
 
     if let Err(e) = app.emit("network-status", payload) {
-        eprintln!("Error emitting network-status event: {}", e);
+        eprintln!("[network-sync] Error emitiendo evento network-status: {}", e);
     }
 
     if is_uabc {
-         if let Err(e) = app.emit("uabc-detected", ()) {
-             eprintln!("Error emitting uabc-detected event: {}", e);
-         }
+        if let Err(e) = app.emit("uabc-detected", ()) {
+            eprintln!("[network-sync] Error emitiendo evento uabc-detected: {}", e);
+        }
     }
 }
 
 fn handle_network_update(
     update: Update,
-    last_state: &Arc<Mutex<Option<WifiState>>>,
     is_first_update: &Arc<Mutex<bool>>,
     app: &tauri::AppHandle,
 ) {
@@ -232,72 +192,56 @@ fn handle_network_update(
 
     let is_first = {
         let mut guard = is_first_update.lock().unwrap();
-        if *guard {
-            *guard = false;
-            true
-        } else {
-            false
-        }
+        std::mem::replace(&mut *guard, false)
     };
 
     if is_first {
-        if let Some(state) = &current_state {
-            if let Some(ssid) = &state.ssid {
-                println!("[network-sync] WiFi actual: '{}'", ssid);
-                emit_network_status(app, Some(ssid.clone()));
-            } else {
-                println!("[network-sync] WiFi actual: conectado (SSID no disponible)");
-                emit_network_status(app, None);
-            }
-        } else {
-             emit_network_status(app, None);
+        let ssid = current_state.as_ref().and_then(|s| s.ssid.clone());
+        if let Some(ref ssid_str) = ssid {
+            println!("[network-sync] WiFi actual: '{}'", ssid_str);
         }
-        *last_state.lock().unwrap() = current_state;
+        emit_network_status(app, ssid);
+        *LAST_STATE.lock().unwrap() = current_state;
         return;
     }
 
-    let mut state_guard = last_state.lock().unwrap();
+    let mut state_guard = LAST_STATE.lock().unwrap();
     let previous_state = state_guard.clone();
 
-    if let (Some(prev), Some(curr)) = (&previous_state, &current_state) {
-        let ssid_changed = prev.ssid != curr.ssid;
-        let ip_changed = prev.ipv4 != curr.ipv4;
+    match (&previous_state, &current_state) {
+        (Some(prev), Some(curr)) => {
+            if prev.ssid != curr.ssid || prev.ipv4 != curr.ipv4 {
+                let mut updated_state = curr.clone();
+                
+                if updated_state.ssid.is_none() {
+                    thread::sleep(Duration::from_millis(SSID_RETRY_DELAY_MS));
+                    updated_state.ssid = get_wifi_ssid(&curr.interface);
+                }
 
-        if ssid_changed || ip_changed {
-            let prev_ssid = prev.ssid.as_deref().unwrap_or("desconocida");
-            
-            // Si el SSID no está disponible inmediatamente después del cambio,
-            // esperar un poco para que el sistema lo actualice y reintentar
-            let mut updated_state = curr.clone();
-            if updated_state.ssid.is_none() {
-                thread::sleep(Duration::from_millis(SSID_RETRY_DELAY_MS));
-                updated_state.ssid = get_wifi_ssid(&curr.interface);
-            }
-            
-            let curr_ssid = updated_state.ssid.as_deref().unwrap_or("desconocida");
+                if prev.ssid != updated_state.ssid {
+                    let prev_ssid = prev.ssid.as_deref().unwrap_or("desconocida");
+                    let curr_ssid = updated_state.ssid.as_deref().unwrap_or("desconocida");
+                    println!("[network-sync] Cambio de red WiFi: '{}' -> '{}'", prev_ssid, curr_ssid);
+                    emit_network_status(app, updated_state.ssid.clone());
+                }
 
-            if prev_ssid != curr_ssid {
-                println!("[network-sync] Cambio de red WiFi: '{}' -> '{}'", prev_ssid, curr_ssid);
-                emit_network_status(app, updated_state.ssid.clone());
-            } else if ip_changed {
-                println!("[network-sync] Cambio de red WiFi: '{}' (reconexión)", curr_ssid);
+                *state_guard = Some(updated_state);
             }
-            
-            // Actualizar con el SSID obtenido para evitar detectar el cambio dos veces
-            *state_guard = Some(updated_state);
-            return;
         }
-    } else if previous_state.is_none() && current_state.is_some() {
-        if let Some(ssid) = &current_state.as_ref().unwrap().ssid {
-            println!("[network-sync] WiFi conectado: '{}'", ssid);
-            emit_network_status(app, Some(ssid.clone()));
+        (None, Some(curr)) => {
+            if let Some(ref ssid) = curr.ssid {
+                println!("[network-sync] WiFi conectado: '{}'", ssid);
+                emit_network_status(app, Some(ssid.clone()));
+            }
+            *state_guard = current_state;
         }
-    } else if previous_state.is_some() && current_state.is_none() {
-        if let Some(ssid) = &previous_state.as_ref().unwrap().ssid {
-            println!("[network-sync] WiFi desconectado: '{}'", ssid);
+        (Some(prev), None) => {
+            if let Some(ref ssid) = prev.ssid {
+                println!("[network-sync] WiFi desconectado: '{}'", ssid);
+            }
+            emit_network_status(app, None);
+            *state_guard = None;
         }
-        emit_network_status(app, None);
+        (None, None) => {}
     }
-
-    *state_guard = current_state;
 }
