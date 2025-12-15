@@ -16,6 +16,7 @@ import img from "./assets/img/cima_sync_logo.png";
 import StopIcon from "./assets/icons/StopIcon";
 import WifiIcon from "./assets/icons/WifiIcon";
 
+import '@fontsource-variable/nunito';
 import "./css/Global.css"
 import "./css/AppAnimations.css"
 
@@ -68,7 +69,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
         const result = await getCredentials();
 
-        if (result) {
+        if (result && result.email && result.password) {
           setCredentials({ email: result.email, password: result.password });
         }
       } catch (error) {
@@ -120,10 +121,20 @@ function App({ showTourFirstTime = false }: AppProps) {
     };
 
     const setupStatusListener = async () => {
+      // 1. Escuchar cambios de red en tiempo real
       const unlisten = await listen('network-status', (event: any) => {
         const payload = event.payload;
-        setIsUabcConnected(payload.is_uabc);
+        setIsUabcConnected(!!payload.is_uabc);
       });
+
+      // 2. Consultar el estado actual por si el evento inicial ya se emitió
+      try {
+        const status: any = await invoke("get_network_status");
+        setIsUabcConnected(!!status.is_uabc);
+      } catch (error) {
+        console.error("Error fetching initial network status:", error);
+      }
+
       return unlisten;
     }
 

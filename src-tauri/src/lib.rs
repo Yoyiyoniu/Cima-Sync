@@ -15,7 +15,11 @@ use crate::commands::{
     encrypt_credentials, 
     decrypt_credentials, 
     clear_crypto, 
-    set_crypto_key
+    set_crypto_key,
+    save_credentials,
+    get_credentials,
+    delete_credentials,
+    get_network_status
 };
 
 pub fn run() {
@@ -56,7 +60,11 @@ pub fn run() {
             encrypt_credentials, 
             decrypt_credentials, 
             clear_crypto, 
-            set_crypto_key
+            set_crypto_key,
+            save_credentials,
+            get_credentials,
+            delete_credentials,
+            get_network_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

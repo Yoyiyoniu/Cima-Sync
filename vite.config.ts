@@ -23,10 +23,10 @@ export default defineConfig(async () => ({
     host: host || "0.0.0.0", // Permite conexiones desde cualquier IP en la red local
     hmr: host
       ? {
-          protocol: "ws",
-          host,
-          port: 1421,
-        }
+        protocol: "ws",
+        host,
+        port: 1421,
+      }
       : undefined,
     watch: {
       // 3. tell vite to ignore watching `src-tauri`

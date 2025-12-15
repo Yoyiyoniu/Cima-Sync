@@ -34,6 +34,7 @@ aes-gcm = "0.9"
 base64 = "0.22"
 rand = "0.8"
 netwatcher = "0.4.0"
+keyring = { version = "3.6.3", features = ["apple-native", "windows-native", "linux-native", "sync-secret-service"] }
 
 [target.'cfg(not(any(target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"

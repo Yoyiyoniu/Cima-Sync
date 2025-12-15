@@ -4,9 +4,21 @@ use base64::{Engine as _, engine::general_purpose};
 use rand::{RngCore, rngs::OsRng};
 use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
+use keyring::Entry;
+use serde::{Serialize, Deserialize};
+
+const SERVICE_NAME: &str = "cima-sync";
+const KEY_USER: &str = "master_key";
+const KEY_CREDS: &str = "user_creds";
 
 lazy_static! {
     static ref SESSION_KEY: Arc<Mutex<Option<Vec<u8>>>> = Arc::new(Mutex::new(None));
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UserCredentials {
+    pub email: String,
+    pub password: String,
 }
 
 pub fn generate_session_key() -> Vec<u8> {
@@ -15,22 +27,45 @@ pub fn generate_session_key() -> Vec<u8> {
     key
 }
 
-pub fn init_session_key() -> String {
-    let mut session_key = SESSION_KEY.lock().unwrap();
-    
-    if session_key.is_some() {
-        return "EXISTING_KEY".to_string();
-    }
-    
-    let key = generate_session_key();
-    *session_key = Some(key.clone());
-    
-    general_purpose::STANDARD.encode(&key)
+fn get_keyring_entry(key_name: &str) -> Result<Entry, String> {
+    Entry::new(SERVICE_NAME, key_name).map_err(|e| e.to_string())
 }
 
 fn get_session_key() -> Result<Vec<u8>, String> {
-    let session_key = SESSION_KEY.lock().unwrap();
-    session_key.clone().ok_or_else(|| "No hay clave de sesión inicializada".to_string())
+    let mut session_key = SESSION_KEY.lock().unwrap();
+    
+    if let Some(ref key) = *session_key {
+        return Ok(key.clone());
+    }
+
+    // Intentar cargar del keyring
+    let entry = get_keyring_entry(KEY_USER)?;
+    
+    match entry.get_password() {
+        Ok(stored_key_b64) => {
+            let key = general_purpose::STANDARD.decode(stored_key_b64)
+                .map_err(|e| format!("Error decodificando clave almacenada: {}", e))?;
+            
+            if key.len() != 32 {
+                return Err("Clave almacenada corrupta o inválida".to_string());
+            }
+            
+            *session_key = Some(key.clone());
+            Ok(key)
+        },
+        Err(keyring::Error::NoEntry) => {
+            // Generar nueva clave
+            let key = generate_session_key();
+            let key_b64 = general_purpose::STANDARD.encode(&key);
+            
+            entry.set_password(&key_b64)
+                .map_err(|e| format!("Error guardando clave en keyring: {}", e))?;
+                
+            *session_key = Some(key.clone());
+            Ok(key)
+        },
+        Err(e) => Err(format!("Error de keyring: {}", e))
+    }
 }
 
 pub fn encrypt_text(plaintext: &str) -> Result<String, String> {
@@ -74,27 +109,56 @@ pub fn decrypt_text(ciphertext: &str) -> Result<String, String> {
         .map_err(|e| format!("Error al convertir a UTF-8: {}", e))
 }
 
-#[allow(dead_code)]
-pub fn has_session_key() -> bool {
-    let session_key = SESSION_KEY.lock().unwrap();
-    session_key.is_some()
+pub fn save_credentials_to_keyring(email: &str, password: &str) -> Result<(), String> {
+    let creds = UserCredentials {
+        email: email.to_string(),
+        password: password.to_string(),
+    };
+    
+    let json = serde_json::to_string(&creds)
+        .map_err(|e| format!("Error serializando credenciales: {}", e))?;
+        
+    let encrypted = encrypt_text(&json)?;
+    
+    let entry = get_keyring_entry(KEY_CREDS)?;
+    entry.set_password(&encrypted)
+        .map_err(|e| format!("Error guardando credenciales en keyring: {}", e))?;
+        
+    Ok(())
 }
 
-pub fn clear_session_key() {
+pub fn get_credentials_from_keyring() -> Result<UserCredentials, String> {
+    let entry = get_keyring_entry(KEY_CREDS)?;
+    
+    let encrypted = entry.get_password()
+        .map_err(|_| "No se encontraron credenciales".to_string())?;
+        
+    let json = decrypt_text(&encrypted)?;
+    
+    serde_json::from_str(&json)
+        .map_err(|e| format!("Error deserializando credenciales: {}", e))
+}
+
+pub fn clear_credentials_from_keyring() -> Result<(), String> {
+    let entry = get_keyring_entry(KEY_CREDS)?;
+    let _ = entry.delete_credential();
+    Ok(())
+}
+
+// Llamada para asegurar que el sistema de criptografía esté listo
+pub fn init_crypto_system() -> Result<(), String> {
+    get_session_key().map(|_| ())
+}
+
+pub fn clear_stored_key() -> Result<(), String> {
     let mut session_key = SESSION_KEY.lock().unwrap();
     *session_key = None;
-}
-
-pub fn set_session_key(key_b64: &str) -> Result<(), String> {
-    let key = general_purpose::STANDARD.decode(key_b64)
-        .map_err(|e| format!("Error al decodificar la clave: {}", e))?;
     
-    if key.len() != 32 {
-        return Err("La clave debe tener 32 bytes".to_string());
-    }
+    let entry_key = get_keyring_entry(KEY_USER)?;
+    let _ = entry_key.delete_credential();
     
-    let mut session_key = SESSION_KEY.lock().unwrap();
-    *session_key = Some(key);
+    let entry_creds = get_keyring_entry(KEY_CREDS)?;
+    let _ = entry_creds.delete_credential();
     
     Ok(())
 }

@@ -6,53 +6,34 @@ interface Credentials {
   password: string;
 }
 
-const SQLITE_CREDENTIALS = "sqlite:cima-sync.db";
+// const SQLITE_CREDENTIALS = "sqlite:cima-sync.db"; // Eliminada
 const SQLITE_CONFIG = "sqlite:cima-config.db";
 
 export async function initEncryption() {
   try {
-    const existingKey = await loadEncryptionKey();
-    if (existingKey) {
-      try {
-        await invoke("set_crypto_key", { keyB64: existingKey });
-      } catch (keyError) {
-        console.error("Error al cargar clave existente:", keyError);
-        
-        await clearEncryptionKey();
-        await clearCredentials();        
-        const sessionKey = await invoke("init_crypto") as string;
-        
-        await saveEncryptionKey(sessionKey);
-      }
-    } else {
-      const sessionKey = await invoke("init_crypto") as string;
-      
-      await saveEncryptionKey(sessionKey);
-    }
+    await invoke("init_crypto");
+
+    // Migración: borrar claves obsoletas de DB
+    await clearEncryptionKeyLegacy();
+
+    // Opcional: borrar DB de credenciales antigua si existe
+    await removeOldCredentialsDB();
+
   } catch (error) {
     console.error("Error al inicializar encriptación:", error);
-    await clearEncryptionKey();
-    await clearCredentials();
-    await invoke("clear_crypto");
-    
     try {
-      const sessionKey = await invoke("init_crypto") as string;
-      await saveEncryptionKey(sessionKey);
+      await invoke("clear_crypto");
+      await invoke("init_crypto");
     } catch (retryError) {
-      console.error("Error al reinicializar sistema de encriptación:", retryError);
+      console.error("Error crítico inicializando criptografía:", retryError);
     }
   }
 }
 
 export async function saveCredentials({ email, password }: Credentials) {
   try {
-    const encryptedEmail = await invoke("encrypt_credentials", { plaintext: email }) as string;
-    const encryptedPassword = await invoke("encrypt_credentials", { plaintext: password }) as string;
-
-    const db = await Database.load(SQLITE_CREDENTIALS);
-    await db.execute("CREATE TABLE IF NOT EXISTS credentials (email TEXT, password TEXT)");
-    await db.execute("DELETE FROM credentials");
-    await db.execute("INSERT INTO credentials (email, password) VALUES ($1, $2)", [encryptedEmail, encryptedPassword]);
+    // Guarda directamente en Keyring vía backend
+    await invoke("save_credentials", { email, password });
   } catch (error) {
     console.error("Error saving credentials:", error);
   }
@@ -60,26 +41,22 @@ export async function saveCredentials({ email, password }: Credentials) {
 
 export async function getCredentials(): Promise<Credentials | undefined> {
   try {
-    const db = await Database.load(SQLITE_CREDENTIALS);
-    await db.execute("CREATE TABLE IF NOT EXISTS credentials (email TEXT, password TEXT)");
-    const result = await db.select("SELECT email, password FROM credentials LIMIT 1") as Credentials[];
-    if (Array.isArray(result) && result.length > 0 && result[0]?.email && result[0]?.password) {
-      const decryptedEmail = await invoke("decrypt_credentials", { ciphertext: result[0].email }) as string;
-      const decryptedPassword = await invoke("decrypt_credentials", { ciphertext: result[0].password }) as string;
-      return { email: decryptedEmail, password: decryptedPassword };
+    // Recupera directamente del Keyring vía backend
+    const creds = await invoke("get_credentials") as Credentials;
+    if (creds && creds.email && creds.password) {
+      return creds;
     }
     return undefined;
   } catch (error) {
-    console.error("Error getting credentials:", error);
+    // Si no hay credenciales o error (e.g. key mismatch), retorna undefined silenciosamente
+    // console.warn("Error getting credentials:", error); 
     return undefined;
   }
 }
 
 export async function clearCredentials() {
   try {
-    const db = await Database.load(SQLITE_CREDENTIALS);
-    await db.execute("DELETE FROM credentials");
-    await invoke("clear_crypto");
+    await invoke("delete_credentials");
   } catch (error) {
     console.error("Error clearing credentials:", error);
   }
@@ -197,40 +174,27 @@ export async function clearConfig() {
   }
 }
 
-export async function saveEncryptionKey(keyB64: string) {
+async function clearEncryptionKeyLegacy() {
   try {
     const db = await Database.load(SQLITE_CONFIG);
-    await db.execute("CREATE TABLE IF NOT EXISTS crypto_keys (key_data TEXT)");
-    await db.execute("DELETE FROM crypto_keys");
-    await db.execute("INSERT INTO crypto_keys (key_data) VALUES ($1)", [keyB64]);
+    await db.execute("DROP TABLE IF EXISTS crypto_keys");
   } catch (error) {
-    console.error("Error saving encryption key:", error);
+    // Ignorar
   }
 }
 
-export async function loadEncryptionKey(): Promise<string | undefined> {
+async function removeOldCredentialsDB() {
   try {
-    const db = await Database.load(SQLITE_CONFIG);
-    await db.execute("CREATE TABLE IF NOT EXISTS crypto_keys (key_data TEXT)");
-    const result = await db.select("SELECT key_data FROM crypto_keys LIMIT 1") as { key_data: string }[];
-    if (Array.isArray(result) && result.length > 0 && typeof result[0]?.key_data === 'string') {
-      return result[0].key_data;
-    }
-    return undefined;
-  } catch (error) {
-    console.error("Error loading encryption key:", error);
-    return undefined;
+    const db = await Database.load("sqlite:cima-sync.db");
+    await db.execute("DROP TABLE IF EXISTS credentials");
+  } catch (e) {
+    // Ignorar
   }
 }
 
 export async function removeDatabase() {
-  try {
-    const dbCreds = await Database.load(SQLITE_CREDENTIALS);
-    await dbCreds.execute("DROP TABLE IF EXISTS credentials");
-  } catch (error) {
-    console.error("Error removing credentials database:", error);
-  }
-  
+  await removeOldCredentialsDB();
+
   try {
     const dbCfg = await Database.load(SQLITE_CONFIG);
     await dbCfg.execute("DROP TABLE IF EXISTS settings");
@@ -244,22 +208,11 @@ export async function removeDatabase() {
 export async function resetCredentialsSystem() {
   try {
     await clearCredentials();
-    
     await setRememberSessionConfig(false);
-    
-    await clearEncryptionKey();
-    
     await invoke("clear_crypto");
+    await clearEncryptionKeyLegacy();
+    await removeOldCredentialsDB();
   } catch (error) {
     console.error("Error reseteando sistema de credenciales:", error);
-  }
-}
-
-export async function clearEncryptionKey() {
-  try {
-    const db = await Database.load(SQLITE_CONFIG);
-    await db.execute("DELETE FROM crypto_keys");
-  } catch (error) {
-    console.error("Error clearing encryption key:", error);
   }
 }

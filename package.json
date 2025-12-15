@@ -21,11 +21,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:windows": "tsc && vite build --target win32",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:windows": "bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc && ./scripts/check-builds-windows.sh",
+    "build:linux": "./scripts/build-linux.sh && ./scripts/check-builds-linux.sh",
+    "build:all": "./build-and-check.sh"
   },
   "dependencies": {
+    "@fontsource-variable/nunito": "^5.2.7",
     "@reactour/tour": "^3.8.0",
     "@tailwindcss/vite": "^4.1.17",
     "@tauri-apps/api": "^2.9.1",

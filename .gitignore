@@ -2,6 +2,7 @@
 OutApps/
 ~/
 appimagetool
+release/*
 
 # dependency directories
 node_modules/
