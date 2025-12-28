@@ -203,11 +203,11 @@ export function Onboarding() {
 	const isLast = step === steps.length - 1;
 
 	return (
-		<main className="min-h-screen w-full text-white bg-gradient-to-br from-gray-950 via-slate-950 to-gray-900 overflow-hidden relative">
+		<main className="min-h-screen w-full text-white bg-linear-to-r from-gray-950 via-slate-950 to-gray-900 overflow-hidden relative">
 			{/* Fondo animado */}
 			<div className="absolute inset-0">
-				<div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-transparent to-transparent"></div>
-				<div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-teal-900/20 via-transparent to-transparent"></div>
+				<div className="absolute top-0 left-0 w-full h-full bg-radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-transparent to-transparent"></div>
+				<div className="absolute bottom-0 right-0 w-full h-full bg-radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-teal-900/20 via-transparent to-transparent"></div>
 				<motion.div
 					className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl"
 					animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -233,7 +233,7 @@ export function Onboarding() {
 						>
 							{/* Mensaje de bienvenida */}
 							<motion.h1
-								className="text-5xl font-bold mb-8 bg-gradient-to-r from-slate-300 to-gray-400 bg-clip-text text-transparent"
+								className="text-5xl font-bold mb-8 bg-linear-to-r from-slate-300 to-gray-400 bg-clip-text text-transparent"
 								initial={{ y: -50, opacity: 0 }}
 								animate={{ y: 0, opacity: 1 }}
 								transition={{ delay: 0.2, duration: 0.8, type: "spring" }}
@@ -282,7 +282,7 @@ export function Onboarding() {
 
 								{/* Efecto de brillo */}
 								<motion.div
-									className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+									className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent"
 									animate={{
 										x: [-100, 100],
 									}}
@@ -329,7 +329,7 @@ export function Onboarding() {
 						>
 							{/* Círculo de éxito animado */}
 							<motion.div
-								className="mb-6 p-6 rounded-full bg-gradient-to-br from-emerald-500/30 to-teal-600/30 border-2 border-emerald-500/50"
+								className="mb-6 p-6 rounded-full bg-linear-to-br from-emerald-500/30 to-teal-600/30 border-2 border-emerald-500/50"
 								initial={{ scale: 0 }}
 								animate={{ scale: 1 }}
 								transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
@@ -357,7 +357,7 @@ export function Onboarding() {
 							</motion.div>
 
 							<motion.h2
-								className="text-3xl font-bold mb-4 bg-gradient-to-r from-emerald-300 to-teal-400 bg-clip-text text-transparent"
+								className="text-3xl font-bold mb-4 bg-linear-to-r from-emerald-300 to-teal-400 bg-clip-text text-transparent"
 								initial={{ y: -30, opacity: 0 }}
 								animate={{ y: 0, opacity: 1 }}
 								transition={{ delay: 0.2, duration: 0.6 }}
@@ -429,8 +429,8 @@ export function Onboarding() {
 							transition={{ duration: 0.5, type: "spring" }}
 						>
 							{/* Fondo decorativo */}
-							<div className="absolute inset-0 bg-gradient-to-br from-emerald-900/10 via-transparent to-teal-900/10 rounded-3xl"></div>
-							<div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>
+							<div className="absolute inset-0 bg-linear-to-br from-emerald-900/10 via-transparent to-teal-900/10 rounded-3xl"></div>
+							<div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-emerald-500/50 to-transparent"></div>
 
 							{/* Logo de fondo */}
 							<motion.img
@@ -542,7 +542,7 @@ export function Onboarding() {
 										>
 											{/* Icono del paso */}
 											<motion.div
-												className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-600/20 text-emerald-400 border border-emerald-500/30"
+												className="mb-6 p-4 rounded-2xl bg-linear-to-br from-emerald-500/20 to-teal-600/20 text-emerald-400 border border-emerald-500/30"
 												initial={{ scale: 0, rotate: -180 }}
 												animate={{ scale: 1, rotate: 0 }}
 												transition={{
@@ -554,7 +554,7 @@ export function Onboarding() {
 												{steps[step].icon}
 											</motion.div>
 
-											<h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-gray-200 via-emerald-300 to-teal-400 bg-clip-text text-transparent">
+											<h2 className="text-2xl font-bold mb-4 bg-linear-to-r from-gray-200 via-emerald-300 to-teal-400 bg-clip-text text-transparent">
 												{steps[step].title}
 											</h2>
 											<p className="text-gray-300 text-base leading-relaxed max-w-sm">
@@ -619,7 +619,7 @@ export function Onboarding() {
 												>
 													<motion.button
 														onClick={handleOpenKofi}
-														className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 rounded-xl text-white font-semibold shadow-lg shadow-pink-500/25 transition-all"
+														className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-linear-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 rounded-xl text-white font-semibold shadow-lg shadow-pink-500/25 transition-all"
 														whileHover={{
 															scale: 1.02,
 															boxShadow:
@@ -667,7 +667,7 @@ export function Onboarding() {
 									</div>
 									<div className="h-1.5 w-full bg-gray-700/50 rounded-full overflow-hidden">
 										<motion.div
-											className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+											className="h-full bg-linear-to-r from-emerald-500 to-teal-400 rounded-full"
 											initial={false}
 											animate={{
 												width: `${((step + 1) / steps.length) * 100}%`,
@@ -714,7 +714,7 @@ export function Onboarding() {
 									</motion.button>
 
 									<motion.button
-										className="flex-1 px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
+										className="flex-1 px-8 py-3 rounded-xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
 										onClick={() => {
 											if (isLast) {
 												setShowOutro(true);

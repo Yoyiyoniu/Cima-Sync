@@ -82,7 +82,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 				const result = await getCredentials();
 
-				if (result && result.email && result.password) {
+				if (result?.email && result.password) {
 					setCredentials({ email: result.email, password: result.password });
 				}
 			} catch (error) {
@@ -105,13 +105,13 @@ function App({ showTourFirstTime = false }: AppProps) {
 		};
 
 		const setupStatusListener = async () => {
-			// 1. Escuchar cambios de red en tiempo real
+			// 1. Listen for network status changes
 			const unlisten = await listen("network-status", (event: any) => {
 				const payload = event.payload;
 				setIsUabcConnected(!!payload.is_uabc);
 			});
 
-			// 2. Consultar el estado actual por si el evento inicial ya se emitió
+			// 2. Check the current status if the initial event was already emitted
 			try {
 				const status: any = await invoke("get_network_status");
 				setIsUabcConnected(!!status.is_uabc);
@@ -187,7 +187,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	return (
 		<main
-			className={`app-fade-in ${showApp ? "show" : ""} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-gradient-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}
+			className={`app-fade-in ${showApp ? "show" : ""} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}
 		>
 			<img
 				src={img}

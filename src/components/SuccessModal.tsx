@@ -36,7 +36,7 @@ export const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
 
 	return (
 		<div
-			className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center transition-all duration-300 ${
+			className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 flex items-center justify-center transition-all duration-300 ${
 				isAnimating ? "opacity-100" : "opacity-0"
 			}`}
 		>
@@ -57,7 +57,7 @@ export const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
 						/>
 						{/* Efecto de brillo */}
 						<div
-							className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 ${
+							className={`absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 ${
 								isAnimating ? "shine-effect" : ""
 							}`}
 						></div>
