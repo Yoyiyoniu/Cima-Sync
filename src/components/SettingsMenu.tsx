@@ -55,7 +55,7 @@ export const SettingsMenu = () => {
     };
 
     const handleCoffeeRedirect = async () => {
-        await openUrl("https://ko-fi.com/yoyiyo");
+        await openUrl(t("support.koFiUrl"));
     };
 
     const handleRemoveDatabase = async () => {

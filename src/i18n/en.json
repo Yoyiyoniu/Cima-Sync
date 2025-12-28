@@ -1,107 +1,123 @@
 {
-    "Settings": {
-        "title": "Settings",
-        "language": "Language",
-        "language.es": "Spanish",
-        "language.en": "English",
-        "github": "See project on Github",
-        "autoRun": {
-            "title": "Start with System",
-            "description": "Start with System"
-        },
-        "appInfo": {
-            "title": "App info",
-            "name": "Cima Sync",
-            "version": "1.0.0",
-            "description": "Tool to automate the authentication process in the captive portal of UABC."
-        },
-        "config": {
-            "title": "Configuration",
-            "description": "Cima Sync configuration"
-        },
-        "help": {
-            "title": "Help",
-            "description1": "Application to automate the authentication process in the captive portal of UABC.",
-            "description2": "If you have any questions, you can contact the developer."
-        },
-        "removeDatabase": "Delete app data",
-        "tour": "Guided tour",
-        "tour.description": "Show automatic tour when opening the app",
-        "tour.button": "Restart tour"
-    },
-    "App": {
-        "title": "Auto login",
-        "subtitle": "UABC Institutional System",
-        "success": "Connection established successfully.",
-        "email": "Email",
-        "password": "Password",
-        "remember": "Remember session",
-        "rememberTitle": "Keep session active",
-        "login": "Login",
-        "logout": "Logout",
-        "connecting": "Connecting...",
-        "connected": "Connected",
-        "uabcConnection": "UABC Connection",
-        "networkUnavailable": "UABC Network Unavailable",
-        "error": "Error",
-        "autoLogin": "Automatic login",
-        "helpButton": "📖 Need help?",
-        "buyCoffee": "If you liked the app, support the development with a coffee",
-        "supportDevelopment": "Support development"
-    },
-    "SuccessModal": {
-        "title": "All Ready!",
-        "message": "Connection established successfully.",
-        "coffeeMessage": "Did the app help you? Buy me a coffee :)",
-        "buyCoffeeButton": "Buy a coffee",
-        "button": "Got it"
-    },
-    "Input": {
-        "emailPlaceholder": "me@uabc.edu.mx",
-        "passwordPlaceholder": "•••••••••••••"
-    },
-    "Modal": {
-        "cancel": "Cancel",
-        "continue": "Continue",
-        "thanks": "Thanks for your interest",
-        "thanksDescription": "If you are interested in working with us, click the button below",
-        "github": {
-            "title": "You're exiting the app",
-            "description": "You will be redirected to the GitHub page to see the project code. Do you want to continue?"
-        },
-        "coffee": {
-            "title": "You're exiting the app",
-            "description": "You will be redirected to the Ko-fi page to support the app development. Do you want to continue?"
-        },
-        "removeDatabase": {
-            "title": "Remove database",
-            "description": "Are you sure you want to remove the database? This action cannot be undone."
-        }
-    },
-    "Onboarding": {
-        "progress": "Step {{current}} of {{total}}",
-        "prev": "Back",
-        "next": "Next",
-        "finish": "Start",
-        "welcome": {
-            "title": "Welcome to Cima Sync!",
-            "subtitle": "Your tool for automatic authentication at UABC"
-        },
-        "step1": {
-            "title": "Welcome to Cima Sync",
-            "description": "This app helps you authenticate automatically in UABC's captive portal. Select your preferred language to get started."
-        },
-        "step2": {
-            "title": "Save your session if you want",
-            "description": "Enable 'Remember session' so the app tries to login automatically."
-        },
-        "step3": {
-            "title": "Privacy",
-            "description": "Your credentials are stored locally and you can wipe data from Settings."
-        },
-        "ready": {
-            "title": "All ready!",
-            "subtitle": "Starting your Cima Sync experience..."
-        }
-    }
+	"Settings": {
+		"title": "Settings",
+		"language": "Language",
+		"language.es": "Spanish",
+		"language.en": "English",
+		"github": "See project on Github",
+		"autoRun": {
+			"title": "Start with System",
+			"description": "Start with System"
+		},
+		"appInfo": {
+			"title": "App info",
+			"name": "Cima Sync",
+			"version": "1.0.0",
+			"description": "Seamlessly connect to the Cimarrón WiFi. No more manual logins."
+		},
+		"config": {
+			"title": "Configuration",
+			"description": "Cima Sync configuration"
+		},
+		"help": {
+			"title": "Help",
+			"description1": "Automatically authenticates you to the Cimarrón campus WiFi network.",
+			"description2": "Questions or issues? Reach out to the developer."
+		},
+		"removeDatabase": "Delete app data",
+		"tour": "Guided tour",
+		"tour.description": "Show automatic tour when opening the app",
+		"tour.button": "Restart tour"
+	},
+	"App": {
+		"title": "Auto login",
+		"subtitle": "Cimarrón Institutional System",
+		"success": "Connection established successfully.",
+		"email": "Email",
+		"password": "Password",
+		"remember": "Remember session",
+		"rememberTitle": "Keep session active",
+		"login": "Login",
+		"logout": "Logout",
+		"connecting": "Connecting...",
+		"connected": "Connected",
+		"uabcConnection": "Cimarrón Connection",
+		"networkUnavailable": "Cimarrón Network Unavailable",
+		"error": "Error",
+		"autoLogin": "Automatic login",
+		"helpButton": "📖 Need help?",
+		"buyCoffee": "If you liked the app, support the development with a coffee",
+		"supportDevelopment": "Support development"
+	},
+	"SuccessModal": {
+		"title": "All Ready!",
+		"message": "Connection established successfully.",
+		"coffeeMessage": "Did the app help you? Buy me a coffee :)",
+		"buyCoffeeButton": "Buy a coffee",
+		"button": "Got it"
+	},
+	"Input": {
+		"emailPlaceholder": "username@cimarron.edu.mx",
+		"passwordPlaceholder": "•••••••••••••"
+	},
+	"Modal": {
+		"cancel": "Cancel",
+		"continue": "Continue",
+		"thanks": "Thanks for your interest",
+		"thanksDescription": "If you are interested in working with us, click the button below",
+		"github": {
+			"title": "You're exiting the app",
+			"description": "You will be redirected to the GitHub page to see the project code. Do you want to continue?"
+		},
+		"coffee": {
+			"title": "You're exiting the app",
+			"description": "You will be redirected to the Ko-fi page to support the app development. Do you want to continue?"
+		},
+		"removeDatabase": {
+			"title": "Remove database",
+			"description": "Are you sure you want to remove the database? This action cannot be undone."
+		}
+	},
+	"Onboarding": {
+		"progress": "Step {{current}} of {{total}}",
+		"prev": "Back",
+		"next": "Next",
+		"finish": "Start",
+		"welcome": {
+			"title": "Welcome to Cima Sync!",
+			"subtitle": "Your tool for automatic Cimarrón authentication"
+		},
+		"step1": {
+			"title": "🌐 Select Your Language",
+			"description": "Hey Cimarrón! This app automatically connects you to the campus WiFi network. Choose your preferred language to continue."
+		},
+		"step2": {
+			"title": "🔐 Automatic Session",
+			"description": "Enable 'Remember session' and forget about typing your password. The app will log you in every time it detects the Cimarrón network."
+		},
+		"step3": {
+			"title": "🛡️ Your Privacy Matters",
+			"description": "Your credentials are securely stored on your device. They are never sent to external servers. You can delete them anytime from Settings."
+		},
+		"step4": {
+			"title": "⚡ Auto Start",
+			"description": "Want Cima Sync to open automatically when you turn on your computer? You'll always be ready to connect.",
+			"toggle": "Start with system",
+			"enabled": "✓ App will start automatically",
+			"disabled": "App won't start automatically"
+		},
+		"step5": {
+			"title": "☕ Enjoying the app?",
+			"description": "Cima Sync is free and open source. If you find it useful, consider supporting development with a coffee. Every contribution helps a lot!",
+			"button": "Buy me a coffee on Ko-fi",
+			"optional": "This is completely optional, thanks for using Cima Sync!"
+		},
+		"ready": {
+			"title": "All ready!",
+			"subtitle": "Starting your Cima Sync experience..."
+		}
+	},
+	"support": {
+		"koFiUrl": "https://ko-fi.com/yoyiyo"
+	}
 }
