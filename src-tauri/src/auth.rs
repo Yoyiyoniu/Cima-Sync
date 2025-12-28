@@ -34,9 +34,7 @@ impl Auth {
         }
     }
 
-    pub fn login(&self) -> Result<bool, Box<dyn std::error::Error>> {
-        println!("User: {}", self.email);
- 
+    pub fn login(&self) -> Result<bool, Box<dyn std::error::Error>> { 
         let start_time = Instant::now();
         print!("Verificando conexión... ");
 
@@ -247,8 +245,9 @@ fn verify_connection_after_login() -> bool {
 
     thread::sleep(Duration::from_millis(500));
 
+    // Cliente SEGURO - verifica certificados TLS correctamente
+    // Esto previene ataques MITM al verificar conexión a internet
     match reqwest::blocking::Client::builder()
-        .danger_accept_invalid_certs(true)
         .timeout(Duration::from_secs(3))
         .build()
     {
@@ -292,6 +291,8 @@ fn verify_connection_after_login() -> bool {
 }
 
 fn check_redirect(url: &str) -> Result<(bool, Option<String>), Box<dyn std::error::Error>> {
+    // NOTA: Solo se usa para detectar redirecciones del portal captivo UABC
+    // No transmite datos sensibles, solo detecta si hay redirección
     let client = reqwest::blocking::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .timeout(Duration::from_secs(3))

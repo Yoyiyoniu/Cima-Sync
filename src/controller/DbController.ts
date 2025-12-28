@@ -1,11 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import Database from "@tauri-apps/plugin-sql";
 
-interface Credentials {
-	email: string;
-	password: string;
-}
-
 const SQLITE_CONFIG = "sqlite:cima-config.db";
 
 export async function initEncryption() {
@@ -25,47 +20,6 @@ export async function initEncryption() {
 		} catch (retryError) {
 			console.error("Error initializing encryption:", retryError);
 		}
-	}
-}
-
-export async function saveCredentials({ email, password }: Credentials) {
-	try {
-		const db = await Database.load(SQLITE_CONFIG);
-		await db.execute(
-			"INSERT INTO settings (key, value) VALUES ('email', $1), ('password', $2) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-			[email, password],
-		);
-	} catch (error) {
-		console.error("Error saving credentials:", error);
-	}
-}
-
-export async function getCredentials(): Promise<Credentials | undefined> {
-	try {
-		const db = await Database.load(SQLITE_CONFIG);
-		const rows = (await db.select(
-			"SELECT key, value FROM settings WHERE key IN ('email', 'password')",
-		)) as { key: string; value: string }[];
-
-		const email = rows.find((r) => r.key === "email")?.value;
-		const password = rows.find((r) => r.key === "password")?.value;
-
-		if (email && password) {
-			return { email, password };
-		}
-		return undefined;
-	} catch (error) {
-		console.error("Error getting credentials:", error);
-		return undefined;
-	}
-}
-
-export async function clearCredentials() {
-	try {
-		const db = await Database.load(SQLITE_CONFIG);
-		await db.execute("DELETE FROM settings WHERE key IN ('email', 'password')");
-	} catch (error) {
-		console.error("Error clearing credentials:", error);
 	}
 }
 
@@ -198,7 +152,6 @@ export async function removeDatabase() {
 
 export async function resetCredentialsSystem() {
 	try {
-		await clearCredentials();
 		await setRememberSessionConfig(false);
 		await invoke("clear_crypto");
 	} catch (error) {

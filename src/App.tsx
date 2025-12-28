@@ -9,9 +9,6 @@ import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
 
 import {
-	clearCredentials,
-	getCredentials,
-	saveCredentials,
 	getRememberSessionConfig,
 	setRememberSessionConfig,
 	initEncryption,
@@ -80,13 +77,25 @@ function App({ showTourFirstTime = false }: AppProps) {
 				const remember = await getRememberSessionConfig();
 				setRememberSession(remember);
 
-				const result = await getCredentials();
-
-				if (result?.email && result.password) {
-					setCredentials({ email: result.email, password: result.password });
+				// Cargar credenciales desde el keyring seguro
+				if (remember) {
+					try {
+						const storedCreds = await invoke<{
+							email: string;
+							password: string;
+						}>("get_credentials");
+						if (storedCreds?.email && storedCreds?.password) {
+							setCredentials({
+								email: storedCreds.email,
+								password: storedCreds.password,
+							});
+						}
+					} catch {
+						// No hay credenciales guardadas, es normal
+					}
 				}
-			} catch (error) {
-				console.error("Error loading configuration:", error);
+			} catch (_error) {
+				console.error("Error loading configuration:");
 			}
 		};
 
@@ -97,7 +106,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 		const setupNetworkListener = async () => {
 			const unlisten = await listen("uabc-detected", async () => {
 				console.log("UABC Network detected via event");
-				// Solo actualizamos el estado de conexión, el usuario debe autenticarse manualmente
 				setIsUabcConnected(true);
 			});
 
@@ -145,13 +153,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 		try {
 			await setRememberSessionConfig(rememberSession);
 
-			// Guardar credenciales ANTES del login si está marcado "Recordar sesión"
-			if (rememberSession) {
-				await saveCredentials(credentials);
-			} else {
-				await clearCredentials();
-			}
-
 			await invoke("login", {
 				email: credentials.email,
 				password: credentials.password,
@@ -161,10 +162,17 @@ function App({ showTourFirstTime = false }: AppProps) {
 			setShowSuccessModal(true);
 
 			if (rememberSession) {
+				await invoke("save_credentials", {
+					email: credentials.email,
+					password: credentials.password,
+				});
+
 				await invoke("auto_auth", {
 					email: credentials.email,
 					password: credentials.password,
 				});
+			} else {
+				await invoke("delete_credentials");
 			}
 		} catch (error) {
 			console.error("Login error:", error);
@@ -182,7 +190,14 @@ function App({ showTourFirstTime = false }: AppProps) {
 	const handleRememberChange = async (checked: boolean) => {
 		setRememberSession(checked);
 		await setRememberSessionConfig(checked);
-		// No borrar las credenciales automáticamente, solo actualizar la configuración
+
+		if (!checked) {
+			try {
+				await invoke("delete_credentials");
+			} catch (_error) {
+				console.error("Error deleting credentials:");
+			}
+		}
 	};
 
 	return (
