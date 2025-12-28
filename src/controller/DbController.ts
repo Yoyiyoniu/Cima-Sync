@@ -187,6 +187,9 @@ export async function removeDatabase() {
 		await db.execute("DROP TABLE IF EXISTS text_settings");
 		await db.execute("DROP TABLE IF EXISTS credentials");
 		await db.execute("DROP TABLE IF EXISTS crypto_keys");
+		await db.execute(
+			"CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)",
+		);
 		await db.close();
 	} catch (error) {
 		console.error("Error removing database:", error);
