@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use std::thread;
 use std::time::{Duration, Instant};
 
+use crate::network_controller::client_builder::build_client;
+
 const ERROR_NO_CONEXION: &str = "No se detecta conexión a internet.";
 const ERROR_PORTAL_NO_DISPONIBLE: &str = "No estas en el wifi UABC o ya estas conectado.";
 const ERROR_CREDENCIALES: &str = "Credenciales invalidas.";
@@ -34,7 +36,7 @@ impl Auth {
         }
     }
 
-    pub fn login(&self) -> Result<bool, Box<dyn std::error::Error>> { 
+    pub fn login(&self) -> Result<bool, Box<dyn std::error::Error>> {
         let start_time = Instant::now();
         print!("Verificando conexión... ");
 
@@ -108,10 +110,7 @@ impl Auth {
                     thread::sleep(self.success_interval);
                 }
                 Ok(false) | Err(_) => {
-                    println!(
-                        "Retrying in {} seconds.",
-                        self.check_interval.as_secs()
-                    );
+                    println!("Retrying in {} seconds.", self.check_interval.as_secs());
                     thread::sleep(self.check_interval);
                 }
             }
@@ -129,10 +128,7 @@ impl Auth {
 }
 
 fn check_uabc_connection() -> Result<bool, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::builder()
-        .danger_accept_invalid_certs(true)
-        .timeout(Duration::from_secs(3))
-        .build()?;
+    let client = build_client(Duration::from_secs(3), false)?;
 
     match client.get("https://pcw.uabc.mx/").send() {
         Ok(response) => {
@@ -202,10 +198,7 @@ fn send_login(
     password: &str,
     local_id: &str,
 ) -> Result<reqwest::StatusCode, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::builder()
-        .danger_accept_invalid_certs(true)
-        .timeout(Duration::from_secs(5))
-        .build()?;
+    let client = build_client(Duration::from_secs(5), false)?;
 
     let mut form = HashMap::new();
     form.insert("url", local_id);
@@ -222,7 +215,6 @@ fn send_login(
             let body = res.text()?;
 
             if status.is_success() {
-                // Verificar si el título es correcto
                 if body.contains("<title>Login Successful</title>") {
                     println!("Data sent in {:.2} seconds", elapsed.as_secs_f32());
                     Ok(status)
@@ -245,8 +237,6 @@ fn verify_connection_after_login() -> bool {
 
     thread::sleep(Duration::from_millis(500));
 
-    // Cliente SEGURO - verifica certificados TLS correctamente
-    // Esto previene ataques MITM al verificar conexión a internet
     match reqwest::blocking::Client::builder()
         .timeout(Duration::from_secs(3))
         .build()
@@ -291,13 +281,7 @@ fn verify_connection_after_login() -> bool {
 }
 
 fn check_redirect(url: &str) -> Result<(bool, Option<String>), Box<dyn std::error::Error>> {
-    // NOTA: Solo se usa para detectar redirecciones del portal captivo UABC
-    // No transmite datos sensibles, solo detecta si hay redirección
-    let client = reqwest::blocking::Client::builder()
-        .redirect(reqwest::redirect::Policy::none())
-        .timeout(Duration::from_secs(3))
-        .danger_accept_invalid_certs(true)
-        .build()?;
+    let client = build_client(Duration::from_secs(3), true)?;
 
     let response = client.get(url).send()?;
 

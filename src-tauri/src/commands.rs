@@ -1,7 +1,6 @@
 use crate::crypto::{
-    init_crypto_system, clear_stored_key,
-    save_credentials_to_keyring, get_credentials_from_keyring, clear_credentials_from_keyring,
-    UserCredentials
+    clear_credentials_from_keyring, clear_stored_key, get_credentials_from_keyring,
+    init_crypto_system, save_credentials_to_keyring, UserCredentials,
 };
 
 use crate::auth::Auth;
@@ -53,7 +52,6 @@ pub fn login(email: &str, password: &str) -> Result<String, String> {
         Err(e) => Err(format!("{}", e)),
     }
 }
-
 
 // ENCRYPTION & CREDENTIALS COMMANDS
 #[tauri::command]

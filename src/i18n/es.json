@@ -22,7 +22,8 @@
 		"help": {
 			"title": "Ayuda",
 			"description1": "Te autentica automáticamente en la red WiFi del campus Cimarrón.",
-			"description2": "Si tienes alguna duda, puedes contactar al desarrollador."
+			"description2": "Si tienes alguna duda, puedes contactar al desarrollador.",
+			"button": "Reportar un problema"
 		},
 		"removeDatabase": "Eliminar datos",
 		"tour": "Tour guiado",
@@ -76,6 +77,10 @@
 		"removeDatabase": {
 			"title": "Eliminar datos",
 			"description": "¿Estás seguro de querer eliminar los datos de la aplicación? Esta acción no se puede deshacer."
+		},
+		"issues": {
+			"title": "Estás saliendo de la aplicación",
+			"description": "Serás redirigido a la página de issues de GitHub para reportar un problema o sugerir una mejora. ¿Deseas continuar?"
 		}
 	},
 	"Onboarding": {

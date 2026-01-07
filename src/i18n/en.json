@@ -22,7 +22,8 @@
 		"help": {
 			"title": "Help",
 			"description1": "Automatically authenticates you to the Cimarrón campus WiFi network.",
-			"description2": "Questions or issues? Reach out to the developer."
+			"description2": "Questions or issues? Reach out to the developer.",
+			"button": "Report an issue"
 		},
 		"removeDatabase": "Delete app data",
 		"tour": "Guided tour",
@@ -76,6 +77,10 @@
 		"removeDatabase": {
 			"title": "Remove database",
 			"description": "Are you sure you want to remove the database? This action cannot be undone."
+		},
+		"issues": {
+			"title": "You're exiting the app",
+			"description": "You will be redirected to the GitHub issues page to report a problem or suggest an improvement. Do you want to continue?"
 		}
 	},
 	"Onboarding": {

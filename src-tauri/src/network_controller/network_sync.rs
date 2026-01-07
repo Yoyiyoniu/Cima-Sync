@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use netwatcher::{watch_interfaces, Interface, Update};
 use std::collections::HashMap;
 use std::process::Command;
@@ -5,7 +6,6 @@ use std::sync::{Arc, Mutex, Once};
 use std::thread;
 use std::time::Duration;
 use tauri::Emitter;
-use lazy_static::lazy_static;
 
 static MONITOR_ONCE: Once = Once::new();
 
@@ -24,12 +24,17 @@ struct WifiState {
 
 impl WifiState {
     fn from_interfaces(interfaces: &HashMap<u32, Interface>) -> Option<Self> {
-        interfaces.values()
+        interfaces
+            .values()
             .filter(|iface| !iface.ips.is_empty() && is_wifi_interface(&iface.name))
             .find_map(|iface| {
-                let ipv4 = iface.ips.iter()
+                let ipv4 = iface
+                    .ips
+                    .iter()
                     .map(|ip| ip.ip.to_string())
-                    .find(|ip_str| !ip_str.starts_with("fe80:") && !ip_str.starts_with("169.254."))?;
+                    .find(|ip_str| {
+                        !ip_str.starts_with("fe80:") && !ip_str.starts_with("169.254.")
+                    })?;
 
                 Some(WifiState {
                     interface: iface.name.clone(),
@@ -48,7 +53,7 @@ fn check_is_uabc(ssid: &Option<String>) -> bool {
 fn create_status_payload(ssid: Option<String>) -> serde_json::Value {
     let is_uabc = check_is_uabc(&ssid);
     let connected = ssid.is_some();
-    
+
     serde_json::json!({
         "connected": connected,
         "ssid": ssid,
@@ -57,7 +62,9 @@ fn create_status_payload(ssid: Option<String>) -> serde_json::Value {
 }
 
 pub fn get_current_network_status() -> serde_json::Value {
-    let ssid = LAST_STATE.lock().unwrap()
+    let ssid = LAST_STATE
+        .lock()
+        .unwrap()
         .as_ref()
         .and_then(|state| state.ssid.clone());
     create_status_payload(ssid)
@@ -173,7 +180,10 @@ fn emit_network_status(app: &tauri::AppHandle, ssid: Option<String>) {
     let payload = create_status_payload(ssid);
 
     if let Err(e) = app.emit("network-status", payload) {
-        eprintln!("[network-sync] Error emitiendo evento network-status: {}", e);
+        eprintln!(
+            "[network-sync] Error emitiendo evento network-status: {}",
+            e
+        );
     }
 
     if is_uabc {
@@ -212,7 +222,7 @@ fn handle_network_update(
         (Some(prev), Some(curr)) => {
             if prev.ssid != curr.ssid || prev.ipv4 != curr.ipv4 {
                 let mut updated_state = curr.clone();
-                
+
                 if updated_state.ssid.is_none() {
                     thread::sleep(Duration::from_millis(SSID_RETRY_DELAY_MS));
                     updated_state.ssid = get_wifi_ssid(&curr.interface);
@@ -221,7 +231,10 @@ fn handle_network_update(
                 if prev.ssid != updated_state.ssid {
                     let prev_ssid = prev.ssid.as_deref().unwrap_or("desconocida");
                     let curr_ssid = updated_state.ssid.as_deref().unwrap_or("desconocida");
-                    println!("[network-sync] Cambio de red WiFi: '{}' -> '{}'", prev_ssid, curr_ssid);
+                    println!(
+                        "[network-sync] Cambio de red WiFi: '{}' -> '{}'",
+                        prev_ssid, curr_ssid
+                    );
                     emit_network_status(app, updated_state.ssid.clone());
                 }
 

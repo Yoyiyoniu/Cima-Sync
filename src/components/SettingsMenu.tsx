@@ -16,6 +16,8 @@ import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
 import { TourButton } from "./SettingsMenu/TourButton";
 
 import CoffeeIcon from "../assets/icons/CoffeeIcon";
+import HelpIcon from "../assets/icons/HelpIcon";
+
 import { useNavigate } from "react-router";
 
 export const SettingsMenu = () => {
@@ -26,6 +28,7 @@ export const SettingsMenu = () => {
 	const [showGithubModal, setShowGithubModal] = useState(false);
 	const [showRemoveDatabaseModal, setShowRemoveDatabaseModal] = useState(false);
 	const [showCoffeeModal, setShowCoffeeModal] = useState(false);
+	const [showIssuesModal, setShowIssuesModal] = useState(false);
 	const [currentPlatform, setCurrentPlatform] = useState<string>("");
 
 	useEffect(() => {
@@ -34,6 +37,7 @@ export const SettingsMenu = () => {
 				setIsOpen(false);
 				setShowGithubModal(false);
 				setShowCoffeeModal(false);
+				setShowIssuesModal(false);
 			}
 		};
 		window.addEventListener("keydown", handleEscape);
@@ -61,6 +65,10 @@ export const SettingsMenu = () => {
 
 	const handleCoffeeRedirect = async () => {
 		await openUrl(t("support.koFiUrl"));
+	};
+
+	const handleIssuesRedirect = async () => {
+		await openUrl("https://github.com/Yoyiyoniu/cima-sync/issues");
 	};
 
 	const handleRemoveDatabase = async () => {
@@ -106,6 +114,14 @@ export const SettingsMenu = () => {
 				modalText={t("Modal.removeDatabase.description")}
 				setShowModal={setShowRemoveDatabaseModal}
 				handleModalFunction={handleRemoveDatabase}
+			/>
+
+			<Modal
+				showModal={showIssuesModal}
+				title={t("Modal.issues.title")}
+				modalText={t("Modal.issues.description")}
+				setShowModal={setShowIssuesModal}
+				handleModalFunction={handleIssuesRedirect}
 			/>
 			<div
 				className={`fixed top-0 left-0 h-full w-80 bg-white/10 backdrop-blur-md border-r border-white/20 z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
@@ -206,9 +222,15 @@ export const SettingsMenu = () => {
 							<h2 className="text-lg font-semibold text-white">
 								{t("Settings.help.title")}
 							</h2>
-							<div className="space-y-2 text-white/80">
-								<p className="text-sm">• {t("Settings.help.description1")}</p>
-								<p className="text-sm">• {t("Settings.help.description2")}</p>
+							<div className="space-y-2">
+								<button
+									className="flex items-center gap-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 transition-colors duration-200 rounded-md p-2 w-full"
+									type="button"
+									onClick={() => setShowIssuesModal(true)}
+								>
+									<HelpIcon width={20} height={20} />
+									{t("Settings.help.button")}
+								</button>
 							</div>
 						</div>
 					</div>
