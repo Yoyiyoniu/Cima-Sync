@@ -1,7 +1,9 @@
 use reqwest;
+use secrecy::{ExposeSecret, SecretBox};
 use std::collections::HashMap;
 use std::thread;
 use std::time::{Duration, Instant};
+use zeroize::Zeroize;
 
 use crate::network_controller::client_builder::build_client;
 
@@ -17,9 +19,42 @@ const SUCCESS_INTERVAL: Duration = Duration::from_secs(20);
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+#[derive(Clone)]
+pub struct SecureString(String);
+
+impl Zeroize for SecureString {
+    fn zeroize(&mut self) {
+        self.0.zeroize();
+    }
+}
+
+impl Drop for SecureString {
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
+impl From<String> for SecureString {
+    fn from(s: String) -> Self {
+        SecureString(s)
+    }
+}
+
+impl From<&str> for SecureString {
+    fn from(s: &str) -> Self {
+        SecureString(s.to_string())
+    }
+}
+
+impl SecureString {
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+}
+
 pub struct Auth {
     email: String,
-    password: String,
+    password: SecretBox<SecureString>,
     check_interval: Duration,
     success_interval: Duration,
     should_stop: Arc<AtomicBool>,
@@ -29,7 +64,7 @@ impl Auth {
     pub fn new(email: &str, password: &str) -> Self {
         Auth {
             email: email.to_string(),
-            password: password.to_string(),
+            password: SecretBox::new(Box::new(SecureString::from(password))),
             check_interval: MONITORING_INTERVAL,
             success_interval: SUCCESS_INTERVAL,
             should_stop: Arc::new(AtomicBool::new(false)),
@@ -47,7 +82,7 @@ impl Auth {
                     Ok(true)
                 } else {
                     let login_start = Instant::now();
-                    match auto_login(&self.email, &self.password) {
+                    match auto_login(&self.email, self.password.expose_secret().expose()) {
                         Ok(success) => {
                             let _login_elapsed = login_start.elapsed();
                             if success {

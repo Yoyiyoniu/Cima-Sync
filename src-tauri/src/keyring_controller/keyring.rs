@@ -2,15 +2,42 @@ use crate::keyring_controller::crypto::{decrypt_text, encrypt_text, generate_ses
 use base64::{engine::general_purpose, Engine as _};
 use keyring::Entry;
 use lazy_static::lazy_static;
+use secrecy::{ExposeSecret, SecretBox};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
+use zeroize::Zeroize;
 
 const SERVICE_NAME: &str = "cima-sync";
 const KEY_USER: &str = "master_key";
 const KEY_CREDS: &str = "user_creds";
 
+#[derive(Clone)]
+pub struct SecureKey(Vec<u8>);
+
+impl Zeroize for SecureKey {
+    fn zeroize(&mut self) {
+        self.0.zeroize();
+    }
+}
+
+impl Drop for SecureKey {
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
+impl SecureKey {
+    pub fn new(key: Vec<u8>) -> Self {
+        SecureKey(key)
+    }
+
+    pub fn expose(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 lazy_static! {
-    static ref SESSION_KEY: Arc<Mutex<Option<Vec<u8>>>> = Arc::new(Mutex::new(None));
+    static ref SESSION_KEY: Arc<Mutex<Option<SecretBox<SecureKey>>>> = Arc::new(Mutex::new(None));
 }
 
 #[derive(Serialize, Deserialize)]
@@ -24,10 +51,12 @@ fn get_keyring_entry(key_name: &str) -> Result<Entry, String> {
 }
 
 pub fn get_session_key() -> Result<Vec<u8>, String> {
-    let mut session_key = SESSION_KEY.lock().unwrap();
+    let mut session_key = SESSION_KEY
+        .lock()
+        .map_err(|_| "Error al acceder a la clave de sesión".to_string())?;
 
     if let Some(ref key) = *session_key {
-        return Ok(key.clone());
+        return Ok(key.expose_secret().expose().to_vec());
     }
 
     let entry = get_keyring_entry(KEY_USER)?;
@@ -42,11 +71,11 @@ pub fn get_session_key() -> Result<Vec<u8>, String> {
                 return Err("Clave almacenada corrupta o inválida".to_string());
             }
 
-            *session_key = Some(key.clone());
+            let secure_key = SecretBox::new(Box::new(SecureKey::new(key.clone())));
+            *session_key = Some(secure_key);
             Ok(key)
         }
         Err(keyring::Error::NoEntry) => {
-            // Generar nueva clave
             let key = generate_session_key();
             let key_b64 = general_purpose::STANDARD.encode(&key);
 
@@ -54,7 +83,8 @@ pub fn get_session_key() -> Result<Vec<u8>, String> {
                 .set_password(&key_b64)
                 .map_err(|e| format!("Error guardando clave en keyring: {}", e))?;
 
-            *session_key = Some(key.clone());
+            let secure_key = SecretBox::new(Box::new(SecureKey::new(key.clone())));
+            *session_key = Some(secure_key);
             Ok(key)
         }
         Err(e) => Err(format!("Error de keyring: {}", e)),
@@ -105,7 +135,10 @@ pub fn init_crypto_system() -> Result<(), String> {
 }
 
 pub fn clear_stored_key() -> Result<(), String> {
-    let mut session_key = SESSION_KEY.lock().unwrap();
+    let mut session_key = SESSION_KEY
+        .lock()
+        .map_err(|_| "Error al acceder a la clave de sesión".to_string())?;
+    
     *session_key = None;
 
     let entry_key = get_keyring_entry(KEY_USER)?;
