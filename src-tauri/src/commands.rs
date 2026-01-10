@@ -34,7 +34,7 @@ pub fn auto_auth(email: &str, password: &str) -> String {
     *CURRENT_AUTH.lock().unwrap() = Some(auth);
 
     thread::spawn(move || match auth_clone.start_monitoring() {
-        Ok(_) => println!("Proceso de monitoreo finalizado"),
+        Ok(_) => {}
         Err(e) => eprintln!("Error en el proceso de monitoreo: {}", e),
     });
 

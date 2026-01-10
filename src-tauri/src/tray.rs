@@ -28,12 +28,9 @@ pub fn system_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             "quit" => {
-                println!("quit menu item was clicked");
                 app.exit(0);
             }
-            _ => {
-                println!("menu item {:?} not handled", event.id);
-            }
+            _ => {}
         })
         .icon(app.default_window_icon().unwrap().clone())
         .build(app)?;

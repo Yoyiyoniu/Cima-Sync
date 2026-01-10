@@ -207,9 +207,6 @@ fn handle_network_update(
 
     if is_first {
         let ssid = current_state.as_ref().and_then(|s| s.ssid.clone());
-        if let Some(ref ssid_str) = ssid {
-            println!("[network-sync] WiFi actual: '{}'", ssid_str);
-        }
         emit_network_status(app, ssid);
         *LAST_STATE.lock().unwrap() = current_state;
         return;
@@ -229,12 +226,6 @@ fn handle_network_update(
                 }
 
                 if prev.ssid != updated_state.ssid {
-                    let prev_ssid = prev.ssid.as_deref().unwrap_or("desconocida");
-                    let curr_ssid = updated_state.ssid.as_deref().unwrap_or("desconocida");
-                    println!(
-                        "[network-sync] Cambio de red WiFi: '{}' -> '{}'",
-                        prev_ssid, curr_ssid
-                    );
                     emit_network_status(app, updated_state.ssid.clone());
                 }
 
@@ -243,15 +234,11 @@ fn handle_network_update(
         }
         (None, Some(curr)) => {
             if let Some(ref ssid) = curr.ssid {
-                println!("[network-sync] WiFi conectado: '{}'", ssid);
                 emit_network_status(app, Some(ssid.clone()));
             }
             *state_guard = current_state;
         }
-        (Some(prev), None) => {
-            if let Some(ref ssid) = prev.ssid {
-                println!("[network-sync] WiFi desconectado: '{}'", ssid);
-            }
+        (Some(_prev), None) => {
             emit_network_status(app, None);
             *state_guard = None;
         }

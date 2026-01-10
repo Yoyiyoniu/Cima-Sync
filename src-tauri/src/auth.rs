@@ -38,35 +38,19 @@ impl Auth {
 
     pub fn login(&self) -> Result<bool, Box<dyn std::error::Error>> {
         let start_time = Instant::now();
-        print!("Verificando conexión... ");
 
         match check_uabc_connection() {
             Ok(is_direct_access) => {
-                let elapsed = start_time.elapsed();
+                let _elapsed = start_time.elapsed();
 
                 if is_direct_access {
-                    println!(
-                        "✓ Conexión establecida en {:.2} segundos.",
-                        elapsed.as_secs_f32()
-                    );
-                    println!("Connected to UABC.");
                     Ok(true)
                 } else {
-                    println!(
-                        "\nPortal detectado en {:.2} segundos.",
-                        elapsed.as_secs_f32()
-                    );
-                    println!("Starting session...");
-
                     let login_start = Instant::now();
                     match auto_login(&self.email, &self.password) {
                         Ok(success) => {
-                            let login_elapsed = login_start.elapsed();
+                            let _login_elapsed = login_start.elapsed();
                             if success {
-                                println!(
-                                    "Session started in {:.2} seconds.",
-                                    login_elapsed.as_secs_f32()
-                                );
                                 Ok(true)
                             } else {
                                 Err(ERROR_CREDENCIALES.into())
@@ -97,33 +81,23 @@ impl Auth {
     }
 
     pub fn start_monitoring(&self) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Starting connection monitoring...");
         self.should_stop.store(false, Ordering::SeqCst);
 
         while !self.should_stop.load(Ordering::SeqCst) {
             match self.login() {
                 Ok(true) => {
-                    println!(
-                        "Next verification in {} seconds.",
-                        self.success_interval.as_secs()
-                    );
                     thread::sleep(self.success_interval);
                 }
                 Ok(false) | Err(_) => {
-                    println!("Retrying in {} seconds.", self.check_interval.as_secs());
                     thread::sleep(self.check_interval);
                 }
             }
-
-            println!("\n---------------------------------------------");
         }
-        println!("Connection monitoring stopped");
         Ok(())
     }
 
     pub fn stop_monitoring(&self) {
         self.should_stop.store(true, Ordering::SeqCst);
-        println!("Stop signal sent");
     }
 }
 
@@ -160,28 +134,22 @@ fn auto_login(username: &str, password: &str) -> Result<bool, Box<dyn std::error
     let res = get_local_id();
     match res {
         Ok(local_id) => {
-            let id_time = start_time.elapsed();
-            println!("ID obtained in {:.2} seconds", id_time.as_secs_f32());
+            let _id_time = start_time.elapsed();
 
             match send_login(username, password, &local_id) {
                 Ok(status) => {
                     if status == reqwest::StatusCode::OK {
-                        println!("Request sent successfully");
-
                         if verify_connection_after_login() {
                             return Ok(true);
                         } else {
-                            println!("Request sent but no active connection");
                             return Ok(false);
                         }
                     } else {
-                        println!("Unexpected server response: {}", status);
                         Ok(false)
                     }
                 }
                 Err(e) => {
                     if e.to_string().contains("certificate") && verify_connection_after_login() {
-                        println!("Connection established");
                         return Ok(true);
                     }
 
@@ -205,26 +173,18 @@ fn send_login(
     form.insert("username", email);
     form.insert("password", password);
 
-    println!("Sending data...");
-    let start_time = Instant::now();
-
     match client.post("https://pcw.uabc.mx/").form(&form).send() {
         Ok(res) => {
-            let elapsed = start_time.elapsed();
             let status = res.status();
             let body = res.text()?;
 
             if status.is_success() {
                 if body.contains("<title>Login Successful</title>") {
-                    println!("Data sent in {:.2} seconds", elapsed.as_secs_f32());
                     Ok(status)
                 } else {
-                    println!("Error: The page title does not match");
-                    println!("It is possible that the credentials are incorrect");
                     Ok(reqwest::StatusCode::UNAUTHORIZED)
                 }
             } else {
-                println!("Error sending data. Code: {}", status);
                 Ok(status)
             }
         }
@@ -233,8 +193,6 @@ fn send_login(
 }
 
 fn verify_connection_after_login() -> bool {
-    println!("Verifying connection...");
-
     thread::sleep(Duration::from_millis(500));
 
     match reqwest::blocking::Client::builder()
@@ -244,37 +202,19 @@ fn verify_connection_after_login() -> bool {
         Ok(client) => match client.get("https://www.google.com").send() {
             Ok(response) => {
                 let success = response.status().is_success();
-                println!(
-                    "Result: {}",
-                    if success {
-                        "Conectado"
-                    } else {
-                        "No connection"
-                    }
-                );
                 success
             }
             Err(_) => match client.get("https://www.cloudflare.com").send() {
                 Ok(response) => {
                     let success = response.status().is_success();
-                    println!(
-                        "Resultado (alternativo): {}",
-                        if success {
-                            "Connected"
-                        } else {
-                            "No connection"
-                        }
-                    );
                     success
                 }
                 Err(_) => {
-                    println!("No internet connection detected");
                     false
                 }
             },
         },
         Err(_) => {
-            println!("Error verifying connection");
             false
         }
     }
