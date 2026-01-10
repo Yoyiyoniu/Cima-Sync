@@ -30,6 +30,12 @@ pub fn run() {
                 system_tray(app)?;
                 start_network_monitor(app.handle().clone());
                 Ok(())
+            })
+            .on_window_event(|window, event| {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
             });
     }
 
