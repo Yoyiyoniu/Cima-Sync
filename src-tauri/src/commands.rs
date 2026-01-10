@@ -1,6 +1,7 @@
-use crate::crypto::{
-    clear_credentials_from_keyring, clear_stored_key, get_credentials_from_keyring,
-    init_crypto_system, save_credentials_to_keyring, UserCredentials,
+use crate::keyring_controller::keyring::{
+    clear_credentials_from_keyring, clear_stored_key, decrypt_text_with_session,
+    encrypt_text_with_session, get_credentials_from_keyring, init_crypto_system,
+    save_credentials_to_keyring, UserCredentials,
 };
 
 use crate::auth::Auth;
@@ -85,12 +86,12 @@ pub fn clear_crypto() -> Result<(), String> {
 pub fn encrypt_credentials(plaintext: &str) -> Result<String, String> {
     // Si aun se llama por error, retorna dummy o implementa si es necesario.
     // Pero la idea es migrar. Dejaré implementación base por si acaso.
-    crate::crypto::encrypt_text(plaintext)
+    encrypt_text_with_session(plaintext)
 }
 
 #[tauri::command]
 pub fn decrypt_credentials(ciphertext: &str) -> Result<String, String> {
-    crate::crypto::decrypt_text(ciphertext)
+    decrypt_text_with_session(ciphertext)
 }
 
 #[tauri::command]

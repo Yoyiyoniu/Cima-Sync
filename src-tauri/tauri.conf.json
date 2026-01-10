@@ -2,7 +2,7 @@
 	"$schema": "https://schema.tauri.app/config/2",
 	"productName": "cima-sync",
 	"version": "1.0.0",
-	"identifier": "com.cima-sync",
+	"identifier": "cima-sync",
 	"build": {
 		"beforeDevCommand": "bun run dev",
 		"devUrl": "http://localhost:1420",
@@ -12,11 +12,11 @@
 	"app": {
 		"windows": [
 			{
-				"title": "Cima Sync | Cimarrones siempre conectados",
-				"width": 600,
-				"height": 800,
-				"minWidth": 550,
-				"minHeight": 600,
+				"title": "Cima Sync",
+				"width": 800,
+				"height": 1200,
+				"minWidth": 600,
+				"minHeight": 700,
 				"browserExtensionsEnabled": false,
 				"center": true,
 				"zoomHotkeysEnabled": false,

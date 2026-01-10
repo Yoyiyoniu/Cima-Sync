@@ -1,6 +1,6 @@
 mod auth;
 mod commands;
-mod crypto;
+mod keyring_controller;
 mod network_controller;
 mod tray;
 

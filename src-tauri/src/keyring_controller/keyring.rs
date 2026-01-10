@@ -1,9 +1,7 @@
-use aes_gcm::aead::{Aead, NewAead};
-use aes_gcm::{Aes256Gcm, Key, Nonce};
+use crate::keyring_controller::crypto::{decrypt_text, encrypt_text, generate_session_key};
 use base64::{engine::general_purpose, Engine as _};
 use keyring::Entry;
 use lazy_static::lazy_static;
-use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
@@ -21,24 +19,17 @@ pub struct UserCredentials {
     pub password: String,
 }
 
-pub fn generate_session_key() -> Vec<u8> {
-    let mut key = vec![0u8; 32];
-    OsRng.fill_bytes(&mut key);
-    key
-}
-
 fn get_keyring_entry(key_name: &str) -> Result<Entry, String> {
     Entry::new(SERVICE_NAME, key_name).map_err(|e| e.to_string())
 }
 
-fn get_session_key() -> Result<Vec<u8>, String> {
+pub fn get_session_key() -> Result<Vec<u8>, String> {
     let mut session_key = SESSION_KEY.lock().unwrap();
 
     if let Some(ref key) = *session_key {
         return Ok(key.clone());
     }
 
-    // Intentar cargar del keyring
     let entry = get_keyring_entry(KEY_USER)?;
 
     match entry.get_password() {
@@ -70,49 +61,6 @@ fn get_session_key() -> Result<Vec<u8>, String> {
     }
 }
 
-pub fn encrypt_text(plaintext: &str) -> Result<String, String> {
-    let key = get_session_key()?;
-
-    let cipher = Aes256Gcm::new(Key::from_slice(&key));
-
-    let mut nonce_bytes = [0u8; 12];
-    OsRng.fill_bytes(&mut nonce_bytes);
-    let nonce = Nonce::from_slice(&nonce_bytes);
-
-    let ciphertext = cipher
-        .encrypt(nonce, plaintext.as_bytes())
-        .map_err(|e| format!("Error al encriptar: {}", e))?;
-
-    let mut result = nonce_bytes.to_vec();
-    result.extend_from_slice(&ciphertext);
-
-    Ok(general_purpose::STANDARD.encode(&result))
-}
-
-pub fn decrypt_text(ciphertext: &str) -> Result<String, String> {
-    let key = get_session_key()?;
-
-    let encrypted_data = general_purpose::STANDARD
-        .decode(ciphertext)
-        .map_err(|e| format!("Error al decodificar base64: {}", e))?;
-
-    if encrypted_data.len() < 12 {
-        return Err("Datos encriptados inválidos".to_string());
-    }
-
-    let nonce_bytes = &encrypted_data[0..12];
-    let ciphertext_bytes = &encrypted_data[12..];
-
-    let cipher = Aes256Gcm::new(Key::from_slice(&key));
-    let nonce = Nonce::from_slice(nonce_bytes);
-
-    let plaintext = cipher
-        .decrypt(nonce, ciphertext_bytes)
-        .map_err(|e| format!("Error al desencriptar: {}", e))?;
-
-    String::from_utf8(plaintext).map_err(|e| format!("Error al convertir a UTF-8: {}", e))
-}
-
 pub fn save_credentials_to_keyring(email: &str, password: &str) -> Result<(), String> {
     let creds = UserCredentials {
         email: email.to_string(),
@@ -122,7 +70,8 @@ pub fn save_credentials_to_keyring(email: &str, password: &str) -> Result<(), St
     let json = serde_json::to_string(&creds)
         .map_err(|e| format!("Error serializando credenciales: {}", e))?;
 
-    let encrypted = encrypt_text(&json)?;
+    let session_key = get_session_key()?;
+    let encrypted = encrypt_text(&session_key, &json)?;
 
     let entry = get_keyring_entry(KEY_CREDS)?;
     entry
@@ -139,7 +88,8 @@ pub fn get_credentials_from_keyring() -> Result<UserCredentials, String> {
         .get_password()
         .map_err(|_| "No se encontraron credenciales".to_string())?;
 
-    let json = decrypt_text(&encrypted)?;
+    let session_key = get_session_key()?;
+    let json = decrypt_text(&session_key, &encrypted)?;
 
     serde_json::from_str(&json).map_err(|e| format!("Error deserializando credenciales: {}", e))
 }
@@ -150,7 +100,6 @@ pub fn clear_credentials_from_keyring() -> Result<(), String> {
     Ok(())
 }
 
-// Llamada para asegurar que el sistema de criptografía esté listo
 pub fn init_crypto_system() -> Result<(), String> {
     get_session_key().map(|_| ())
 }
@@ -166,4 +115,14 @@ pub fn clear_stored_key() -> Result<(), String> {
     let _ = entry_creds.delete_credential();
 
     Ok(())
+}
+
+pub fn encrypt_text_with_session(plaintext: &str) -> Result<String, String> {
+    let key = get_session_key()?;
+    encrypt_text(&key, plaintext)
+}
+
+pub fn decrypt_text_with_session(ciphertext: &str) -> Result<String, String> {
+    let key = get_session_key()?;
+    decrypt_text(&key, ciphertext)
 }
