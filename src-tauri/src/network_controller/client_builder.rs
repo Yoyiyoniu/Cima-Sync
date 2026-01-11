@@ -9,7 +9,9 @@ lazy_static! {
 }
 
 fn get_cached_certificate() -> Result<reqwest::Certificate, Box<dyn std::error::Error>> {
-    let mut cache = CERT_CACHE.lock().unwrap();
+    let mut cache = CERT_CACHE
+        .lock()
+        .map_err(|_| "Error al acceder a la caché del certificado")?;
     
     if let Some(ref cert) = *cache {
         return Ok(cert.clone());

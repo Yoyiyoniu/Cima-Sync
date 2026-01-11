@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use netwatcher::{watch_interfaces, Interface, Update};
+use regex::Regex;
 use std::collections::HashMap;
 use std::process::Command;
 use std::sync::{Arc, Mutex, Once};
@@ -11,9 +12,61 @@ static MONITOR_ONCE: Once = Once::new();
 
 lazy_static! {
     static ref LAST_STATE: Arc<Mutex<Option<WifiState>>> = Arc::new(Mutex::new(None));
+    static ref INTERFACE_NAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_\-\.]+$")
+        .expect("Regex de interfaz inválido");
 }
 
 const SSID_RETRY_DELAY_MS: u64 = 500;
+const MAX_INTERFACE_NAME_LENGTH: usize = 64;
+
+#[derive(Debug)]
+enum InterfaceValidation {
+    Valid(String),
+    Invalid(String),
+}
+
+fn sanitize_interface_name(name: &str) -> InterfaceValidation {
+    if name.len() > MAX_INTERFACE_NAME_LENGTH {
+        return InterfaceValidation::Invalid(format!(
+            "Nombre de interfaz demasiado largo: {} caracteres (máximo {})",
+            name.len(),
+            MAX_INTERFACE_NAME_LENGTH
+        ));
+    }
+
+    if name.is_empty() {
+        return InterfaceValidation::Invalid("Nombre de interfaz vacío".to_string());
+    }
+
+    if !INTERFACE_NAME_REGEX.is_match(name) {
+        return InterfaceValidation::Invalid(format!(
+            "Nombre de interfaz contiene caracteres no permitidos: {}",
+            name
+        ));
+    }
+
+    let dangerous_patterns = ["..", "//", "\\", "$", "`", "|", ";", "&", ">", "<", "(", ")", "{", "}", "[", "]", "'", "\"", "\n", "\r", "\0"];
+    for pattern in dangerous_patterns {
+        if name.contains(pattern) {
+            return InterfaceValidation::Invalid(format!(
+                "Nombre de interfaz contiene patrón peligroso: {}",
+                pattern
+            ));
+        }
+    }
+
+    InterfaceValidation::Valid(name.to_string())
+}
+
+fn get_safe_interface_name(name: &str) -> Option<String> {
+    match sanitize_interface_name(name) {
+        InterfaceValidation::Valid(safe_name) => Some(safe_name),
+        InterfaceValidation::Invalid(reason) => {
+            eprintln!("[network-sync] Nombre de interfaz inválido: {}", reason);
+            None
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct WifiState {
@@ -64,9 +117,8 @@ fn create_status_payload(ssid: Option<String>) -> serde_json::Value {
 pub fn get_current_network_status() -> serde_json::Value {
     let ssid = LAST_STATE
         .lock()
-        .unwrap()
-        .as_ref()
-        .and_then(|state| state.ssid.clone());
+        .ok()
+        .and_then(|guard| guard.as_ref().and_then(|state| state.ssid.clone()));
     create_status_payload(ssid)
 }
 
@@ -91,10 +143,15 @@ fn parse_ssid_line(line: &str) -> Option<String> {
 }
 
 fn get_wifi_ssid(interface_name: &str) -> Option<String> {
+    let safe_name = match get_safe_interface_name(interface_name) {
+        Some(name) => name,
+        None => return Some("SSID no disponible".to_string()),
+    };
+
     #[cfg(target_os = "linux")]
     {
         if let Ok(output) = Command::new("iwgetid")
-            .arg(interface_name)
+            .arg(&safe_name)
             .arg("--raw")
             .output()
         {
@@ -113,7 +170,7 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
             if output.status.success() {
                 for line in String::from_utf8_lossy(&output.stdout).lines() {
                     let parts: Vec<&str> = line.split(':').collect();
-                    if parts.len() >= 3 && parts[0] == "yes" && parts[2] == interface_name {
+                    if parts.len() >= 3 && parts[0] == "yes" && parts[2] == safe_name {
                         if let Some(ssid) = extract_ssid_from_line(parts[1]) {
                             return Some(ssid);
                         }
@@ -136,7 +193,7 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
                 for line in stdout.lines() {
                     let line_lower = line.to_lowercase();
                     if line_lower.contains("nombre") || line_lower.contains("name") {
-                        current_interface = line.contains(interface_name);
+                        current_interface = line.contains(&safe_name as &str);
                         continue;
                     }
                     if current_interface {
@@ -154,12 +211,15 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
             }
         }
 
+        let escaped_name = safe_name.replace("'", "''");
         if let Ok(output) = Command::new("powershell")
             .args([
+                "-NoProfile",
+                "-NonInteractive", 
                 "-Command",
                 &format!(
                     "(Get-NetConnectionProfile | Where-Object {{ $_.InterfaceAlias -like '*{}*' }}).Name",
-                    interface_name
+                    escaped_name
                 ),
             ])
             .output()
@@ -191,7 +251,13 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
             }
         }
 
-        for iface in &[interface_name, "en0", "en1"] {
+        let valid_interfaces: Vec<&str> = [safe_name.as_str(), "en0", "en1"]
+            .iter()
+            .filter(|iface| get_safe_interface_name(iface).is_some())
+            .copied()
+            .collect();
+
+        for iface in valid_interfaces {
             if let Ok(output) = Command::new("networksetup")
                 .args(["-getairportnetwork", iface])
                 .output()
@@ -287,16 +353,45 @@ fn monitor_loop(app: tauri::AppHandle) {
     let is_first_clone = Arc::clone(&is_first_update);
     let app_clone = app.clone();
 
-    let _handle = watch_interfaces(move |update: Update| {
+    match watch_interfaces(move |update: Update| {
         handle_network_update(update, &is_first_clone, &app_clone);
-    })
-    .unwrap_or_else(|err| {
-        eprintln!("[network-sync] Error al iniciar el monitor: {err}");
-        std::process::exit(1);
-    });
-
-    loop {
-        thread::park();
+    }) {
+        Ok(_handle) => {
+            loop {
+                thread::park();
+            }
+        }
+        Err(err) => {
+            eprintln!("[network-sync] Error al iniciar el monitor de red: {err}");
+            let _ = app.emit("network-status", serde_json::json!({
+                "connected": false,
+                "ssid": null,
+                "is_uabc": false,
+                "error": format!("No se pudo iniciar el monitor de red: {}", err)
+            }));
+            
+            loop {
+                thread::sleep(Duration::from_secs(30));
+                
+                let is_first_retry = Arc::new(Mutex::new(true));
+                let is_first_retry_clone = Arc::clone(&is_first_retry);
+                let app_retry = app.clone();
+                
+                match watch_interfaces(move |update: Update| {
+                    handle_network_update(update, &is_first_retry_clone, &app_retry);
+                }) {
+                    Ok(_new_handle) => {
+                        eprintln!("[network-sync] Monitor de red reiniciado exitosamente");
+                        loop {
+                            thread::park();
+                        }
+                    }
+                    Err(retry_err) => {
+                        eprintln!("[network-sync] Reintento fallido: {retry_err}");
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -315,18 +410,31 @@ fn handle_network_update(
     app: &tauri::AppHandle,
 ) {
     let current_state = WifiState::from_interfaces(&update.interfaces);
-    let is_first = {
-        let mut guard = is_first_update.lock().unwrap();
-        std::mem::replace(&mut *guard, false)
+    
+    let is_first = match is_first_update.lock() {
+        Ok(mut guard) => std::mem::replace(&mut *guard, false),
+        Err(poisoned) => {
+            eprintln!("[network-sync] Lock envenenado en is_first_update, recuperando");
+            std::mem::replace(&mut *poisoned.into_inner(), false)
+        }
     };
 
     if is_first {
         emit_network_status(app, current_state.as_ref().and_then(|s| s.ssid.clone()));
-        *LAST_STATE.lock().unwrap() = current_state;
+        match LAST_STATE.lock() {
+            Ok(mut guard) => *guard = current_state,
+            Err(poisoned) => *poisoned.into_inner() = current_state,
+        }
         return;
     }
 
-    let mut state_guard = LAST_STATE.lock().unwrap();
+    let mut state_guard = match LAST_STATE.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[network-sync] Lock envenenado en LAST_STATE, recuperando");
+            poisoned.into_inner()
+        }
+    };
     let previous_state = state_guard.clone();
 
     match (&previous_state, &current_state) {

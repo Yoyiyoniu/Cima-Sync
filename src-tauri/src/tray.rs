@@ -32,7 +32,11 @@ pub fn system_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
             }
             _ => {}
         })
-        .icon(app.default_window_icon().unwrap().clone())
+        .icon(
+            app.default_window_icon()
+                .ok_or("No se encontró el ícono por defecto de la ventana")?
+                .clone(),
+        )
         .build(app)?;
     Ok(())
 }

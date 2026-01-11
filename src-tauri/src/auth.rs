@@ -1,6 +1,7 @@
 use reqwest;
 use secrecy::{ExposeSecret, SecretBox};
 use std::collections::HashMap;
+use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
 use zeroize::Zeroize;
@@ -15,8 +16,12 @@ const ERROR_GENERAL: &str = "Ocurrió un error al conectarse a la red UABC.";
 
 const MONITORING_INTERVAL: Duration = Duration::from_secs(60);
 const SUCCESS_INTERVAL: Duration = Duration::from_secs(20);
+const INITIAL_BACKOFF_SECS: u64 = 5;
+const MAX_BACKOFF_SECS: u64 = 5 * 60;
+const BACKOFF_MULTIPLIER: f64 = 2.0;
+const MAX_CONSECUTIVE_FAILURES: u32 = 10;
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -58,6 +63,8 @@ pub struct Auth {
     check_interval: Duration,
     success_interval: Duration,
     should_stop: Arc<AtomicBool>,
+    consecutive_failures: Arc<AtomicU32>,
+    current_backoff_secs: Arc<Mutex<u64>>,
 }
 
 impl Auth {
@@ -68,6 +75,48 @@ impl Auth {
             check_interval: MONITORING_INTERVAL,
             success_interval: SUCCESS_INTERVAL,
             should_stop: Arc::new(AtomicBool::new(false)),
+            consecutive_failures: Arc::new(AtomicU32::new(0)),
+            current_backoff_secs: Arc::new(Mutex::new(INITIAL_BACKOFF_SECS)),
+        }
+    }
+
+    fn calculate_backoff(&self) -> Duration {
+        let failures = self.consecutive_failures.load(Ordering::SeqCst);
+        
+        if failures == 0 {
+            return self.check_interval;
+        }
+
+        let backoff_secs = match self.current_backoff_secs.lock() {
+            Ok(mut guard) => {
+                let current = *guard;
+                let next = ((current as f64) * BACKOFF_MULTIPLIER) as u64;
+                *guard = next.min(MAX_BACKOFF_SECS);
+                current
+            }
+            Err(poisoned) => {
+                let guard = poisoned.into_inner();
+                *guard
+            }
+        };
+
+        Duration::from_secs(backoff_secs.min(MAX_BACKOFF_SECS))
+    }
+
+    fn record_success(&self) {
+        self.consecutive_failures.store(0, Ordering::SeqCst);
+        if let Ok(mut guard) = self.current_backoff_secs.lock() {
+            *guard = INITIAL_BACKOFF_SECS;
+        }
+    }
+
+    fn record_failure(&self) {
+        let failures = self.consecutive_failures.fetch_add(1, Ordering::SeqCst);
+        if failures >= MAX_CONSECUTIVE_FAILURES {
+            eprintln!(
+                "[auth] Demasiados fallos consecutivos ({}), considera verificar la conexión",
+                failures + 1
+            );
         }
     }
 
@@ -121,10 +170,20 @@ impl Auth {
         while !self.should_stop.load(Ordering::SeqCst) {
             match self.login() {
                 Ok(true) => {
+                    self.record_success();
                     thread::sleep(self.success_interval);
                 }
-                Ok(false) | Err(_) => {
-                    thread::sleep(self.check_interval);
+                Ok(false) => {
+                    self.record_failure();
+                    let backoff = self.calculate_backoff();
+                    eprintln!("[auth] Login fallido, reintentando en {} segundos", backoff.as_secs());
+                    thread::sleep(backoff);
+                }
+                Err(e) => {
+                    self.record_failure();
+                    let backoff = self.calculate_backoff();
+                    eprintln!("[auth] Error: {}. Reintentando en {} segundos", e, backoff.as_secs());
+                    thread::sleep(backoff);
                 }
             }
         }
