@@ -4,7 +4,6 @@ OutApps/
 appimagetool
 release/*
 src-tauri/certs/*
-src-tauri/src/network_controller/certificate_controller.rs
 # dependency directories
 node_modules/
 
