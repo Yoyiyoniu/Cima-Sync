@@ -124,5 +124,11 @@
 	},
 	"support": {
 		"koFiUrl": "https://ko-fi.com/yoyiyo"
+	},
+	"CertificateAlert": {
+		"buttonTitle": "Update available",
+		"title": "Update required",
+		"message": "A new version is available. Update the application to continue connecting correctly.",
+		"updateButton": "Download update"
 	}
 }

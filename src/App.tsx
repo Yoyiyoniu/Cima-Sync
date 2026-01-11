@@ -17,6 +17,7 @@ import { Input } from "./components/Input";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { CopyRightMenu } from "./components/ContactMe";
 import { SuccessModal } from "./components/SuccessModal";
+import { CertificateAlert } from "./components/CertificateAlert";
 
 import img from "./assets/img/cima-sync-logo.avif";
 import StopIcon from "./assets/icons/StopIcon";
@@ -49,6 +50,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 	const [showSuccessModal, setShowSuccessModal] = useState(false);
 	const [showApp, setShowApp] = useState(false);
 	const [isUabcConnected, setIsUabcConnected] = useState(false);
+	const [showCertificateAlert, setShowCertificateAlert] = useState(false);
 
 	const appStateRef = useRef(appState);
 	useEffect(() => {
@@ -176,6 +178,15 @@ function App({ showTourFirstTime = false }: AppProps) {
 			}
 		} catch (error) {
 			console.error("Login error:", error);
+			const errorStr = String(error).toLowerCase();
+			if (
+				errorStr.includes("certificate") ||
+				errorStr.includes("ssl") ||
+				errorStr.includes("tls") ||
+				errorStr.includes("expired")
+			) {
+				setShowCertificateAlert(true);
+			}
 			setAppState((prev) => ({ ...prev, error: String(error) }));
 		} finally {
 			setAppState((prev) => ({ ...prev, loading: false }));
@@ -380,6 +391,8 @@ function App({ showTourFirstTime = false }: AppProps) {
 				isOpen={showSuccessModal}
 				onClose={() => setShowSuccessModal(false)}
 			/>
+
+			<CertificateAlert isVisible={showCertificateAlert} />
 		</main>
 	);
 }
