@@ -1,61 +1,73 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "cima-sync",
-  "version": "1.0.0",
-  "identifier": "com.cima-sync",
-  "build": {
-    "beforeDevCommand": "bun run dev",
-    "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
-    "frontendDist": "../dist"
-  },
-  "app": {
-    "windows": [
-      {
-        "title": "Cima Sync | Cimarrones siempre conectados",
-        "width": 600,
-        "height": 800,
-        "minWidth": 550,
-        "minHeight": 600,
-        "browserExtensionsEnabled": false,
-        "center": true,
-        "zoomHotkeysEnabled": false,
-        "allowLinkPreview": false,
-        "devtools": true
-      }
-    ]
-  },
-  "bundle": {
-    "active": true,
-    "targets": "all",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
-    "linux": {
-      "deb": {
-        "depends": []
-      },
-      "appimage": {
-        "bundleMediaFramework": false
-      }
-    },
-    "windows": {
-      "webviewInstallMode": {
-        "type": "embedBootstrapper",
-        "silent": true
-      }
-    }
-  },
-  "plugins": {
-    "sql": {
-      "preload": [
-        "sqlite:cima-sync.db",
-        "sqlite:cima-config.db"
-      ]
-    }
-  }
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "cima-sync",
+	"version": "1.0.0",
+	"identifier": "app.cimasync",
+	"build": {
+		"beforeDevCommand": "bun run dev",
+		"devUrl": "http://localhost:1420",
+		"beforeBuildCommand": "bun run build",
+		"frontendDist": "../dist"
+	},
+	"app": {
+		"security": {
+			"csp": {
+				"default-src": "'self'",
+				"script-src": "'self'",
+				"style-src": "'self' 'unsafe-inline'",
+				"img-src": "'self' data: blob:",
+				"connect-src": "'self' https://pcw.uabc.mx",
+				"frame-src": "'none'",
+				"object-src": "'none'",
+				"base-uri": "'self'"
+			}
+		},
+		"windows": [
+			{
+				"title": "Cima Sync",
+				"width": 800,
+				"height": 1200,
+				"minWidth": 600,
+				"minHeight": 700,
+				"browserExtensionsEnabled": false,
+				"center": true,
+				"zoomHotkeysEnabled": false,
+				"allowLinkPreview": false,
+				"devtools": false
+			}
+		]
+	},
+	"bundle": {
+		"active": true,
+		"targets": "all",
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		],
+		"linux": {
+			"deb": {
+				"depends": ["wireless-tools", "network-manager"]
+			},
+			"rpm": {
+				"depends": ["wireless-tools", "NetworkManager"]
+			},
+			"appimage": {
+				"bundleMediaFramework": false
+			}
+		},
+		"windows": {
+			"webviewInstallMode": {
+				"type": "embedBootstrapper",
+				"silent": true
+			}
+		}
+	},
+	"plugins": {
+		"sql": {
+			"preload": ["sqlite:cima-config.db"]
+		}
+	}
 }

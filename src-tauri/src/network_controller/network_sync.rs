@@ -1,19 +1,72 @@
+use lazy_static::lazy_static;
 use netwatcher::{watch_interfaces, Interface, Update};
+use regex::Regex;
 use std::collections::HashMap;
 use std::process::Command;
 use std::sync::{Arc, Mutex, Once};
 use std::thread;
 use std::time::Duration;
 use tauri::Emitter;
-use lazy_static::lazy_static;
 
 static MONITOR_ONCE: Once = Once::new();
 
 lazy_static! {
     static ref LAST_STATE: Arc<Mutex<Option<WifiState>>> = Arc::new(Mutex::new(None));
+    static ref INTERFACE_NAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_\-\.]+$")
+        .expect("Regex de interfaz inválido");
 }
 
 const SSID_RETRY_DELAY_MS: u64 = 500;
+const MAX_INTERFACE_NAME_LENGTH: usize = 64;
+
+#[derive(Debug)]
+enum InterfaceValidation {
+    Valid(String),
+    Invalid(String),
+}
+
+fn sanitize_interface_name(name: &str) -> InterfaceValidation {
+    if name.len() > MAX_INTERFACE_NAME_LENGTH {
+        return InterfaceValidation::Invalid(format!(
+            "Nombre de interfaz demasiado largo: {} caracteres (máximo {})",
+            name.len(),
+            MAX_INTERFACE_NAME_LENGTH
+        ));
+    }
+
+    if name.is_empty() {
+        return InterfaceValidation::Invalid("Nombre de interfaz vacío".to_string());
+    }
+
+    if !INTERFACE_NAME_REGEX.is_match(name) {
+        return InterfaceValidation::Invalid(format!(
+            "Nombre de interfaz contiene caracteres no permitidos: {}",
+            name
+        ));
+    }
+
+    let dangerous_patterns = ["..", "//", "\\", "$", "`", "|", ";", "&", ">", "<", "(", ")", "{", "}", "[", "]", "'", "\"", "\n", "\r", "\0"];
+    for pattern in dangerous_patterns {
+        if name.contains(pattern) {
+            return InterfaceValidation::Invalid(format!(
+                "Nombre de interfaz contiene patrón peligroso: {}",
+                pattern
+            ));
+        }
+    }
+
+    InterfaceValidation::Valid(name.to_string())
+}
+
+fn get_safe_interface_name(name: &str) -> Option<String> {
+    match sanitize_interface_name(name) {
+        InterfaceValidation::Valid(safe_name) => Some(safe_name),
+        InterfaceValidation::Invalid(reason) => {
+            eprintln!("[network-sync] Nombre de interfaz inválido: {}", reason);
+            None
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct WifiState {
@@ -24,12 +77,17 @@ struct WifiState {
 
 impl WifiState {
     fn from_interfaces(interfaces: &HashMap<u32, Interface>) -> Option<Self> {
-        interfaces.values()
+        interfaces
+            .values()
             .filter(|iface| !iface.ips.is_empty() && is_wifi_interface(&iface.name))
             .find_map(|iface| {
-                let ipv4 = iface.ips.iter()
+                let ipv4 = iface
+                    .ips
+                    .iter()
                     .map(|ip| ip.ip.to_string())
-                    .find(|ip_str| !ip_str.starts_with("fe80:") && !ip_str.starts_with("169.254."))?;
+                    .find(|ip_str| {
+                        !ip_str.starts_with("fe80:") && !ip_str.starts_with("169.254.")
+                    })?;
 
                 Some(WifiState {
                     interface: iface.name.clone(),
@@ -48,7 +106,7 @@ fn check_is_uabc(ssid: &Option<String>) -> bool {
 fn create_status_payload(ssid: Option<String>) -> serde_json::Value {
     let is_uabc = check_is_uabc(&ssid);
     let connected = ssid.is_some();
-    
+
     serde_json::json!({
         "connected": connected,
         "ssid": ssid,
@@ -57,17 +115,43 @@ fn create_status_payload(ssid: Option<String>) -> serde_json::Value {
 }
 
 pub fn get_current_network_status() -> serde_json::Value {
-    let ssid = LAST_STATE.lock().unwrap()
-        .as_ref()
-        .and_then(|state| state.ssid.clone());
+    let ssid = LAST_STATE
+        .lock()
+        .ok()
+        .and_then(|guard| guard.as_ref().and_then(|state| state.ssid.clone()));
     create_status_payload(ssid)
 }
 
+fn extract_ssid_from_line(line: &str) -> Option<String> {
+    line.find(':')
+        .map(|pos| line[pos + 1..].trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
+#[cfg(target_os = "windows")]
+fn parse_ssid_line(line: &str) -> Option<String> {
+    let line_lower = line.to_lowercase();
+    if (line_lower.contains("ssid") && !line_lower.contains("bssid"))
+        || line_lower.contains("nombre de red")
+        || line_lower.contains("network name")
+    {
+        extract_ssid_from_line(line)
+            .filter(|s| !matches!(s.as_str(), "N/A" | "Ninguno" | "None"))
+    } else {
+        None
+    }
+}
+
 fn get_wifi_ssid(interface_name: &str) -> Option<String> {
+    let safe_name = match get_safe_interface_name(interface_name) {
+        Some(name) => name,
+        None => return Some("SSID no disponible".to_string()),
+    };
+
     #[cfg(target_os = "linux")]
     {
         if let Ok(output) = Command::new("iwgetid")
-            .arg(interface_name)
+            .arg(&safe_name)
             .arg("--raw")
             .output()
         {
@@ -84,12 +168,104 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
             .output()
         {
             if output.status.success() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                for line in stdout.lines() {
+                for line in String::from_utf8_lossy(&output.stdout).lines() {
                     let parts: Vec<&str> = line.split(':').collect();
-                    if parts.len() >= 3 && parts[0] == "yes" && parts[2] == interface_name {
-                        let ssid = parts[1].trim().to_string();
-                        if !ssid.is_empty() {
+                    if parts.len() >= 3 && parts[0] == "yes" && parts[2] == safe_name {
+                        if let Some(ssid) = extract_ssid_from_line(parts[1]) {
+                            return Some(ssid);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(output) = Command::new("netsh")
+            .args(["wlan", "show", "interfaces"])
+            .output()
+        {
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                let mut current_interface = false;
+
+                for line in stdout.lines() {
+                    let line_lower = line.to_lowercase();
+                    if line_lower.contains("nombre") || line_lower.contains("name") {
+                        current_interface = line.contains(&safe_name as &str);
+                        continue;
+                    }
+                    if current_interface {
+                        if let Some(ssid) = parse_ssid_line(line) {
+                            return Some(ssid);
+                        }
+                    }
+                }
+
+                for line in stdout.lines() {
+                    if let Some(ssid) = parse_ssid_line(line) {
+                        return Some(ssid);
+                    }
+                }
+            }
+        }
+
+        let escaped_name = safe_name.replace("'", "''");
+        if let Ok(output) = Command::new("powershell")
+            .args([
+                "-NoProfile",
+                "-NonInteractive", 
+                "-Command",
+                &format!(
+                    "(Get-NetConnectionProfile | Where-Object {{ $_.InterfaceAlias -like '*{}*' }}).Name",
+                    escaped_name
+                ),
+            ])
+            .output()
+        {
+            if output.status.success() {
+                if let Some(ssid) = extract_ssid_from_line(&String::from_utf8_lossy(&output.stdout)) {
+                    return Some(ssid);
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        for airport_path in &[
+            "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport",
+            "/usr/sbin/airport",
+        ] {
+            if let Ok(output) = Command::new(airport_path).arg("-I").output() {
+                if output.status.success() {
+                    for line in String::from_utf8_lossy(&output.stdout).lines() {
+                        if line.trim().starts_with("SSID:") {
+                            if let Some(ssid) = extract_ssid_from_line(line) {
+                                return Some(ssid);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        let valid_interfaces: Vec<&str> = [safe_name.as_str(), "en0", "en1"]
+            .iter()
+            .filter(|iface| get_safe_interface_name(iface).is_some())
+            .copied()
+            .collect();
+
+        for iface in valid_interfaces {
+            if let Ok(output) = Command::new("networksetup")
+                .args(["-getairportnetwork", iface])
+                .output()
+            {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    if let Some(ssid) = extract_ssid_from_line(&stdout) {
+                        if !ssid.contains("You are not associated") && !ssid.contains("not associated") {
                             return Some(ssid);
                         }
                     }
@@ -97,14 +273,36 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
             }
         }
 
-        Some("SSID no disponible".to_string())
+        if let Ok(output) = Command::new("system_profiler")
+            .args(["SPAirPortDataType"])
+            .output()
+        {
+            if output.status.success() {
+                let mut in_current = false;
+                for line in String::from_utf8_lossy(&output.stdout).lines() {
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("Current Network Information:") {
+                        in_current = true;
+                    } else if in_current {
+                        if trimmed.starts_with("Network Name:") || trimmed.starts_with("SSID:") {
+                            if let Some(ssid) = extract_ssid_from_line(trimmed) {
+                                return Some(ssid);
+                            }
+                        } else if trimmed.starts_with("---") {
+                            in_current = false;
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
     {
-        eprintln!("[network-sync] get_wifi_ssid no está implementado para este sistema operativo; usando fallback genérico");
-        Some("SSID no disponible".to_string())
+        eprintln!("[network-sync] get_wifi_ssid no implementado para este SO");
     }
+
+    Some("SSID no disponible".to_string())
 }
 
 #[inline]
@@ -152,34 +350,57 @@ pub fn start_network_monitor(app: tauri::AppHandle) {
 
 fn monitor_loop(app: tauri::AppHandle) {
     let is_first_update = Arc::new(Mutex::new(true));
+    let is_first_clone = Arc::clone(&is_first_update);
+    let app_clone = app.clone();
 
-    let _handle = match watch_interfaces(move |update: Update| {
-        handle_network_update(update, &is_first_update, &app);
+    match watch_interfaces(move |update: Update| {
+        handle_network_update(update, &is_first_clone, &app_clone);
     }) {
-        Ok(handle) => handle,
-        Err(err) => {
-            eprintln!("[network-sync] Error al iniciar el monitor: {err}");
-            return;
+        Ok(_handle) => {
+            loop {
+                thread::park();
+            }
         }
-    };
-
-    loop {
-        thread::park();
+        Err(err) => {
+            eprintln!("[network-sync] Error al iniciar el monitor de red: {err}");
+            let _ = app.emit("network-status", serde_json::json!({
+                "connected": false,
+                "ssid": null,
+                "is_uabc": false,
+                "error": format!("No se pudo iniciar el monitor de red: {}", err)
+            }));
+            
+            loop {
+                thread::sleep(Duration::from_secs(30));
+                
+                let is_first_retry = Arc::new(Mutex::new(true));
+                let is_first_retry_clone = Arc::clone(&is_first_retry);
+                let app_retry = app.clone();
+                
+                match watch_interfaces(move |update: Update| {
+                    handle_network_update(update, &is_first_retry_clone, &app_retry);
+                }) {
+                    Ok(_new_handle) => {
+                        eprintln!("[network-sync] Monitor de red reiniciado exitosamente");
+                        loop {
+                            thread::park();
+                        }
+                    }
+                    Err(retry_err) => {
+                        eprintln!("[network-sync] Reintento fallido: {retry_err}");
+                    }
+                }
+            }
+        }
     }
 }
 
 fn emit_network_status(app: &tauri::AppHandle, ssid: Option<String>) {
-    let is_uabc = check_is_uabc(&ssid);
-    let payload = create_status_payload(ssid);
+    let payload = create_status_payload(ssid.clone());
+    let _ = app.emit("network-status", payload);
 
-    if let Err(e) = app.emit("network-status", payload) {
-        eprintln!("[network-sync] Error emitiendo evento network-status: {}", e);
-    }
-
-    if is_uabc {
-        if let Err(e) = app.emit("uabc-detected", ()) {
-            eprintln!("[network-sync] Error emitiendo evento uabc-detected: {}", e);
-        }
+    if check_is_uabc(&ssid) {
+        let _ = app.emit("uabc-detected", ());
     }
 }
 
@@ -189,59 +410,55 @@ fn handle_network_update(
     app: &tauri::AppHandle,
 ) {
     let current_state = WifiState::from_interfaces(&update.interfaces);
-
-    let is_first = {
-        let mut guard = is_first_update.lock().unwrap();
-        std::mem::replace(&mut *guard, false)
+    
+    let is_first = match is_first_update.lock() {
+        Ok(mut guard) => std::mem::replace(&mut *guard, false),
+        Err(poisoned) => {
+            eprintln!("[network-sync] Lock envenenado en is_first_update, recuperando");
+            std::mem::replace(&mut *poisoned.into_inner(), false)
+        }
     };
 
     if is_first {
-        let ssid = current_state.as_ref().and_then(|s| s.ssid.clone());
-        if let Some(ref ssid_str) = ssid {
-            println!("[network-sync] WiFi actual: '{}'", ssid_str);
+        emit_network_status(app, current_state.as_ref().and_then(|s| s.ssid.clone()));
+        match LAST_STATE.lock() {
+            Ok(mut guard) => *guard = current_state,
+            Err(poisoned) => *poisoned.into_inner() = current_state,
         }
-        emit_network_status(app, ssid);
-        *LAST_STATE.lock().unwrap() = current_state;
         return;
     }
 
-    let mut state_guard = LAST_STATE.lock().unwrap();
+    let mut state_guard = match LAST_STATE.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            eprintln!("[network-sync] Lock envenenado en LAST_STATE, recuperando");
+            poisoned.into_inner()
+        }
+    };
     let previous_state = state_guard.clone();
 
     match (&previous_state, &current_state) {
-        (Some(prev), Some(curr)) => {
-            if prev.ssid != curr.ssid || prev.ipv4 != curr.ipv4 {
-                let mut updated_state = curr.clone();
-                
-                if updated_state.ssid.is_none() {
-                    thread::sleep(Duration::from_millis(SSID_RETRY_DELAY_MS));
-                    updated_state.ssid = get_wifi_ssid(&curr.interface);
-                }
-
-                if prev.ssid != updated_state.ssid {
-                    let prev_ssid = prev.ssid.as_deref().unwrap_or("desconocida");
-                    let curr_ssid = updated_state.ssid.as_deref().unwrap_or("desconocida");
-                    println!("[network-sync] Cambio de red WiFi: '{}' -> '{}'", prev_ssid, curr_ssid);
-                    emit_network_status(app, updated_state.ssid.clone());
-                }
-
-                *state_guard = Some(updated_state);
+        (Some(prev), Some(curr)) if prev.ssid != curr.ssid || prev.ipv4 != curr.ipv4 => {
+            let mut updated_state = curr.clone();
+            if updated_state.ssid.is_none() {
+                thread::sleep(Duration::from_millis(SSID_RETRY_DELAY_MS));
+                updated_state.ssid = get_wifi_ssid(&curr.interface);
             }
+            if prev.ssid != updated_state.ssid {
+                emit_network_status(app, updated_state.ssid.clone());
+            }
+            *state_guard = Some(updated_state);
         }
         (None, Some(curr)) => {
-            if let Some(ref ssid) = curr.ssid {
-                println!("[network-sync] WiFi conectado: '{}'", ssid);
-                emit_network_status(app, Some(ssid.clone()));
+            if curr.ssid.is_some() {
+                emit_network_status(app, curr.ssid.clone());
             }
             *state_guard = current_state;
         }
-        (Some(prev), None) => {
-            if let Some(ref ssid) = prev.ssid {
-                println!("[network-sync] WiFi desconectado: '{}'", ssid);
-            }
+        (Some(_), None) => {
             emit_network_status(app, None);
             *state_guard = None;
         }
-        (None, None) => {}
+        _ => {}
     }
 }

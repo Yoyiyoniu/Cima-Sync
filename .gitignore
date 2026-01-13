@@ -3,7 +3,7 @@ OutApps/
 ~/
 appimagetool
 release/*
-
+src-tauri/certs/*
 # dependency directories
 node_modules/
 

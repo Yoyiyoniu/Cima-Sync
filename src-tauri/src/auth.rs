@@ -1,7 +1,12 @@
 use reqwest;
+use secrecy::{ExposeSecret, SecretBox};
 use std::collections::HashMap;
+use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
+use zeroize::Zeroize;
+
+use crate::network_controller::client_builder::build_client;
 
 const ERROR_NO_CONEXION: &str = "No se detecta conexión a internet.";
 const ERROR_PORTAL_NO_DISPONIBLE: &str = "No estas en el wifi UABC o ya estas conectado.";
@@ -11,62 +16,125 @@ const ERROR_GENERAL: &str = "Ocurrió un error al conectarse a la red UABC.";
 
 const MONITORING_INTERVAL: Duration = Duration::from_secs(60);
 const SUCCESS_INTERVAL: Duration = Duration::from_secs(20);
+const INITIAL_BACKOFF_SECS: u64 = 5;
+const MAX_BACKOFF_SECS: u64 = 5 * 60;
+const BACKOFF_MULTIPLIER: f64 = 2.0;
+const MAX_CONSECUTIVE_FAILURES: u32 = 10;
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
+
+#[derive(Clone)]
+pub struct SecureString(String);
+
+impl Zeroize for SecureString {
+    fn zeroize(&mut self) {
+        self.0.zeroize();
+    }
+}
+
+impl Drop for SecureString {
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
+impl From<String> for SecureString {
+    fn from(s: String) -> Self {
+        SecureString(s)
+    }
+}
+
+impl From<&str> for SecureString {
+    fn from(s: &str) -> Self {
+        SecureString(s.to_string())
+    }
+}
+
+impl SecureString {
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+}
 
 pub struct Auth {
     email: String,
-    password: String,
+    password: SecretBox<SecureString>,
     check_interval: Duration,
     success_interval: Duration,
     should_stop: Arc<AtomicBool>,
+    consecutive_failures: Arc<AtomicU32>,
+    current_backoff_secs: Arc<Mutex<u64>>,
 }
 
 impl Auth {
     pub fn new(email: &str, password: &str) -> Self {
         Auth {
             email: email.to_string(),
-            password: password.to_string(),
+            password: SecretBox::new(Box::new(SecureString::from(password))),
             check_interval: MONITORING_INTERVAL,
             success_interval: SUCCESS_INTERVAL,
             should_stop: Arc::new(AtomicBool::new(false)),
+            consecutive_failures: Arc::new(AtomicU32::new(0)),
+            current_backoff_secs: Arc::new(Mutex::new(INITIAL_BACKOFF_SECS)),
+        }
+    }
+
+    fn calculate_backoff(&self) -> Duration {
+        let failures = self.consecutive_failures.load(Ordering::SeqCst);
+        
+        if failures == 0 {
+            return self.check_interval;
+        }
+
+        let backoff_secs = match self.current_backoff_secs.lock() {
+            Ok(mut guard) => {
+                let current = *guard;
+                let next = ((current as f64) * BACKOFF_MULTIPLIER) as u64;
+                *guard = next.min(MAX_BACKOFF_SECS);
+                current
+            }
+            Err(poisoned) => {
+                let guard = poisoned.into_inner();
+                *guard
+            }
+        };
+
+        Duration::from_secs(backoff_secs.min(MAX_BACKOFF_SECS))
+    }
+
+    fn record_success(&self) {
+        self.consecutive_failures.store(0, Ordering::SeqCst);
+        if let Ok(mut guard) = self.current_backoff_secs.lock() {
+            *guard = INITIAL_BACKOFF_SECS;
+        }
+    }
+
+    fn record_2efailure(&self) {
+        let failures = self.consecutive_failures.fetch_add(1, Ordering::SeqCst);
+        if failures >= MAX_CONSECUTIVE_FAILURES {
+            eprintln!(
+                "[auth] Demasiados fallos consecutivos ({}), considera verificar la conexión",
+                failures + 1
+            );
         }
     }
 
     pub fn login(&self) -> Result<bool, Box<dyn std::error::Error>> {
-        println!("User: {}", self.email);
- 
         let start_time = Instant::now();
-        print!("Verificando conexión... ");
 
         match check_uabc_connection() {
             Ok(is_direct_access) => {
-                let elapsed = start_time.elapsed();
+                let _elapsed = start_time.elapsed();
 
                 if is_direct_access {
-                    println!(
-                        "✓ Conexión establecida en {:.2} segundos.",
-                        elapsed.as_secs_f32()
-                    );
-                    println!("Connected to UABC.");
                     Ok(true)
                 } else {
-                    println!(
-                        "\nPortal detectado en {:.2} segundos.",
-                        elapsed.as_secs_f32()
-                    );
-                    println!("Starting session...");
-
                     let login_start = Instant::now();
-                    match auto_login(&self.email, &self.password) {
+                    match auto_login(&self.email, self.password.expose_secret().expose()) {
                         Ok(success) => {
-                            let login_elapsed = login_start.elapsed();
+                            let _login_elapsed = login_start.elapsed();
                             if success {
-                                println!(
-                                    "Session started in {:.2} seconds.",
-                                    login_elapsed.as_secs_f32()
-                                );
                                 Ok(true)
                             } else {
                                 Err(ERROR_CREDENCIALES.into())
@@ -97,44 +165,38 @@ impl Auth {
     }
 
     pub fn start_monitoring(&self) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Starting connection monitoring...");
         self.should_stop.store(false, Ordering::SeqCst);
 
         while !self.should_stop.load(Ordering::SeqCst) {
             match self.login() {
                 Ok(true) => {
-                    println!(
-                        "Next verification in {} seconds.",
-                        self.success_interval.as_secs()
-                    );
+                    self.record_success();
                     thread::sleep(self.success_interval);
                 }
-                Ok(false) | Err(_) => {
-                    println!(
-                        "Retrying in {} seconds.",
-                        self.check_interval.as_secs()
-                    );
-                    thread::sleep(self.check_interval);
+                Ok(false) => {
+                    self.record_2efailure();
+                    let backoff = self.calculate_backoff();
+                    eprintln!("[auth] Login fallido, reintentando en {} segundos", backoff.as_secs());
+                    thread::sleep(backoff);
+                }
+                Err(e) => {
+                    self.record_2efailure();
+                    let backoff = self.calculate_backoff();
+                    eprintln!("[auth] Error: {}. Reintentando en {} segundos", e, backoff.as_secs());
+                    thread::sleep(backoff);
                 }
             }
-
-            println!("\n---------------------------------------------");
         }
-        println!("Connection monitoring stopped");
         Ok(())
     }
 
     pub fn stop_monitoring(&self) {
         self.should_stop.store(true, Ordering::SeqCst);
-        println!("Stop signal sent");
     }
 }
 
 fn check_uabc_connection() -> Result<bool, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::builder()
-        .danger_accept_invalid_certs(true)
-        .timeout(Duration::from_secs(3))
-        .build()?;
+    let client = build_client(Duration::from_secs(3), false)?;
 
     match client.get("https://pcw.uabc.mx/").send() {
         Ok(response) => {
@@ -145,6 +207,7 @@ fn check_uabc_connection() -> Result<bool, Box<dyn std::error::Error>> {
                 if body.contains("Universidad Autónoma de Baja California")
                     && !body.contains("login")
                 {
+                    println!("Pcw exist");
                     return Ok(true);
                 }
             }
@@ -166,28 +229,22 @@ fn auto_login(username: &str, password: &str) -> Result<bool, Box<dyn std::error
     let res = get_local_id();
     match res {
         Ok(local_id) => {
-            let id_time = start_time.elapsed();
-            println!("ID obtained in {:.2} seconds", id_time.as_secs_f32());
+            let _id_time = start_time.elapsed();
 
             match send_login(username, password, &local_id) {
                 Ok(status) => {
                     if status == reqwest::StatusCode::OK {
-                        println!("Request sent successfully");
-
                         if verify_connection_after_login() {
                             return Ok(true);
                         } else {
-                            println!("Request sent but no active connection");
                             return Ok(false);
                         }
                     } else {
-                        println!("Unexpected server response: {}", status);
                         Ok(false)
                     }
                 }
                 Err(e) => {
                     if e.to_string().contains("certificate") && verify_connection_after_login() {
-                        println!("Connection established");
                         return Ok(true);
                     }
 
@@ -204,37 +261,25 @@ fn send_login(
     password: &str,
     local_id: &str,
 ) -> Result<reqwest::StatusCode, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::builder()
-        .danger_accept_invalid_certs(true)
-        .timeout(Duration::from_secs(5))
-        .build()?;
+    let client = build_client(Duration::from_secs(5), false)?;
 
     let mut form = HashMap::new();
     form.insert("url", local_id);
     form.insert("username", email);
     form.insert("password", password);
 
-    println!("Sending data...");
-    let start_time = Instant::now();
-
     match client.post("https://pcw.uabc.mx/").form(&form).send() {
         Ok(res) => {
-            let elapsed = start_time.elapsed();
             let status = res.status();
             let body = res.text()?;
 
             if status.is_success() {
-                // Verificar si el título es correcto
                 if body.contains("<title>Login Successful</title>") {
-                    println!("Data sent in {:.2} seconds", elapsed.as_secs_f32());
                     Ok(status)
                 } else {
-                    println!("Error: The page title does not match");
-                    println!("It is possible that the credentials are incorrect");
                     Ok(reqwest::StatusCode::UNAUTHORIZED)
                 }
             } else {
-                println!("Error sending data. Code: {}", status);
                 Ok(status)
             }
         }
@@ -243,60 +288,35 @@ fn send_login(
 }
 
 fn verify_connection_after_login() -> bool {
-    println!("Verifying connection...");
-
     thread::sleep(Duration::from_millis(500));
 
     match reqwest::blocking::Client::builder()
-        .danger_accept_invalid_certs(true)
         .timeout(Duration::from_secs(3))
         .build()
     {
         Ok(client) => match client.get("https://www.google.com").send() {
             Ok(response) => {
                 let success = response.status().is_success();
-                println!(
-                    "Result: {}",
-                    if success {
-                        "Conectado"
-                    } else {
-                        "No connection"
-                    }
-                );
                 success
             }
             Err(_) => match client.get("https://www.cloudflare.com").send() {
                 Ok(response) => {
                     let success = response.status().is_success();
-                    println!(
-                        "Resultado (alternativo): {}",
-                        if success {
-                            "Connected"
-                        } else {
-                            "No connection"
-                        }
-                    );
                     success
                 }
                 Err(_) => {
-                    println!("No internet connection detected");
                     false
                 }
             },
         },
         Err(_) => {
-            println!("Error verifying connection");
             false
         }
     }
 }
 
 fn check_redirect(url: &str) -> Result<(bool, Option<String>), Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::builder()
-        .redirect(reqwest::redirect::Policy::none())
-        .timeout(Duration::from_secs(3))
-        .danger_accept_invalid_certs(true)
-        .build()?;
+    let client = build_client(Duration::from_secs(3), true)?;
 
     let response = client.get(url).send()?;
 

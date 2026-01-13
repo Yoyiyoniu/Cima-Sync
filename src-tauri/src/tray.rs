@@ -8,35 +8,35 @@ use tauri::{
 #[cfg(desktop)]
 pub fn system_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let quit_i = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
-    let minimize_i = MenuItem::with_id(app, "minimize", "Minimizar ventana", true, None::<&str>)?;
-    let maximize_i = MenuItem::with_id(app, "maximize", "Maximizar ventana", true, None::<&str>)?;
-
-    let menu = Menu::with_items(app, &[&minimize_i, &maximize_i, &quit_i])?;
+    let toggle_i = MenuItem::with_id(app, "toggle", "Maximizar / Minimizar", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&toggle_i, &quit_i])?;
 
     TrayIconBuilder::new()
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| match event.id.as_ref() {
-            "maximize" => {
+            "toggle" => {
                 if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-            "minimize" => {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.hide();
+                    let is_visible = window.is_visible().unwrap_or(false);
+                    if is_visible {
+                        let _ = window.set_focus();
+                        let _ = window.hide();
+                    } else {
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
                 }
             }
             "quit" => {
-                println!("quit menu item was clicked");
                 app.exit(0);
             }
-            _ => {
-                println!("menu item {:?} not handled", event.id);
-            }
+            _ => {}
         })
-        .icon(app.default_window_icon().unwrap().clone())
+        .icon(
+            app.default_window_icon()
+                .ok_or("No se encontró el ícono por defecto de la ventana")?
+                .clone(),
+        )
         .build(app)?;
     Ok(())
 }
