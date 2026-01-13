@@ -110,7 +110,7 @@ impl Auth {
         }
     }
 
-    fn record_failure(&self) {
+    fn record_2efailure(&self) {
         let failures = self.consecutive_failures.fetch_add(1, Ordering::SeqCst);
         if failures >= MAX_CONSECUTIVE_FAILURES {
             eprintln!(
@@ -174,13 +174,13 @@ impl Auth {
                     thread::sleep(self.success_interval);
                 }
                 Ok(false) => {
-                    self.record_failure();
+                    self.record_2efailure();
                     let backoff = self.calculate_backoff();
                     eprintln!("[auth] Login fallido, reintentando en {} segundos", backoff.as_secs());
                     thread::sleep(backoff);
                 }
                 Err(e) => {
-                    self.record_failure();
+                    self.record_2efailure();
                     let backoff = self.calculate_backoff();
                     eprintln!("[auth] Error: {}. Reintentando en {} segundos", e, backoff.as_secs());
                     thread::sleep(backoff);
@@ -207,6 +207,7 @@ fn check_uabc_connection() -> Result<bool, Box<dyn std::error::Error>> {
                 if body.contains("Universidad Autónoma de Baja California")
                     && !body.contains("login")
                 {
+                    println!("Pcw exist");
                     return Ok(true);
                 }
             }
