@@ -10,6 +10,7 @@ use zeroize::Zeroize;
 const SERVICE_NAME: &str = "cima-sync";
 const KEY_USER: &str = "master_key";
 const KEY_CREDS: &str = "user_creds";
+const KEYRING_KEY_PREFIX: &str = "cimasync:";
 
 #[derive(Clone)]
 pub struct SecureKey(Vec<u8>);
@@ -47,7 +48,8 @@ pub struct UserCredentials {
 }
 
 fn get_keyring_entry(key_name: &str) -> Result<Entry, String> {
-    Entry::new(SERVICE_NAME, key_name).map_err(|e| e.to_string())
+    let namespaced_key = format!("{}{}", KEYRING_KEY_PREFIX, key_name);
+    Entry::new(SERVICE_NAME, &namespaced_key).map_err(|e| e.to_string())
 }
 
 pub fn get_session_key() -> Result<Vec<u8>, String> {
@@ -114,9 +116,13 @@ pub fn save_credentials_to_keyring(email: &str, password: &str) -> Result<(), St
 pub fn get_credentials_from_keyring() -> Result<UserCredentials, String> {
     let entry = get_keyring_entry(KEY_CREDS)?;
 
-    let encrypted = entry
-        .get_password()
-        .map_err(|_| "No se encontraron credenciales".to_string())?;
+    let encrypted = entry.get_password().map_err(|e| match e {
+        keyring::Error::NoEntry => "No se encontraron credenciales".to_string(),
+        keyring::Error::BadEncoding(_) => {
+            "Datos de keyring corruptos o invalidos".to_string()
+        }
+        other => format!("Error de keyring: {}", other),
+    })?;
 
     let session_key = get_session_key()?;
     let json = decrypt_text(&session_key, &encrypted)?;
