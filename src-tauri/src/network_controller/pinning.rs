@@ -10,6 +10,7 @@ use sha2::{Digest, Sha256};
 use std::sync::Arc;
 use x509_parser::prelude::{FromDer, X509Certificate};
 
+// ? Rotated every 3 months :D
 const PINNED_SPKI_SHA256: &[&str] = &[
     "LsFWmoYBZbe7dGPj4X9kDpO59+xly3cuwIgO7SgtW34=",
 ];
