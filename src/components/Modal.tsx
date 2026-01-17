@@ -1,6 +1,6 @@
-import GithubIcon from "../assets/icons/GithubIcon";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import GithubIcon from "../assets/icons/GithubIcon";
 
 interface ModalProps {
     modalText: string;
@@ -36,7 +36,7 @@ export const Modal = ({ setShowModal, handleModalFunction, modalText, title, sho
     return (
         <>
             {
-                showModal && <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center modal-backdrop ${isClosing ? 'modal-backdrop-closing' : ''}`}>
+                showModal && <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center modal-backdrop ${isClosing ? 'modal-backdrop-closing' : ''}`}>
                     <div className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 max-w-md mx-4 modal-content ${isClosing ? 'modal-content-closing' : ''}`}>
                         <div className="flex items-center gap-3 mb-4">
                             <GithubIcon width={24} height={24} className="text-white" />

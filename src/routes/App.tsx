@@ -1,5 +1,5 @@
-import { useSearchParams } from "react-router";
 import { TourProvider } from "@reactour/tour";
+import { useSearchParams } from "react-router";
 import App from "../App";
 import { tourSteps, tourStyles } from "../tourConfig";
 

@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
-import { Modal } from "./Modal"
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { Modal } from "./Modal"
 
 export const CopyRightMenu = () => {
   const [showModal, setShowModal] = useState(false);

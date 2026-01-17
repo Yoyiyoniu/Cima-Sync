@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 
 export const AutoStartConfig = () => {
     const { t } = useTranslation();
@@ -28,8 +28,8 @@ export const AutoStartConfig = () => {
                 await enable();
                 setAutoRunEnabled(true);
             }
-        } catch (error) {
-            setAutoRunEnabled(!autoRunEnabled);
+		} catch (error) {
+			setAutoRunEnabled((prev) => !prev);
             console.error('Error al cambiar el estado del auto-run:', error);
         }
     };

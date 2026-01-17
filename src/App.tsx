@@ -1,29 +1,26 @@
-import type { FormEvent } from "react";
-import { useEffect, useRef } from "react";
-import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-
-import { disableContextMenu } from "./hooks/disableContextMenu";
+import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
+
+import { useAppBootstrap } from "./hooks/useAppBootstrap";
+import { useDisableContextMenu } from "./hooks/disableContextMenu";
+import { useNetworkStatus } from "./hooks/useNetworkStatus";
+import { useShowApp } from "./hooks/useShowApp";
+import { useTourAutoOpen } from "./hooks/useTourAutoOpen";
 import type { AppProps, AppState } from "./types";
 
-import {
-	getRememberSessionConfig,
-	setRememberSessionConfig,
-	initEncryption,
-} from "./controller/DbController";
+import { setRememberSessionConfig } from "./controller/DbController";
+import { LoadingText } from "./components/LoadingText";
+import { CertificateAlert } from "./components/CertificateAlert";
+import { CopyRightMenu } from "./components/ContactMe";
 import { Input } from "./components/Input";
 import { SettingsMenu } from "./components/SettingsMenu";
-import { CopyRightMenu } from "./components/ContactMe";
 import { SuccessModal } from "./components/SuccessModal";
-import { CertificateAlert } from "./components/CertificateAlert";
-import { LoadingText } from "./components/LoadingText";
 
-import img from "./assets/img/cima-sync-logo.avif";
 import StopIcon from "./assets/icons/StopIcon";
 import WifiIcon from "./assets/icons/WifiIcon";
+import img from "./assets/img/cima-sync-logo.avif";
 
 import "@fontsource-variable/nunito";
 import "./css/Global.css";
@@ -31,18 +28,17 @@ import "./css/Global.css";
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
 	const { setIsOpen } = useTour();
-	const [credentials, setCredentials] = useState({ email: "", password: "" });
+	const { credentials, setCredentials, rememberSession, setRememberSession } =
+		useAppBootstrap();
 	const [appState, setAppState] = useState<AppState>({
 		loading: false,
 		error: null,
 		success: false,
 	});
-	
-	const [rememberSession, setRememberSession] = useState(false);
 	const [showSuccessModal, setShowSuccessModal] = useState(false);
-	const [showApp, setShowApp] = useState(false);
-	const [isUabcConnected, setIsUabcConnected] = useState(false);
 	const [showCertificateAlert, setShowCertificateAlert] = useState(false);
+	const { showApp } = useShowApp();
+	const { isUabcConnected } = useNetworkStatus();
 	const isFormDisabled = appState.loading || appState.success;
 	const isLoginDisabled =
 		isFormDisabled ||
@@ -50,101 +46,9 @@ function App({ showTourFirstTime = false }: AppProps) {
 		!credentials.password ||
 		!isUabcConnected;
 
-	const appStateRef = useRef(appState);
-	useEffect(() => {
-		appStateRef.current = appState;
-	}, [appState]);
+	useDisableContextMenu();
 
-	disableContextMenu();
-
-	useEffect(() => {
-		if (showTourFirstTime) {
-			const timer = setTimeout(() => setIsOpen(true), 1000);
-			return () => clearTimeout(timer);
-		}
-	}, [showTourFirstTime, setIsOpen]);
-
-	useEffect(() => {
-		const timer = setTimeout(() => setShowApp(true), 100);
-		return () => clearTimeout(timer);
-	}, []);
-
-	useEffect(() => {
-		const bootstrap = async () => {
-			try {
-				await initEncryption();
-
-				const remember = await getRememberSessionConfig();
-				setRememberSession(remember);
-
-				// Cargar credenciales desde el keyring seguro
-				if (remember) {
-					try {
-						const storedCreds = await invoke<{
-							email: string;
-							password: string;
-						}>("get_credentials");
-						if (storedCreds?.email && storedCreds?.password) {
-							setCredentials({
-								email: storedCreds.email,
-								password: storedCreds.password,
-							});
-						}
-					} catch {
-						// No hay credenciales guardadas, es normal
-					}
-				}
-			} catch (_error) {
-				console.error("Error loading configuration:");
-			}
-		};
-
-		bootstrap();
-	}, []);
-
-	useEffect(() => {
-		const setupNetworkListener = async () => {
-			const unlisten = await listen("uabc-detected", async () => {
-				console.log("UABC Network detected via event");
-				setIsUabcConnected(true);
-			});
-
-			return unlisten;
-		};
-
-		const setupStatusListener = async () => {
-			// 1. Listen for network status changes
-			const unlisten = await listen("network-status", (event: any) => {
-				const payload = event.payload;
-				setIsUabcConnected(!!payload.is_uabc);
-			});
-
-			// 2. Check the current status if the initial event was already emitted
-			try {
-				const status: any = await invoke("get_network_status");
-				setIsUabcConnected(!!status.is_uabc);
-			} catch (error) {
-				console.error("Error fetching initial network status:", error);
-			}
-
-			return unlisten;
-		};
-
-		let unlistenFn: (() => void) | undefined;
-		let unlistenStatusFn: (() => void) | undefined;
-
-		setupNetworkListener().then((fn) => {
-			unlistenFn = fn;
-		});
-		setupStatusListener().then((fn) => {
-			unlistenStatusFn = fn;
-		});
-
-		return () => {
-			if (unlistenFn) unlistenFn();
-			if (unlistenStatusFn) unlistenStatusFn();
-		};
-	}, []);
+	useTourAutoOpen({ showTourFirstTime, setIsOpen });
 
 	const handleLogin = async (e: FormEvent) => {
 		e.preventDefault();

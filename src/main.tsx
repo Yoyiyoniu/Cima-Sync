@@ -1,13 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./i18n";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+
 import { Onboarding } from "./components/Onboarding";
 import { SplashScreen } from "./components/SplashScreen";
 import { Initializer } from "./routes/Initializer";
 import { AppWrapper } from "./routes/App";
 
 import "./css/TourNavigation.css";
+import "./i18n";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 	<React.StrictMode>
