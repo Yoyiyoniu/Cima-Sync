@@ -19,6 +19,7 @@ import { SettingsMenu } from "./components/SettingsMenu";
 import { CopyRightMenu } from "./components/ContactMe";
 import { SuccessModal } from "./components/SuccessModal";
 import { CertificateAlert } from "./components/CertificateAlert";
+import { LoadingText } from "./components/LoadingText";
 
 import img from "./assets/img/cima-sync-logo.avif";
 import StopIcon from "./assets/icons/StopIcon";
@@ -26,14 +27,6 @@ import WifiIcon from "./assets/icons/WifiIcon";
 
 import "@fontsource-variable/nunito";
 import "./css/Global.css";
-
-const UI_TEST_MODE = false;
-const MIN_LOGIN_ANIMATION_MS = 5200;
-
-const wait = (ms: number) =>
-	new Promise<void>((resolve) => {
-		setTimeout(resolve, ms);
-	});
 
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
@@ -44,6 +37,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 		error: null,
 		success: false,
 	});
+	
 	const [rememberSession, setRememberSession] = useState(false);
 	const [showSuccessModal, setShowSuccessModal] = useState(false);
 	const [showApp, setShowApp] = useState(false);
@@ -52,8 +46,9 @@ function App({ showTourFirstTime = false }: AppProps) {
 	const isFormDisabled = appState.loading || appState.success;
 	const isLoginDisabled =
 		isFormDisabled ||
-		(!UI_TEST_MODE &&
-			(!credentials.email || !credentials.password || !isUabcConnected));
+		!credentials.email ||
+		!credentials.password ||
+		!isUabcConnected;
 
 	const appStateRef = useRef(appState);
 	useEffect(() => {
@@ -154,13 +149,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 	const handleLogin = async (e: FormEvent) => {
 		e.preventDefault();
 		setAppState({ loading: true, error: null, success: false });
-		if (UI_TEST_MODE) {
-			await wait(MIN_LOGIN_ANIMATION_MS);
-			setAppState({ loading: false, error: null, success: true });
-			setShowSuccessModal(true);
-			return;
-		}
-
 		try {
 			await setRememberSessionConfig(rememberSession);
 
@@ -360,74 +348,63 @@ function App({ showTourFirstTime = false }: AppProps) {
 							</div>
 						)}
 
-						<div
-							className={`form-element ${showApp ? "show" : ""} flex w-full max-w-sm justify-center ${
-								appState.success ? "gap-2" : "gap-0"
-							}`}
-						>
-							<button
-								id="login-button"
-								type="submit"
-								title={
-									!isUabcConnected
-										? t("App.networkUnavailable")
-										: t("App.login")
-								}
-								disabled={isLoginDisabled}
-								className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium
+					</fieldset>
+					<div
+						className={`form-element ${showApp ? "show" : ""} flex w-full max-w-sm justify-center ${
+							appState.success ? "gap-2" : "gap-0"
+						}`}
+					>
+						<button
+							id="login-button"
+							type="submit"
+							title={
+								!isUabcConnected
+									? t("App.networkUnavailable")
+									: t("App.login")
+							}
+							disabled={isLoginDisabled}
+							className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium
                         bg-[#006633] hover:bg-[#005528] text-white 
                         disabled:cursor-not-allowed
                         transition-all duration-300 shadow-sm cursor-pointer w-full"
-							>
-								<span className="login-button-glow" aria-hidden="true" />
-								<span className="login-button-text">
-									{appState.loading
-										? t("App.connecting")
-										: appState.success
-											? t("App.connected")
-											: !isUabcConnected
-												? t("App.networkUnavailable")
-												: t("App.login")}
-								</span>
-								<span className="login-button-sheen" aria-hidden="true" />
-							</button>
-							<button
-								title={t("App.logout")}
-								onClick={handleLogout}
-								type="button"
-								className={`h-11 flex items-center justify-center rounded-md font-medium
+						>
+							<span className="login-button-glow" aria-hidden="true" />
+							<span className="login-button-text">
+								{appState.loading
+									? (
+											<LoadingText
+												isActive={appState.loading}
+												className="inline-block"
+												messages={[
+													`${t("App.connecting")}...`,
+													"Desbloqueando limitaciones cimarronas...",
+													"Puliendo credenciales interestelares...",
+													"Calibrando señal extraterrestre...",
+												]}
+											/>
+										)
+									: appState.success
+										? t("App.connected")
+										: !isUabcConnected
+											? t("App.networkUnavailable")
+											: t("App.login")}
+							</span>
+							<span className="login-button-sheen" aria-hidden="true" />
+						</button>
+						<button
+							title={t("App.logout")}
+							onClick={handleLogout}
+							type="button"
+							className={`h-11 flex items-center justify-center rounded-md font-medium
                       bg-red-600 hover:bg-red-700 text-white
                       disabled:opacity-70 disabled:cursor-not-allowed
                       transition-all duration-300 shadow-sm cursor-pointer
                       ${appState.success ? "w-20 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-0 pointer-events-none"}`}
-							>
-								<StopIcon />
-							</button>
-						</div>
-					</fieldset>
-
-					<div
-						className={`login-loading-overlay ${appState.loading ? "show" : ""}`}
-						aria-hidden="true"
-					>
-						<div className="login-loading-card">
-							<span className="login-pulse-ring" />
-							<div className="login-loading-text">
-								{t("App.connecting")}
-								<span className="login-dots" aria-hidden="true">
-									<span>.</span>
-									<span>.</span>
-									<span>.</span>
-								</span>
-							</div>
-							<div className="login-signal" aria-hidden="true">
-								<span />
-								<span />
-								<span />
-								<span />
-							</div>
-						</div>
+						>
+							<StopIcon />
+						</button>
 					</div>
+
 				</form>
 			</div>
 
