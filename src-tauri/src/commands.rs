@@ -13,7 +13,7 @@ use std::sync::Mutex;
 use std::thread;
 
 lazy_static::lazy_static! {
-    static ref CURRENT_AUTH: Arc<Mutex<Option<Auth>>> = Arc::new(Mutex::new(None));
+    static ref CURRENT_AUTH: Arc<Mutex<Option<Arc<Auth>>>> = Arc::new(Mutex::new(None));
     static ref EMAIL_REGEX: Regex = Regex::new(
         r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     ).expect("Regex de email inválido");
@@ -115,8 +115,9 @@ pub fn auto_auth(email: &str, password: &str) -> Result<String, String> {
     
     let username = email.split('@').next().unwrap_or(email).to_string();
 
-    let auth = Auth::new(&username, password);
-    let auth_clone = Auth::new(&username, password);
+    // Crear solo una instancia de Auth envuelta en Arc
+    let auth = Arc::new(Auth::new(&username, password));
+    let auth_for_thread = Arc::clone(&auth);
     
     match CURRENT_AUTH.lock() {
         Ok(mut guard) => {
@@ -126,7 +127,7 @@ pub fn auto_auth(email: &str, password: &str) -> Result<String, String> {
     }
 
     thread::spawn(move || {
-        if let Err(e) = auth_clone.start_monitoring() {
+        if let Err(e) = auth_for_thread.start_monitoring() {
             eprintln!("[auth] Error en monitoreo: {}", e);
         }
     });
