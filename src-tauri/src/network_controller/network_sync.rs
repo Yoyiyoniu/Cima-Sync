@@ -11,7 +11,7 @@ use tauri::Emitter;
 static MONITOR_ONCE: Once = Once::new();
 
 lazy_static! {
-    static ref LAST_STATE: Arc<Mutex<Option<WifiState>>> = Arc::new(Mutex::new(None));
+    static ref LAST_STATE: Mutex<Option<WifiState>> = Mutex::new(None);
     static ref INTERFACE_NAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_\-\.]+$")
         .expect("Regex de interfaz inválido");
 }
@@ -68,11 +68,12 @@ fn get_safe_interface_name(name: &str) -> Option<String> {
     }
 }
 
+// Usar Box para reducir el tamaño del struct en stack
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct WifiState {
-    interface: String,
-    ssid: Option<String>,
-    ipv4: Option<String>,
+    interface: Box<str>,  // Más eficiente que String para datos inmutables
+    ssid: Option<Box<str>>,
+    ipv4: Option<Box<str>>,
 }
 
 impl WifiState {
@@ -90,21 +91,21 @@ impl WifiState {
                     })?;
 
                 Some(WifiState {
-                    interface: iface.name.clone(),
-                    ssid: get_wifi_ssid(&iface.name),
-                    ipv4: Some(ipv4),
+                    interface: iface.name.clone().into_boxed_str(),
+                    ssid: get_wifi_ssid(&iface.name).map(|s| s.into_boxed_str()),
+                    ipv4: Some(ipv4.into_boxed_str()),
                 })
             })
     }
 }
 
 #[inline]
-fn check_is_uabc(ssid: &Option<String>) -> bool {
-    ssid.as_ref().map(|s| s.contains("UABC")).unwrap_or(false)
+fn check_is_uabc(ssid: Option<&str>) -> bool {
+    ssid.map(|s| s.contains("UABC")).unwrap_or(false)
 }
 
-fn create_status_payload(ssid: Option<String>) -> serde_json::Value {
-    let is_uabc = check_is_uabc(&ssid);
+fn create_status_payload(ssid: Option<&str>) -> serde_json::Value {
+    let is_uabc = check_is_uabc(ssid);
     let connected = ssid.is_some();
 
     serde_json::json!({
@@ -115,10 +116,11 @@ fn create_status_payload(ssid: Option<String>) -> serde_json::Value {
 }
 
 pub fn get_current_network_status() -> serde_json::Value {
-    let ssid = LAST_STATE
-        .lock()
-        .ok()
-        .and_then(|guard| guard.as_ref().and_then(|state| state.ssid.clone()));
+    let guard = match LAST_STATE.lock() {
+        Ok(g) => g,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    let ssid = guard.as_ref().and_then(|state| state.ssid.as_deref());
     create_status_payload(ssid)
 }
 
@@ -395,11 +397,11 @@ fn monitor_loop(app: tauri::AppHandle) {
     }
 }
 
-fn emit_network_status(app: &tauri::AppHandle, ssid: Option<String>) {
-    let payload = create_status_payload(ssid.clone());
+fn emit_network_status(app: &tauri::AppHandle, ssid: Option<&str>) {
+    let payload = create_status_payload(ssid);
     let _ = app.emit("network-status", payload);
 
-    if check_is_uabc(&ssid) {
+    if check_is_uabc(ssid) {
         let _ = app.emit("uabc-detected", ());
     }
 }
@@ -420,7 +422,7 @@ fn handle_network_update(
     };
 
     if is_first {
-        emit_network_status(app, current_state.as_ref().and_then(|s| s.ssid.clone()));
+        emit_network_status(app, current_state.as_ref().and_then(|s| s.ssid.as_deref()));
         match LAST_STATE.lock() {
             Ok(mut guard) => *guard = current_state,
             Err(poisoned) => *poisoned.into_inner() = current_state,
@@ -442,16 +444,16 @@ fn handle_network_update(
             let mut updated_state = curr.clone();
             if updated_state.ssid.is_none() {
                 thread::sleep(Duration::from_millis(SSID_RETRY_DELAY_MS));
-                updated_state.ssid = get_wifi_ssid(&curr.interface);
+                updated_state.ssid = get_wifi_ssid(&curr.interface).map(|s| s.into_boxed_str());
             }
             if prev.ssid != updated_state.ssid {
-                emit_network_status(app, updated_state.ssid.clone());
+                emit_network_status(app, updated_state.ssid.as_deref());
             }
             *state_guard = Some(updated_state);
         }
         (None, Some(curr)) => {
             if curr.ssid.is_some() {
-                emit_network_status(app, curr.ssid.clone());
+                emit_network_status(app, curr.ssid.as_deref());
             }
             *state_guard = current_state;
         }

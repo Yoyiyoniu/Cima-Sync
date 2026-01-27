@@ -1,5 +1,3 @@
-import { useTranslation } from "react-i18next";
-
 interface InputWithIconProps {
     id: string
     type: string
@@ -21,9 +19,6 @@ export const Input = ({
     disabled = false,
     icon,
 }: InputWithIconProps) => {
-    useTranslation();
-    
-    
     return (
         <div className="space-y-2">
             <label htmlFor={id} className="block text-white font-medium text-sm">

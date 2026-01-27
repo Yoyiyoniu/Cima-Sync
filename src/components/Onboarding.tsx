@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router";
-import { enable, isEnabled, disable } from "@tauri-apps/plugin-autostart";
+import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 import cimaLogo from "../assets/img/cima-sync-logo.avif";
@@ -79,7 +79,7 @@ export function Onboarding() {
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, [dropdownOpen]);
 
-	const handleLanguageChange = async (language: string) => {
+	const handleLanguageChange = useCallback(async (language: string) => {
 		try {
 			await i18n.changeLanguage(language);
 			await setLanguagePreference(language);
@@ -87,118 +87,121 @@ export function Onboarding() {
 		} catch (error) {
 			console.error("Error saving language:", error);
 		}
-	};
+	}, [i18n]);
 
-	const steps = [
-		{
-			id: "language",
-			title: t("Onboarding.step1.title"),
-			description: t("Onboarding.step1.description"),
-			icon: (
-				<svg
-					aria-hidden="true"
-					className="w-12 h-12"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						strokeWidth={1.5}
-						d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
-					/>
-				</svg>
-			),
-			showLanguageSelector: true,
-		},
-		{
-			id: "autostart",
-			title: t("Onboarding.step4.title"),
-			description: t("Onboarding.step4.description"),
-			icon: (
-				<svg
-					aria-hidden="true"
-					className="w-12 h-12"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						strokeWidth={1.5}
-						d="M13 10V3L4 14h7v7l9-11h-7z"
-					/>
-				</svg>
-			),
-			showAutoStart: true,
-		},
-		{
-			id: "session",
-			title: t("Onboarding.step2.title"),
-			description: t("Onboarding.step2.description"),
-			icon: (
-				<svg
-					aria-hidden="true"
-					className="w-12 h-12"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						strokeWidth={1.5}
-						d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-					/>
-				</svg>
-			),
-		},
-		{
-			id: "privacy",
-			title: t("Onboarding.step3.title"),
-			description: t("Onboarding.step3.description"),
-			icon: (
-				<svg
-					aria-hidden="true"
-					className="w-12 h-12"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						strokeWidth={1.5}
-						d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-					/>
-				</svg>
-			),
-		},
-		{
-			id: "donate",
-			title: t("Onboarding.step5.title"),
-			description: t("Onboarding.step5.description"),
-			icon: (
-				<svg
-					aria-hidden="true"
-					className="w-12 h-12"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						strokeWidth={1.5}
-						d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-					/>
-				</svg>
-			),
-			showDonation: true,
-		},
-	];
+	const steps = useMemo(
+		() => [
+			{
+				id: "language",
+				title: t("Onboarding.step1.title"),
+				description: t("Onboarding.step1.description"),
+				icon: (
+					<svg
+						aria-hidden="true"
+						className="w-12 h-12"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={1.5}
+							d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+						/>
+					</svg>
+				),
+				showLanguageSelector: true,
+			},
+			{
+				id: "autostart",
+				title: t("Onboarding.step4.title"),
+				description: t("Onboarding.step4.description"),
+				icon: (
+					<svg
+						aria-hidden="true"
+						className="w-12 h-12"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={1.5}
+							d="M13 10V3L4 14h7v7l9-11h-7z"
+						/>
+					</svg>
+				),
+				showAutoStart: true,
+			},
+			{
+				id: "session",
+				title: t("Onboarding.step2.title"),
+				description: t("Onboarding.step2.description"),
+				icon: (
+					<svg
+						aria-hidden="true"
+						className="w-12 h-12"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={1.5}
+							d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+						/>
+					</svg>
+				),
+			},
+			{
+				id: "privacy",
+				title: t("Onboarding.step3.title"),
+				description: t("Onboarding.step3.description"),
+				icon: (
+					<svg
+						aria-hidden="true"
+						className="w-12 h-12"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={1.5}
+							d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+						/>
+					</svg>
+				),
+			},
+			{
+				id: "donate",
+				title: t("Onboarding.step5.title"),
+				description: t("Onboarding.step5.description"),
+				icon: (
+					<svg
+						aria-hidden="true"
+						className="w-12 h-12"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth={1.5}
+							d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+						/>
+					</svg>
+				),
+				showDonation: true,
+			},
+		],
+		[i18n.language, t],
+	);
 
 	const isLast = step === steps.length - 1;
 

@@ -1,25 +1,20 @@
 import { useEffect, useState } from "react";
-import OptionsIcon from "../assets/icons/OptionsIcon";
-import XIcon from "../assets/icons/XIcon";
-import GithubIcon from "../assets/icons/GithubIcon";
-import TrashIcon from "../assets/icons/TrashIcon";
-import { openUrl } from "@tauri-apps/plugin-opener";
-import { Modal } from "./Modal";
-import {
-	removeDatabase,
-	resetCredentialsSystem,
-} from "../controller/DbController";
-import { platform } from "@tauri-apps/plugin-os";
 import { useTranslation } from "react-i18next";
-import { LanguageSelector } from "./SettingsMenu/LanguageSelector";
-import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
-import { TourButton } from "./SettingsMenu/TourButton";
-
-import CoffeeIcon from "../assets/icons/CoffeeIcon";
-import HelpIcon from "../assets/icons/HelpIcon";
-
 import { useNavigate } from "react-router";
+import { platform } from "@tauri-apps/plugin-os";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
+import { removeDatabase, resetCredentialsSystem } from "../controller/DbController";
+import CoffeeIcon from "../assets/icons/CoffeeIcon";
+import GithubIcon from "../assets/icons/GithubIcon";
+import HelpIcon from "../assets/icons/HelpIcon";
+import OptionsIcon from "../assets/icons/OptionsIcon";
+import TrashIcon from "../assets/icons/TrashIcon";
+import XIcon from "../assets/icons/XIcon";
+import { Modal } from "./Modal";
+import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
+import { LanguageSelector } from "./SettingsMenu/LanguageSelector";
+import { TourButton } from "./SettingsMenu/TourButton";
 export const SettingsMenu = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();

@@ -51,13 +51,13 @@ export function CertificateAlert({ isVisible }: CertificateAlertProps) {
 
 			{isModalOpen && (
 				<div
-					className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+					className="fixed inset-0 z-100 flex items-center justify-center p-4"
 					onClick={() => setIsModalOpen(false)}
 				>
 					<div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
 					<div
-						className="relative bg-gradient-to-br from-gray-900 to-gray-800 
+						className="relative bg-linear-to-br from-gray-900 to-gray-800 
 							border border-red-500/30 rounded-xl shadow-2xl 
 							max-w-md w-full p-6"
 						onClick={(e) => e.stopPropagation()}
@@ -97,7 +97,7 @@ export function CertificateAlert({ isVisible }: CertificateAlertProps) {
 						<button
 							onClick={handleUpdateClick}
 							className="w-full flex items-center justify-center gap-3
-								bg-gradient-to-r from-green-600 to-green-700
+								bg-linear-to-r from-green-600 to-green-700
 								hover:from-green-500 hover:to-green-600
 								text-white font-medium py-3 px-4 rounded-lg
 								transition-all duration-200 shadow-lg hover:shadow-green-500/25"

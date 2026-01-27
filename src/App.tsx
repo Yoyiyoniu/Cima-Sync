@@ -1,157 +1,58 @@
-import type { FormEvent } from "react";
-import { useEffect, useRef } from "react";
-import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-
-import { disableContextMenu } from "./hooks/disableContextMenu";
+import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
 
-import {
-	getRememberSessionConfig,
-	setRememberSessionConfig,
-	initEncryption,
-} from "./controller/DbController";
+import { useAppBootstrap } from "./hooks/useAppBootstrap";
+import { useDisableContextMenu } from "./hooks/disableContextMenu";
+import { useNetworkStatus } from "./hooks/useNetworkStatus";
+import { useShowApp } from "./hooks/useShowApp";
+import { useTourAutoOpen } from "./hooks/useTourAutoOpen";
+import type { AppProps, AppState } from "./types";
+
+import { setRememberSessionConfig } from "./controller/DbController";
+import { LoadingText } from "./components/LoadingText";
+import { CertificateAlert } from "./components/CertificateAlert";
+import { CopyRightMenu } from "./components/ContactMe";
 import { Input } from "./components/Input";
 import { SettingsMenu } from "./components/SettingsMenu";
-import { CopyRightMenu } from "./components/ContactMe";
 import { SuccessModal } from "./components/SuccessModal";
-import { CertificateAlert } from "./components/CertificateAlert";
 
-import img from "./assets/img/cima-sync-logo.avif";
 import StopIcon from "./assets/icons/StopIcon";
 import WifiIcon from "./assets/icons/WifiIcon";
+import img from "./assets/img/cima-sync-logo.avif";
 
 import "@fontsource-variable/nunito";
 import "./css/Global.css";
-import "./css/AppAnimations.css";
-
-interface AppProps {
-	showTourFirstTime?: boolean;
-}
-
-interface AppState {
-	loading: boolean;
-	error: string | null;
-	success: boolean;
-}
 
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
 	const { setIsOpen } = useTour();
-	const [credentials, setCredentials] = useState({ email: "", password: "" });
+	const { credentials, setCredentials, rememberSession, setRememberSession } =
+		useAppBootstrap();
 	const [appState, setAppState] = useState<AppState>({
 		loading: false,
 		error: null,
 		success: false,
 	});
-	const [rememberSession, setRememberSession] = useState(false);
 	const [showSuccessModal, setShowSuccessModal] = useState(false);
-	const [showApp, setShowApp] = useState(false);
-	const [isUabcConnected, setIsUabcConnected] = useState(false);
 	const [showCertificateAlert, setShowCertificateAlert] = useState(false);
+	const { showApp } = useShowApp();
+	const { isUabcConnected } = useNetworkStatus();
+	const isFormDisabled = appState.loading || appState.success;
+	const isLoginDisabled =
+		isFormDisabled ||
+		!credentials.email ||
+		!credentials.password ||
+		!isUabcConnected;
 
-	const appStateRef = useRef(appState);
-	useEffect(() => {
-		appStateRef.current = appState;
-	}, [appState]);
+	useDisableContextMenu();
 
-	disableContextMenu();
-
-	useEffect(() => {
-		if (showTourFirstTime) {
-			const timer = setTimeout(() => setIsOpen(true), 1000);
-			return () => clearTimeout(timer);
-		}
-	}, [showTourFirstTime, setIsOpen]);
-
-	useEffect(() => {
-		const timer = setTimeout(() => setShowApp(true), 100);
-		return () => clearTimeout(timer);
-	}, []);
-
-	useEffect(() => {
-		const bootstrap = async () => {
-			try {
-				await initEncryption();
-
-				const remember = await getRememberSessionConfig();
-				setRememberSession(remember);
-
-				// Cargar credenciales desde el keyring seguro
-				if (remember) {
-					try {
-						const storedCreds = await invoke<{
-							email: string;
-							password: string;
-						}>("get_credentials");
-						if (storedCreds?.email && storedCreds?.password) {
-							setCredentials({
-								email: storedCreds.email,
-								password: storedCreds.password,
-							});
-						}
-					} catch {
-						// No hay credenciales guardadas, es normal
-					}
-				}
-			} catch (_error) {
-				console.error("Error loading configuration:");
-			}
-		};
-
-		bootstrap();
-	}, []);
-
-	useEffect(() => {
-		const setupNetworkListener = async () => {
-			const unlisten = await listen("uabc-detected", async () => {
-				console.log("UABC Network detected via event");
-				setIsUabcConnected(true);
-			});
-
-			return unlisten;
-		};
-
-		const setupStatusListener = async () => {
-			// 1. Listen for network status changes
-			const unlisten = await listen("network-status", (event: any) => {
-				const payload = event.payload;
-				setIsUabcConnected(!!payload.is_uabc);
-			});
-
-			// 2. Check the current status if the initial event was already emitted
-			try {
-				const status: any = await invoke("get_network_status");
-				setIsUabcConnected(!!status.is_uabc);
-			} catch (error) {
-				console.error("Error fetching initial network status:", error);
-			}
-
-			return unlisten;
-		};
-
-		let unlistenFn: (() => void) | undefined;
-		let unlistenStatusFn: (() => void) | undefined;
-
-		setupNetworkListener().then((fn) => {
-			unlistenFn = fn;
-		});
-		setupStatusListener().then((fn) => {
-			unlistenStatusFn = fn;
-		});
-
-		return () => {
-			if (unlistenFn) unlistenFn();
-			if (unlistenStatusFn) unlistenStatusFn();
-		};
-	}, []);
+	useTourAutoOpen({ showTourFirstTime, setIsOpen });
 
 	const handleLogin = async (e: FormEvent) => {
 		e.preventDefault();
 		setAppState({ loading: true, error: null, success: false });
-
 		try {
 			await setRememberSessionConfig(rememberSession);
 
@@ -241,7 +142,11 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 			<div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
 				<CopyRightMenu />
-				<form className="w-full max-w-sm flex flex-col gap-3 mb-8">
+				<form
+					className={`login-form w-full max-w-sm flex flex-col gap-3 mb-8 ${isFormDisabled ? "is-loading" : ""}`}
+					onSubmit={handleLogin}
+					aria-busy={appState.loading}
+				>
 					<div className="text-center mb-8">
 						<h1
 							className={`app-title ${showApp ? "show" : ""} text-2xl font-medium`}
@@ -261,114 +166,134 @@ function App({ showTourFirstTime = false }: AppProps) {
 						</div>
 					)}
 
-					<div className={`form-element ${showApp ? "show" : ""}`}>
-						<Input
-							id="email"
-							type="email"
-							label={t("App.email")}
-							placeholder={t("Input.emailPlaceholder")}
-							value={credentials.email}
-							onChange={(e) => {
-								setCredentials((prev) => ({ ...prev, email: e.target.value }));
-							}}
-							disabled={appState.loading || appState.success}
-						/>
-					</div>
-
-					<div className={`form-element ${showApp ? "show" : ""}`}>
-						<Input
-							id="password"
-							type="password"
-							label={t("App.password")}
-							placeholder={t("Input.passwordPlaceholder")}
-							value={credentials.password}
-							onChange={(e) => {
-								setCredentials((prev) => ({
-									...prev,
-									password: e.target.value,
-								}));
-							}}
-							disabled={appState.loading || appState.success}
-						/>
-					</div>
-
-					<div
-						className={`form-element ${showApp ? "show" : ""} flex items-center`}
+					<fieldset
+						disabled={isFormDisabled}
+						className={`login-fieldset flex flex-col gap-3 ${isFormDisabled ? "is-disabled" : ""}`}
 					>
-						<div className="relative flex items-center">
-							<input
-								type="checkbox"
-								id="remember"
-								checked={rememberSession}
-								onChange={(e) => handleRememberChange(e.target.checked)}
-								disabled={appState.loading || appState.success}
-								className="peer h-4 w-4 appearance-none rounded border border-[#006633]/30 bg-black/40 
+						<div className={`form-element ${showApp ? "show" : ""}`}>
+							<Input
+								id="email"
+								type="email"
+								label={t("App.email")}
+								placeholder={t("Input.emailPlaceholder")}
+								value={credentials.email}
+								onChange={(e) => {
+									setCredentials((prev) => ({
+										...prev,
+										email: e.target.value,
+									}));
+								}}
+								disabled={isFormDisabled}
+							/>
+						</div>
+
+						<div className={`form-element ${showApp ? "show" : ""}`}>
+							<Input
+								id="password"
+								type="password"
+								label={t("App.password")}
+								placeholder={t("Input.passwordPlaceholder")}
+								value={credentials.password}
+								onChange={(e) => {
+									setCredentials((prev) => ({
+										...prev,
+										password: e.target.value,
+									}));
+								}}
+								disabled={isFormDisabled}
+							/>
+						</div>
+
+						<div
+							className={`form-element ${showApp ? "show" : ""} flex items-center`}
+						>
+							<div className="relative flex items-center">
+								<input
+									type="checkbox"
+									id="remember"
+									checked={rememberSession}
+									onChange={(e) => handleRememberChange(e.target.checked)}
+									disabled={isFormDisabled}
+									className="peer h-4 w-4 appearance-none rounded border border-[#006633]/30 bg-black/40 
                         checked:bg-[#006633] checked:border-[#006633] 
                           focus:outline-none focus:ring-2 focus:ring-[#006633]/50
                           disabled:opacity-50 disabled:cursor-not-allowed"
-							/>
-							<div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									className="h-3 w-3"
-									viewBox="0 0 20 20"
-									fill="currentColor"
-									aria-hidden="true"
-								>
-									<path
-										fillRule="evenodd"
-										d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-										clipRule="evenodd"
-									/>
-								</svg>
+								/>
+								<div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										className="h-3 w-3"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+										aria-hidden="true"
+									>
+										<path
+											fillRule="evenodd"
+											d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
 							</div>
+							<label
+								htmlFor="remember"
+								title={t("App.rememberTitle")}
+								className="ml-2 text-sm text-gray-300 cursor-pointer select-none"
+							>
+								{t("App.remember")}
+							</label>
 						</div>
-						<label
-							htmlFor="remember"
-							title={t("App.rememberTitle")}
-							className="ml-2 text-sm text-gray-300 cursor-pointer select-none"
-						>
-							{t("App.remember")}
-						</label>
-					</div>
 
-					{appState.error && (
-						<div
-							className={`form-element ${showApp ? "show" : ""} bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}
-						>
-							{t("App.error")}: {appState.error}
-						</div>
-					)}
+						{appState.error && (
+							<div
+								className={`form-element ${showApp ? "show" : ""} bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}
+							>
+								{t("App.error")}: {appState.error}
+							</div>
+						)}
 
+					</fieldset>
 					<div
-						className={`form-element ${showApp ? "show" : ""} flex w-full max-w-sm justify-center gap-2 relative`}
+						className={`form-element ${showApp ? "show" : ""} flex w-full max-w-sm justify-center ${
+							appState.success ? "gap-2" : "gap-0"
+						}`}
 					>
 						<button
 							id="login-button"
 							type="submit"
 							title={
-								!isUabcConnected ? t("App.networkUnavailable") : t("App.login")
-							}
-							onClick={handleLogin}
-							disabled={
-								appState.loading ||
-								appState.success ||
-								!credentials.email ||
-								!credentials.password ||
 								!isUabcConnected
+									? t("App.networkUnavailable")
+									: t("App.login")
 							}
-							className="h-11 flex items-center justify-center rounded-md font-medium
+							disabled={isLoginDisabled}
+							className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium
                         bg-[#006633] hover:bg-[#005528] text-white 
-                        disabled:opacity-70 disabled:cursor-not-allowed
+                        disabled:cursor-not-allowed
                         transition-all duration-300 shadow-sm cursor-pointer w-full"
 						>
-							{appState.loading
-								? t("App.connecting")
-								: appState.success
-									? t("App.connected")
-									: !isUabcConnected
-										? t("App.networkUnavailable")
-										: t("App.login")}
+							<span className="login-button-glow" aria-hidden="true" />
+							<span className="login-button-text">
+								{appState.loading
+									? (
+											<LoadingText
+												isActive={appState.loading}
+												className="inline-block"
+												messages={[
+													`${t("App.connecting")}...`,
+													"Desbloqueando limitaciones cimarronas...",
+													"Puliendo credenciales interestelares...",
+													"Calibrando señal extraterrestre...",
+												]}
+											/>
+										)
+									: appState.success
+										? t("App.connected")
+										: !isUabcConnected
+											? t("App.networkUnavailable")
+											: t("App.login")}
+							</span>
+							<span className="login-button-sheen" aria-hidden="true" />
 						</button>
 						<button
 							title={t("App.logout")}
@@ -378,12 +303,12 @@ function App({ showTourFirstTime = false }: AppProps) {
                       bg-red-600 hover:bg-red-700 text-white
                       disabled:opacity-70 disabled:cursor-not-allowed
                       transition-all duration-300 shadow-sm cursor-pointer
-                      absolute right-0 w-10
-                      ${appState.success ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
+                      ${appState.success ? "w-20 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-0 pointer-events-none"}`}
 						>
 							<StopIcon />
 						</button>
 					</div>
+
 				</form>
 			</div>
 

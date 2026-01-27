@@ -288,30 +288,18 @@ fn send_login(
 }
 
 fn verify_connection_after_login() -> bool {
+    use crate::network_controller::client_builder::get_simple_client;
+    
     thread::sleep(Duration::from_millis(500));
 
-    match reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(3))
-        .build()
-    {
-        Ok(client) => match client.get("https://www.google.com").send() {
-            Ok(response) => {
-                let success = response.status().is_success();
-                success
-            }
-            Err(_) => match client.get("https://www.cloudflare.com").send() {
-                Ok(response) => {
-                    let success = response.status().is_success();
-                    success
-                }
-                Err(_) => {
-                    false
-                }
-            },
+    let client = get_simple_client();
+    
+    match client.get("https://www.google.com").send() {
+        Ok(response) => response.status().is_success(),
+        Err(_) => match client.get("https://www.cloudflare.com").send() {
+            Ok(response) => response.status().is_success(),
+            Err(_) => false,
         },
-        Err(_) => {
-            false
-        }
     }
 }
 

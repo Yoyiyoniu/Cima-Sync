@@ -1,5 +1,9 @@
-type AppState = {
-    loading: false | boolean;
-    error: null | string;
-    success: false | boolean
+export interface AppProps {
+	showTourFirstTime?: boolean;
+}
+
+export interface AppState {
+	loading: boolean;
+	error: string | null;
+	success: boolean;
 }

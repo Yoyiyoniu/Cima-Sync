@@ -3,6 +3,7 @@
 @layer theme;
 
 @import "./App.css" layer(theme);
+@import "./AppAnimations.css" layer(theme);
 
 body {
 	font-family: "Nunito Variable", sans-serif;

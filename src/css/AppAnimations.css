@@ -22,7 +22,7 @@
   transform: translateY(0);
 }
 
-/* Delay escalonado para elementos del formulario */
+/* Delay `escalonado para elementos del formulario */
 .form-element:nth-child(1) { transition-delay: 0.1s; }
 .form-element:nth-child(2) { transition-delay: 0.2s; }
 .form-element:nth-child(3) { transition-delay: 0.3s; }
@@ -115,4 +115,212 @@
 
 .shine-effect {
   animation: shine 1.5s ease-in-out;
+}
+
+/* Spinner del boton de login */
+@keyframes loginSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: loginSpin 0.8s linear infinite;
+}
+
+/* Formulario de login en estado de carga */
+.login-form {
+  position: relative;
+}
+
+.login-form.is-loading .form-element {
+  opacity: 0.55;
+  transform: translateY(0);
+}
+
+.login-fieldset.is-disabled {
+  pointer-events: none;
+}
+
+.login-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(2, 10, 7, 0.72), rgba(0, 18, 10, 0.72));
+  border-radius: 12px;
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.login-loading-overlay.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.login-loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 102, 51, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.login-pulse-ring {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 214, 106, 0.45);
+  box-shadow: 0 0 12px rgba(0, 214, 106, 0.45);
+  animation: loginPulse 1.4s ease-in-out infinite;
+}
+
+.login-loading-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e9f7ef;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.login-dots span {
+  opacity: 0.2;
+  animation: loginDots 1.2s infinite;
+}
+
+.login-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.login-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.login-signal {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 12px;
+}
+
+.login-signal span {
+  width: 4px;
+  border-radius: 999px;
+  background: rgba(0, 214, 106, 0.7);
+  animation: loginSignal 1s infinite ease-in-out;
+}
+
+.login-signal span:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.login-signal span:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.login-signal span:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+/* Boton de login distintivo */
+.login-button {
+  position: relative;
+  overflow: hidden;
+  gap: 10px;
+}
+
+.login-button-glow {
+  position: absolute;
+  inset: 2px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 214, 106, 0.4);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.login-button-text {
+  flex: 1;
+  text-align: center;
+}
+
+.login-button-sheen {
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  animation: loginSheen 2.2s ease-in-out infinite;
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+}
+
+.login-button:disabled .login-button-sheen {
+  animation-play-state: paused;
+  opacity: 0.3;
+}
+
+@keyframes loginPulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes loginDots {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes loginSignal {
+  0%, 100% {
+    height: 4px;
+    opacity: 0.5;
+  }
+  50% {
+    height: 12px;
+    opacity: 1;
+  }
+}
+
+@keyframes loginSheen {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(260%);
+  }
 }
