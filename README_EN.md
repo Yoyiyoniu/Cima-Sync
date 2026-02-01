@@ -25,6 +25,10 @@
 [![GitHub stars](https://img.shields.io/github/stars/Yoyiyoniu/Cima-Sync?style=social)](https://github.com/Yoyiyoniu/Cima-Sync)
 [![GitHub forks](https://img.shields.io/github/forks/Yoyiyoniu/Cima-Sync?style=social)](https://github.com/Yoyiyoniu/Cima-Sync)
 
+### 🎬 Simple Demo
+
+[![Cima Sync Demo](https://img.youtube.com/vi/4Ypd7N2Z7c4/0.jpg)](https://www.youtube.com/watch?v=4Ypd7N2Z7c4)
+
 </div>
 
 ---
