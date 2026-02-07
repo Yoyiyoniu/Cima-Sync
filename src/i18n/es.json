@@ -53,8 +53,6 @@
 	"SuccessModal": {
 		"title": "¡Todo Listo!",
 		"message": "Conexión establecida correctamente.",
-		"coffeeMessage": "¿Te ha servido la app? ¡Patrocíname un café :)",
-		"buyCoffeeButton": "Comprar un café",
 		"button": "Entendido"
 	},
 	"Input": {
@@ -110,12 +108,6 @@
 			"toggle": "Iniciar con el sistema",
 			"enabled": "✓ La app iniciará automáticamente",
 			"disabled": "La app no iniciará automáticamente"
-		},
-		"step5": {
-			"title": "☕ ¿Te gusta la app?",
-			"description": "Cima Sync es gratis y de código abierto. Si te ha sido útil, considera apoyar el desarrollo con un cafecito. ¡Cada aporte ayuda mucho!",
-			"button": "Invítame un café en Ko-fi",
-			"optional": "Esto es completamente opcional, ¡gracias por usar Cima Sync!"
 		},
 		"ready": {
 			"title": "¡Todo listo!",

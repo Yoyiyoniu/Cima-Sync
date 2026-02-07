@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import img from "../assets/img/cima-sync-logo.avif";
 
 interface SuccessModalProps {
@@ -26,10 +25,6 @@ export const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
 			setIsVisible(false);
 			onClose();
 		}, 300);
-	};
-
-	const handleBuyCoffee = async () => {
-		await openUrl(t("support.koFiUrl"));
 	};
 
 	if (!isVisible) return null;
@@ -98,21 +93,6 @@ export const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
 					{t("SuccessModal.title")}
 				</h3>
 				<p className="text-green-300/80 mb-4">{t("SuccessModal.message")}</p>
-
-				{/* Mensaje del café */}
-				<div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-					<p className="text-white/90 text-sm mb-3">
-						{t("SuccessModal.coffeeMessage")}
-					</p>
-					<button
-						type="button"
-						onClick={handleBuyCoffee}
-						className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 rounded-lg transition-all duration-200 hover:scale-105 text-sm font-medium flex items-center gap-2 mx-auto"
-					>
-						<span>☕</span>
-						{t("SuccessModal.buyCoffeeButton")}
-					</button>
-				</div>
 
 				{/* Botón de cerrar */}
 				<button
