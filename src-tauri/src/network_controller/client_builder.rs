@@ -1,6 +1,8 @@
 use lazy_static::lazy_static;
 use std::time::Duration;
 
+// TODO: Add a pinning mechanism to the clients
+
 lazy_static! {
     static ref CLIENT_WITH_REDIRECT: reqwest::blocking::Client = {
         reqwest::blocking::Client::builder()
