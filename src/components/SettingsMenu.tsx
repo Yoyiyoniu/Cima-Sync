@@ -140,7 +140,7 @@ export const SettingsMenu = () => {
 						onClick={() => {
 							setShowCoffeeModal(true);
 						}}
-						className="group relative mb-4 overflow-hidden rounded-lg bg-linear-to-r from-amber-500/20 via-amber-600/20 to-amber-500/20 border border-amber-500/40 hover:border-amber-400/60 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/20 p-3 w-full"
+						className="group relative mb-4 overflow-hidden rounded-lg bg-linear-to-r from-amber-500/20 via-amber-600/20 to-amber-500/20 border border-amber-500/40 hover:border-amber-400/60 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/20 p-3 w-full min-h-20"
 					>
 						<div className="flex items-center gap-3">
 							<div className="relative">
