@@ -5,13 +5,16 @@ import { platform } from "@tauri-apps/plugin-os";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { removeDatabase, resetCredentialsSystem } from "../controller/DbController";
+
 import CoffeeIcon from "../assets/icons/CoffeeIcon";
 import GithubIcon from "../assets/icons/GithubIcon";
-import HelpIcon from "../assets/icons/HelpIcon";
 import OptionsIcon from "../assets/icons/OptionsIcon";
 import TrashIcon from "../assets/icons/TrashIcon";
 import XIcon from "../assets/icons/XIcon";
+import BugIcon from "../assets/icons/BugIcon";
+
 import { Modal } from "./Modal";
+import { BugModal } from "./BugModal";
 import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
 import { LanguageSelector } from "./SettingsMenu/LanguageSelector";
 import { TourButton } from "./SettingsMenu/TourButton";
@@ -62,10 +65,6 @@ export const SettingsMenu = () => {
 		await openUrl(t("support.koFiUrl"));
 	};
 
-	const handleIssuesRedirect = async () => {
-		await openUrl("https://github.com/Yoyiyoniu/cima-sync/issues");
-	};
-
 	const handleRemoveDatabase = async () => {
 		await resetCredentialsSystem();
 		await removeDatabase();
@@ -111,12 +110,9 @@ export const SettingsMenu = () => {
 				handleModalFunction={handleRemoveDatabase}
 			/>
 
-			<Modal
+			<BugModal
 				showModal={showIssuesModal}
-				title={t("Modal.issues.title")}
-				modalText={t("Modal.issues.description")}
 				setShowModal={setShowIssuesModal}
-				handleModalFunction={handleIssuesRedirect}
 			/>
 			<div
 				className={`fixed top-0 left-0 h-full w-80 bg-white/10 backdrop-blur-md border-r border-white/20 z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
@@ -172,7 +168,7 @@ export const SettingsMenu = () => {
 							</svg>
 						</div>
 					</button>
-					<div className="flex-1 space-y-6">
+					<div className="flex-1 space-y-6 items-center justify-center">
 						<div className="space-y-4">
 							<h2 className="text-lg font-semibold text-white">
 								{t("Settings.appInfo.title")}
@@ -223,8 +219,8 @@ export const SettingsMenu = () => {
 									type="button"
 									onClick={() => setShowIssuesModal(true)}
 								>
-									<HelpIcon width={20} height={20} />
-									{t("Settings.help.button")}
+									<BugIcon width={20} height={20} />
+									{t("Settings.help.reportBug")}
 								</button>
 							</div>
 						</div>
