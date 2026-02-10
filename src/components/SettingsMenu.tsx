@@ -14,11 +14,15 @@ import XIcon from "../assets/icons/XIcon";
 import BugIcon from "../assets/icons/BugIcon";
 
 import { Modal } from "./Modal";
-import { BugModal } from "./BugModal";
 import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
 import { LanguageSelector } from "./SettingsMenu/LanguageSelector";
 import { TourButton } from "./SettingsMenu/TourButton";
-export const SettingsMenu = () => {
+
+interface SettingsMenuProps {
+	setShowBugModal: (show: boolean) => void;
+}
+
+export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 
@@ -26,7 +30,6 @@ export const SettingsMenu = () => {
 	const [showGithubModal, setShowGithubModal] = useState(false);
 	const [showRemoveDatabaseModal, setShowRemoveDatabaseModal] = useState(false);
 	const [showCoffeeModal, setShowCoffeeModal] = useState(false);
-	const [showIssuesModal, setShowIssuesModal] = useState(false);
 	const [currentPlatform, setCurrentPlatform] = useState<string>("");
 
 	useEffect(() => {
@@ -35,14 +38,14 @@ export const SettingsMenu = () => {
 				setIsOpen(false);
 				setShowGithubModal(false);
 				setShowCoffeeModal(false);
-				setShowIssuesModal(false);
+				setShowBugModal(false);
 			}
 		};
 		window.addEventListener("keydown", handleEscape);
 		return () => {
 			window.removeEventListener("keydown", handleEscape);
 		};
-	}, []);
+	}, [setShowBugModal]);
 
 	useEffect(() => {
 		const loadInitialState = () => {
@@ -110,10 +113,6 @@ export const SettingsMenu = () => {
 				handleModalFunction={handleRemoveDatabase}
 			/>
 
-			<BugModal
-				showModal={showIssuesModal}
-				setShowModal={setShowIssuesModal}
-			/>
 			<div
 				className={`fixed top-0 left-0 h-full w-80 bg-white/10 backdrop-blur-md border-r border-white/20 z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
 			>
@@ -215,12 +214,12 @@ export const SettingsMenu = () => {
 							</h2>
 							<div className="space-y-2">
 								<button
-									className="flex items-center gap-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 transition-colors duration-200 rounded-md p-2 w-full"
+									className="flex items-center justify-between cursor-pointer rounded-md w-full p-2 text-white/80 hover:text-white hover:bg-amber-500/20 transition-colors duration-200"
 									type="button"
-									onClick={() => setShowIssuesModal(true)}
+									onClick={() => setShowBugModal(true)}
 								>
+									<p className="text-white/80">{t("Settings.help.reportBug")}</p>
 									<BugIcon width={20} height={20} />
-									{t("Settings.help.reportBug")}
 								</button>
 							</div>
 						</div>

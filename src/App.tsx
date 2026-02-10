@@ -12,12 +12,14 @@ import type { AppProps, AppState } from "./types";
 
 import { setRememberSessionConfig } from "./controller/DbController";
 import { LoadingText } from "./components/LoadingText";
+import { BugModal } from "./components/BugModal";
 import { CertificateAlert } from "./components/CertificateAlert";
 import { CopyRightMenu } from "./components/ContactMe";
 import { Input } from "./components/Input";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { SuccessModal } from "./components/SuccessModal";
 
+import BugIcon from "./assets/icons/BugIcon";
 import StopIcon from "./assets/icons/StopIcon";
 import WifiIcon from "./assets/icons/WifiIcon";
 import img from "./assets/img/cima-sync-logo.avif";
@@ -37,6 +39,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 	});
 	const [showSuccessModal, setShowSuccessModal] = useState(false);
 	const [showCertificateAlert, setShowCertificateAlert] = useState(false);
+	const [showBugModal, setShowBugModal] = useState(false);
 	const { showApp } = useShowApp();
 	const { isUabcConnected } = useNetworkStatus();
 	const isFormDisabled = appState.loading || appState.success;
@@ -122,7 +125,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 				className="blur absolute max-h-[800px] object-fit"
 			/>
 
-			<SettingsMenu />
+			<SettingsMenu setShowBugModal={setShowBugModal} />
 
 			<div
 				className={`absolute top-4 right-4 flex items-center gap-2 z-50 app-fade-in ${showApp ? "show" : ""} transition-colors duration-300`}
@@ -318,6 +321,17 @@ function App({ showTourFirstTime = false }: AppProps) {
 			/>
 
 			<CertificateAlert isVisible={showCertificateAlert} />
+
+			<BugModal showModal={showBugModal} setShowModal={setShowBugModal} />
+
+			<button
+				type="button"
+				title={t("Settings.help.reportBug")}
+				onClick={() => setShowBugModal(true)}
+				className="fixed bottom-5 right-5 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white shadow-lg transition-all duration-300 hover:scale-105"
+			>
+				<BugIcon width={24} height={24} />
+			</button>
 		</main>
 	);
 }
