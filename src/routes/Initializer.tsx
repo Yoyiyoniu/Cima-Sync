@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { getHasSeenOnboarding } from "../controller/DbController";
+import { getHasSeenOnboarding, initEncryption } from "../controller/DbController";
 import { SplashScreen } from "../components/SplashScreen";
 
 export const Initializer = () => {
@@ -9,6 +9,8 @@ export const Initializer = () => {
 	useEffect(() => {
 		const checkState = async () => {
 			try {
+				await initEncryption();
+				
 				const seenOnboarding = await getHasSeenOnboarding();
 				if (!seenOnboarding) {
 					navigate("/onboarding", { replace: true });
