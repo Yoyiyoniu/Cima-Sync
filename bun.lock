@@ -7,24 +7,24 @@
       "dependencies": {
         "@fontsource-variable/nunito": "^5.2.7",
         "@reactour/tour": "^3.8.0",
-        "@tailwindcss/vite": "^4.1.17",
-        "@tauri-apps/api": "^2.9.1",
+        "@tailwindcss/vite": "^4.1.18",
+        "@tauri-apps/api": "^2.10.1",
         "@tauri-apps/plugin-autostart": "~2.5.1",
-        "@tauri-apps/plugin-opener": "^2.5.2",
+        "@tauri-apps/plugin-opener": "^2.5.3",
         "@tauri-apps/plugin-os": "~2.3.2",
-        "@tauri-apps/plugin-sql": "~2.3.1",
+        "@tauri-apps/plugin-sql": "~2.3.2",
         "framer-motion": "^11.18.2",
-        "i18next": "^25.7.1",
+        "i18next": "^25.8.4",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-i18next": "^15.7.4",
-        "react-router": "^7.11.0",
-        "tailwindcss": "^4.1.17",
+        "react-router": "^7.13.0",
+        "tailwindcss": "^4.1.18",
         "tauri-plugin-network-api": "^2.0.5",
       },
       "devDependencies": {
-        "@tauri-apps/cli": "^2.9.5",
-        "@types/react": "^18.3.27",
+        "@tauri-apps/cli": "^2.10.0",
+        "@types/react": "^18.3.28",
         "@types/react-dom": "^18.3.7",
         "@vitejs/plugin-react": "^4.7.0",
         "typescript": "~5.6.3",
@@ -317,7 +317,7 @@
 
     "html-parse-stringify": ["html-parse-stringify@3.0.1", "", { "dependencies": { "void-elements": "3.1.0" } }, "sha512-KknJ50kTInJ7qIScF3jeaFRpMpE8/lfiTdzf/twXyPBLAGrLRTmkz3AdTnKeh40X8k9L2fdYwEp/42WGXIRGcg=="],
 
-    "i18next": ["i18next@25.8.4", "", { "dependencies": { "@babel/runtime": "^7.28.4" }, "peerDependencies": { "typescript": "^5" }, "optionalPeers": ["typescript"] }, "sha512-a9A0MnUjKvzjEN/26ZY1okpra9kA8MEwzYEz1BNm+IyxUKPRH6ihf0p7vj8YvULwZHKHl3zkJ6KOt4hewxBecQ=="],
+    "i18next": ["i18next@25.8.10", "", { "dependencies": { "@babel/runtime": "^7.28.4" }, "peerDependencies": { "typescript": "^5" }, "optionalPeers": ["typescript"] }, "sha512-CtPJLMAz1G8sxo+mIzfBjGgLxWs7d6WqIjlmmv9BTsOat4pJIfwZ8cm07n3kFS6bP9c6YwsYutYrwsEeJVBo2g=="],
 
     "jiti": ["jiti@2.6.1", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ=="],
 

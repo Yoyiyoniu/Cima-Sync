@@ -5,24 +5,12 @@
 	"identifier": "app.cimasync",
 	"build": {
 		"beforeDevCommand": "bun run dev",
-		"devUrl": "http://localhost:1420",
+		"devUrl": "http://localhost:1420/",
 		"beforeBuildCommand": "bun run build",
 		"frontendDist": "../dist",
-		"removeUnusedCommands": true
+		"removeUnusedCommands": false
 	},
 	"app": {
-		"security": {
-			"csp": {
-				"default-src": "'self'",
-				"script-src": "'self'",
-				"style-src": "'self' 'unsafe-inline'",
-				"img-src": "'self' data: blob:",
-				"connect-src": "'self' https://pcw.uabc.mx",
-				"frame-src": "'none'",
-				"object-src": "'none'",
-				"base-uri": "'self'"
-			}
-		},
 		"windows": [
 			{
 				"title": "Cima Sync",

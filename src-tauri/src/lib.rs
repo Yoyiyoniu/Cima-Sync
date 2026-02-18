@@ -5,6 +5,8 @@ mod network_controller;
 mod tray;
 
 use crate::network_controller::network_sync::start_network_monitor;
+use tauri::Manager;
+#[cfg(desktop)]
 use crate::tray::system_tray;
 
 use crate::commands::{
@@ -13,7 +15,9 @@ use crate::commands::{
     stop_auth,
 };
 
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let _ = rustls::crypto::ring::default_provider().install_default();
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
@@ -27,6 +31,11 @@ pub fn run() {
                 Some(vec!["--flag1", "--flag2"]),
             ))
             .setup(|app| {
+
+                let win = app.get_webview_window("main").unwrap();
+                win.eval("setTimeout('window.location.reload()', 100)")?;
+            
+
                 system_tray(app)?;
                 start_network_monitor(app.handle().clone());
                 Ok(())
@@ -42,6 +51,9 @@ pub fn run() {
     #[cfg(not(desktop))]
     {
         builder = builder.setup(|app| {
+            let win = app.get_webview_window("main").unwrap();
+            win.eval("setTimeout('window.location.reload()', 100)")?;
+                
             start_network_monitor(app.handle().clone());
             Ok(())
         });
