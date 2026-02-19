@@ -3,6 +3,8 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
 
+import { motion } from "motion/react";
+
 import { useAppBootstrap } from "./hooks/useAppBootstrap";
 import { useDisableContextMenu } from "./hooks/disableContextMenu";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
@@ -134,7 +136,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	return (
 		<main
-			className={`app-fade-in show flex flex-col h-screen items-center justify-center 
+			className={`flex flex-col h-screen items-center justify-center 
 			text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden
 			${isMobile ? "pt-12" : ""}`}
 		>
@@ -162,7 +164,12 @@ function App({ showTourFirstTime = false }: AppProps) {
 				</span>
 			</div>
 
-			<div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
+			<motion.div
+				initial={{ opacity: 0, y: 12 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+				className="w-full p-5 relative z-10 flex flex-col items-center justify-center"
+			>
 				<CopyRightMenu />
 				<form
 					className={`login-form w-full max-w-sm flex flex-col gap-3 mb-8 ${isFormDisabled ? "is-loading" : ""}`}
@@ -328,7 +335,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 						</button>
 					</div>
 				</form>
-			</div>
+			</motion.div>
 
 			<SuccessModal
 				isOpen={showSuccessModal}
