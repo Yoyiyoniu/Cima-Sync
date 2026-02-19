@@ -36,7 +36,7 @@ export const AutoStartConfig = () => {
 
     return (
         <div className="space-y-3">
-            <div className="flex items-center justify-between w-full p-3 transition-colors duration-200 hover:bg-white/10 rounded-lg border border-white/10">
+            <div className="flex items-center justify-between w-full p-3 transition-colors duration-200 hover:bg-white/10 rounded-l-xl rounded-r-xl border border-white/10">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
                         <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

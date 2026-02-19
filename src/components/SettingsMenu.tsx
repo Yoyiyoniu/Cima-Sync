@@ -3,7 +3,10 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
-import { removeDatabase, resetCredentialsSystem } from "../controller/DbController";
+import {
+	removeDatabase,
+	resetCredentialsSystem,
+} from "../controller/DbController";
 import { useDeviceStore } from "../store/deviceStore";
 import { useUiStore } from "../store/uiStore";
 
@@ -65,7 +68,7 @@ export const SettingsMenu = () => {
 		<>
 			<button
 				type="button"
-				className={`left-0 absolute bg-white/5 rounded-full p-2 hover:bg-white/20 transition-all duration-300 m-3 ${isMobile ? "top-7" : "top-0"}`}
+				className={`left-0 absolute bg-white/5 border border-white/20 rounded-full p-2 hover:bg-white/20 hover:border-white/30 transition-all duration-300 m-3 ${isMobile ? "top-12" : "top-0"}`}
 				onClick={() => setIsOpen(!isOpen)}
 			>
 				<OptionsIcon width={30} height={30} className="text-white" />
@@ -103,7 +106,7 @@ export const SettingsMenu = () => {
 			<div
 				className={`fixed top-0 left-0 h-full w-80 bg-white/10 backdrop-blur-md border-r border-white/20 z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
 			>
-				<div className={`p-6 h-full flex flex-col ${isMobile ? "pt-10" : ""}`}>
+				<div className={`p-6 h-full flex flex-col ${isMobile ? "pt-20" : ""}`}>
 					<div className="flex items-center justify-between mb-6">
 						<h1 className="text-xl font-bold text-white">
 							{t("Settings.title")}
@@ -175,7 +178,7 @@ export const SettingsMenu = () => {
 								{isDesktop && <AutoStartConfig />}
 								<button
 									type="button"
-									className="flex items-center justify-between cursor-pointer rounded-md w-full p-2 hover:bg-red-500/20 transition-colors duration-200"
+									className="flex items-center justify-between cursor-pointer rounded-l-xl rounded-r-xl w-full p-2 border border-white/20 hover:bg-red-500/20 hover:border-red-500/40 transition-colors duration-200"
 									onClick={() => {
 										setShowRemoveDatabaseModal(true);
 									}}
@@ -199,11 +202,13 @@ export const SettingsMenu = () => {
 							</h2>
 							<div className="space-y-2">
 								<button
-									className="flex items-center justify-between cursor-pointer rounded-md w-full p-2 text-white/80 hover:text-white hover:bg-amber-500/20 transition-colors duration-200"
+									className="flex items-center justify-between cursor-pointer rounded-l-xl rounded-r-xl w-full p-2 border border-white/20 text-white/80 hover:text-white hover:bg-amber-500/20 hover:border-amber-500/40 transition-colors duration-200"
 									type="button"
 									onClick={openBugModal}
 								>
-									<p className="text-white/80">{t("Settings.help.reportBug")}</p>
+									<p className="text-white/80">
+										{t("Settings.help.reportBug")}
+									</p>
 									<BugIcon width={20} height={20} />
 								</button>
 							</div>
@@ -214,7 +219,7 @@ export const SettingsMenu = () => {
 						type="button"
 						title="Abrir proyecto de github"
 						onClick={() => setShowGithubModal(true)}
-						className="p-2 mb-2 mt-2 rounded-md bg-black/40 hover:bg-black/60 transition-colors duration-200 flex items-center gap-2 w-full"
+						className="p-2 mb-2 mt-2 rounded-l-xl rounded-r-xl bg-black/40 border border-white/20 hover:bg-black/60 hover:border-white/30 transition-colors duration-200 flex items-center gap-2 w-full"
 					>
 						<GithubIcon width={30} height={30} />
 						<p className="text-white/80 text-sm">{t("Settings.github")}</p>

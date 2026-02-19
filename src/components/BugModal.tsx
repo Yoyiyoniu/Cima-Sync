@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
+import { useDeviceStore } from "../store/deviceStore";
 import BugIcon from "../assets/icons/BugIcon";
 
 const BUG_REPORT_EMAIL = import.meta.env.VITE_BUG_REPORT_EMAIL;
@@ -13,6 +14,7 @@ interface BugModalProps {
 
 export const BugModal = ({ showModal, setShowModal }: BugModalProps) => {
 	const { t } = useTranslation();
+	const isMobile = useDeviceStore((state) => state.isMobile);
 	const [isClosing, setIsClosing] = useState(false);
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
@@ -40,13 +42,13 @@ export const BugModal = ({ showModal, setShowModal }: BugModalProps) => {
 	};
 
 	const handleSend = async () => {
-		const subject = encodeURIComponent(
-			`ERROR: [Cima Sync] ${title || t("BugModal.defaultSubject")}`
-		);
-		const body = encodeURIComponent(
-			description || t("BugModal.defaultBody")
-		);
-		const url = `https://mail.google.com/mail/u/0/?fs=1&tf=cm&to=${encodeURIComponent(BUG_REPORT_EMAIL)}&su=${subject}&body=${body}`;
+		const subject = `ERROR: [Cima Sync] ${title || t("BugModal.defaultSubject")}`;
+		const body = description || t("BugModal.defaultBody");
+
+		const url = isMobile
+			? `mailto:${BUG_REPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+			: `https://mail.google.com/mail/u/0/?fs=1&tf=cm&to=${encodeURIComponent(BUG_REPORT_EMAIL)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
 		await openUrl(url);
 		handleClose();
 	};
@@ -54,11 +56,13 @@ export const BugModal = ({ showModal, setShowModal }: BugModalProps) => {
 	if (!showModal) return null;
 
 	return (
-		<div
+		<button
+			type="button"
 			className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center ${isClosing ? "animate-fadeOut" : ""}`}
 			onClick={handleClose}
 		>
-			<div
+			<button
+				type="button"
 				className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 max-w-md mx-4 w-full ${isClosing ? "modal-content-closing" : "modal-content"}`}
 				onClick={(e) => e.stopPropagation()}
 			>
@@ -123,7 +127,7 @@ export const BugModal = ({ showModal, setShowModal }: BugModalProps) => {
 						{t("BugModal.send")}
 					</button>
 				</div>
-			</div>
-		</div>
+			</button>
+		</button>
 	);
 };

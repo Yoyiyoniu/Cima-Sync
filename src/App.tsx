@@ -32,32 +32,34 @@ import "./css/Global.css";
 
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
-	
+
 	const { setIsOpen } = useTour();
-	
-	const {
-		credentials, setCredentials, 
-		rememberSession, setRememberSession 
-	} = useAppBootstrap();
-	
+
+	const { credentials, setCredentials, rememberSession, setRememberSession } =
+		useAppBootstrap();
+
 	const [appState, setAppState] = useState<AppState>({
 		loading: false,
 		error: null,
 		success: false,
 	});
-	
+
 	const showSuccessModal = useUiStore((state) => state.showSuccessModal);
 	const openSuccessModal = useUiStore((state) => state.openSuccessModal);
 	const closeSuccessModal = useUiStore((state) => state.closeSuccessModal);
-	const openCertificateAlert = useUiStore((state) => state.openCertificateAlert);
+	const openCertificateAlert = useUiStore(
+		(state) => state.openCertificateAlert,
+	);
 	const openBugModal = useUiStore((state) => state.openBugModal);
 	const closeBugModal = useUiStore((state) => state.closeBugModal);
 
-	const showCertificateAlert = useUiStore((state) => state.showCertificateAlert);
+	const showCertificateAlert = useUiStore(
+		(state) => state.showCertificateAlert,
+	);
 	const showBugModal = useUiStore((state) => state.showBugModal);
-	
+
 	const { isUabcConnected } = useNetworkStatus();
-	
+
 	const isMobile = useDeviceStore((state) => state.isMobile);
 
 	const isFormDisabled = appState.loading || appState.success;
@@ -148,21 +150,23 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 			<SettingsMenu />
 
-			<div
-				className={`absolute right-4 flex items-center gap-2 z-50 app-fade-in show transition-colors duration-300 ${isMobile ? "top-10" : "top-4"}`}
-			>
-				<WifiIcon
-					connected={isUabcConnected}
-					className={`${isUabcConnected ? "text-green-400" : "text-gray-500"} w-5 h-5 transition-colors duration-300`}
-				/>
-				<span
-					className={`text-xs font-medium ${isUabcConnected ? "text-green-400" : "text-gray-500"} transition-colors duration-300`}
+			{!isMobile && (
+				<div
+					className={`absolute right-4 flex items-center gap-2 z-50 app-fade-in show transition-colors duration-300 ${isMobile ? "top-10" : "top-4"}`}
 				>
-					{isUabcConnected
-						? t("App.uabcConnection")
-						: t("App.networkUnavailable")}
-				</span>
-			</div>
+					<WifiIcon
+						connected={isUabcConnected}
+						className={`${isUabcConnected ? "text-green-400" : "text-gray-500"} w-5 h-5 transition-colors duration-300`}
+					/>
+					<span
+						className={`text-xs font-medium ${isUabcConnected ? "text-green-400" : "text-gray-500"} transition-colors duration-300`}
+					>
+						{isUabcConnected
+							? t("App.uabcConnection")
+							: t("App.networkUnavailable")}
+					</span>
+				</div>
+			)}
 
 			<motion.div
 				initial={{ opacity: 0, y: 12 }}
@@ -177,14 +181,10 @@ function App({ showTourFirstTime = false }: AppProps) {
 					aria-busy={appState.loading}
 				>
 					<div className="text-center mb-8">
-						<h1
-							className={`app-title show text-2xl font-medium`}
-						>
+						<h1 className={`app-title show text-2xl font-medium`}>
 							{t("App.title")}
 						</h1>
-						<p className={`app-subtitle show`}>
-							{t("App.subtitle")}
-						</p>
+						<p className={`app-subtitle show`}>{t("App.subtitle")}</p>
 					</div>
 
 					{appState.success && (
@@ -217,7 +217,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 						</div>
 
 						<div className={`form-element show`}>
-							<Input		
+							<Input
 								id="password"
 								type="password"
 								label={t("App.password")}
@@ -233,9 +233,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 							/>
 						</div>
 
-						<div
-							className={`form-element show flex items-center`}
-						>
+						<div className={`form-element show flex items-center`}>
 							<div className="relative flex items-center">
 								<input
 									type="checkbox"
@@ -337,10 +335,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 				</form>
 			</motion.div>
 
-			<SuccessModal
-				isOpen={showSuccessModal}
-				onClose={closeSuccessModal}
-			/>
+			<SuccessModal isOpen={showSuccessModal} onClose={closeSuccessModal} />
 
 			<CertificateAlert isVisible={showCertificateAlert} />
 
