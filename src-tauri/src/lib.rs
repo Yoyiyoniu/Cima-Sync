@@ -5,7 +5,7 @@ mod network_controller;
 mod tray;
 
 use crate::network_controller::network_sync::start_network_monitor;
-use tauri::Manager;
+
 #[cfg(desktop)]
 use crate::tray::system_tray;
 
@@ -31,16 +31,11 @@ pub fn run() {
                 Some(vec!["--flag1", "--flag2"]),
             ))
             .setup(|app| {
-
-                let win = app.get_webview_window("main").unwrap();
-                win.eval("setTimeout('window.location.reload()', 100)")?;
-            
-
                 system_tray(app)?;
                 start_network_monitor(app.handle().clone());
                 Ok(())
             })
-            .on_window_event(|window, event| {
+            .on_window_event( | window, event | {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
                     let _ = window.hide();
@@ -50,10 +45,7 @@ pub fn run() {
 
     #[cfg(not(desktop))]
     {
-        builder = builder.setup(|app| {
-            let win = app.get_webview_window("main").unwrap();
-            win.eval("setTimeout('window.location.reload()', 100)")?;
-                
+        builder = builder.setup(|app| { 
             start_network_monitor(app.handle().clone());
             Ok(())
         });

@@ -6,8 +6,9 @@ import { useTour } from "@reactour/tour";
 import { useAppBootstrap } from "./hooks/useAppBootstrap";
 import { useDisableContextMenu } from "./hooks/disableContextMenu";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
-import { useShowApp } from "./hooks/useShowApp";
 import { useTourAutoOpen } from "./hooks/useTourAutoOpen";
+import { useDeviceStore } from "./store/deviceStore";
+import { useUiStore } from "./store/uiStore";
 import type { AppProps, AppState } from "./types";
 
 import { setRememberSessionConfig } from "./controller/DbController";
@@ -26,24 +27,39 @@ import img from "./assets/img/cima-sync-logo.avif";
 
 import "@fontsource-variable/nunito";
 import "./css/Global.css";
-import { platform } from "@tauri-apps/plugin-os";
 
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
+	
 	const { setIsOpen } = useTour();
-	const { credentials, setCredentials, rememberSession, setRememberSession } =
-		useAppBootstrap();
+	
+	const {
+		credentials, setCredentials, 
+		rememberSession, setRememberSession 
+	} = useAppBootstrap();
+	
 	const [appState, setAppState] = useState<AppState>({
 		loading: false,
 		error: null,
 		success: false,
 	});
-	const [showSuccessModal, setShowSuccessModal] = useState(false);
-	const [showCertificateAlert, setShowCertificateAlert] = useState(false);
-	const [showBugModal, setShowBugModal] = useState(false);
-	const { showApp } = useShowApp();
+	
+	const showSuccessModal = useUiStore((state) => state.showSuccessModal);
+	const openSuccessModal = useUiStore((state) => state.openSuccessModal);
+	const closeSuccessModal = useUiStore((state) => state.closeSuccessModal);
+	const openCertificateAlert = useUiStore((state) => state.openCertificateAlert);
+	const openBugModal = useUiStore((state) => state.openBugModal);
+	const closeBugModal = useUiStore((state) => state.closeBugModal);
+
+	const showCertificateAlert = useUiStore((state) => state.showCertificateAlert);
+	const showBugModal = useUiStore((state) => state.showBugModal);
+	
 	const { isUabcConnected } = useNetworkStatus();
+	
+	const isMobile = useDeviceStore((state) => state.isMobile);
+
 	const isFormDisabled = appState.loading || appState.success;
+
 	const isLoginDisabled =
 		isFormDisabled ||
 		!credentials.email ||
@@ -66,7 +82,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 			});
 
 			setAppState((prev) => ({ ...prev, success: true }));
-			setShowSuccessModal(true);
+			openSuccessModal();
 
 			if (rememberSession) {
 				await invoke("save_credentials", {
@@ -90,7 +106,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 				errorStr.includes("tls") ||
 				errorStr.includes("expired")
 			) {
-				setShowCertificateAlert(true);
+				openCertificateAlert();
 			}
 			setAppState((prev) => ({ ...prev, error: String(error) }));
 		} finally {
@@ -118,9 +134,9 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	return (
 		<main
-			className={`app-fade-in ${showApp ? "show" : ""} flex flex-col h-screen items-center justify-center 
+			className={`app-fade-in show flex flex-col h-screen items-center justify-center 
 			text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden
-			${platform() === "android" || platform() === "ios" ? "pt-12" : "mt-[250px]"}`}
+			${isMobile ? "pt-12" : ""}`}
 		>
 			<img
 				src={img}
@@ -128,10 +144,10 @@ function App({ showTourFirstTime = false }: AppProps) {
 				className="blur absolute max-h-[800px] object-fit"
 			/>
 
-			<SettingsMenu setShowBugModal={setShowBugModal} />
+			<SettingsMenu />
 
 			<div
-				className={`absolute right-4 flex items-center gap-2 z-50 app-fade-in ${showApp ? "show" : ""} transition-colors duration-300 ${platform() === "android" || platform() === "ios" ? "top-10" : "top-4"}`}
+				className={`absolute right-4 flex items-center gap-2 z-50 app-fade-in show transition-colors duration-300 ${isMobile ? "top-10" : "top-4"}`}
 			>
 				<WifiIcon
 					connected={isUabcConnected}
@@ -155,18 +171,18 @@ function App({ showTourFirstTime = false }: AppProps) {
 				>
 					<div className="text-center mb-8">
 						<h1
-							className={`app-title ${showApp ? "show" : ""} text-2xl font-medium`}
+							className={`app-title show text-2xl font-medium`}
 						>
 							{t("App.title")}
 						</h1>
-						<p className={`app-subtitle ${showApp ? "show" : ""}`}>
+						<p className={`app-subtitle show`}>
 							{t("App.subtitle")}
 						</p>
 					</div>
 
 					{appState.success && (
 						<div
-							className={`form-element ${showApp ? "show" : ""} bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3`}
+							className={`form-element show bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3`}
 						>
 							{t("App.success")}
 						</div>
@@ -176,7 +192,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 						disabled={isFormDisabled}
 						className={`login-fieldset flex flex-col gap-3 ${isFormDisabled ? "is-disabled" : ""}`}
 					>
-						<div className={`form-element ${showApp ? "show" : ""}`}>
+						<div className={`form-element show`}>
 							<Input
 								id="email"
 								type="email"
@@ -193,8 +209,8 @@ function App({ showTourFirstTime = false }: AppProps) {
 							/>
 						</div>
 
-						<div className={`form-element ${showApp ? "show" : ""}`}>
-							<Input
+						<div className={`form-element show`}>
+							<Input		
 								id="password"
 								type="password"
 								label={t("App.password")}
@@ -211,7 +227,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 						</div>
 
 						<div
-							className={`form-element ${showApp ? "show" : ""} flex items-center`}
+							className={`form-element show flex items-center`}
 						>
 							<div className="relative flex items-center">
 								<input
@@ -252,14 +268,14 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 						{appState.error && (
 							<div
-								className={`form-element ${showApp ? "show" : ""} bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}
+								className={`form-element show bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}
 							>
 								{t("App.error")}: {appState.error}
 							</div>
 						)}
 					</fieldset>
 					<div
-						className={`form-element ${showApp ? "show" : ""} flex w-full max-w-sm justify-center ${
+						className={`form-element show flex w-full max-w-sm justify-center ${
 							appState.success ? "gap-2" : "gap-0"
 						}`}
 					>
@@ -316,17 +332,20 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 			<SuccessModal
 				isOpen={showSuccessModal}
-				onClose={() => setShowSuccessModal(false)}
+				onClose={closeSuccessModal}
 			/>
 
 			<CertificateAlert isVisible={showCertificateAlert} />
 
-			<BugModal showModal={showBugModal} setShowModal={setShowBugModal} />
+			<BugModal
+				showModal={showBugModal}
+				setShowModal={(show) => (show ? openBugModal() : closeBugModal())}
+			/>
 
 			<button
 				type="button"
 				title={t("Settings.help.reportBug")}
-				onClick={() => setShowBugModal(true)}
+				onClick={openBugModal}
 				className="fixed bottom-5 right-5 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white shadow-lg transition-all duration-300 hover:scale-105"
 			>
 				<BugIcon width={24} height={24} />

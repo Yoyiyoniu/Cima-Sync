@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { platform } from "@tauri-apps/plugin-os";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { removeDatabase, resetCredentialsSystem } from "../controller/DbController";
+import { useDeviceStore } from "../store/deviceStore";
+import { useUiStore } from "../store/uiStore";
 
 import CoffeeIcon from "../assets/icons/CoffeeIcon";
 import GithubIcon from "../assets/icons/GithubIcon";
@@ -18,11 +19,7 @@ import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
 import { LanguageSelector } from "./SettingsMenu/LanguageSelector";
 import { TourButton } from "./SettingsMenu/TourButton";
 
-interface SettingsMenuProps {
-	setShowBugModal: (show: boolean) => void;
-}
-
-export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
+export const SettingsMenu = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 
@@ -30,7 +27,10 @@ export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
 	const [showGithubModal, setShowGithubModal] = useState(false);
 	const [showRemoveDatabaseModal, setShowRemoveDatabaseModal] = useState(false);
 	const [showCoffeeModal, setShowCoffeeModal] = useState(false);
-	const [currentPlatform, setCurrentPlatform] = useState<string>("");
+	const isMobile = useDeviceStore((state) => state.isMobile);
+	const isDesktop = useDeviceStore((state) => state.isDesktop);
+	const closeBugModal = useUiStore((state) => state.closeBugModal);
+	const openBugModal = useUiStore((state) => state.openBugModal);
 
 	useEffect(() => {
 		const handleEscape = (e: KeyboardEvent) => {
@@ -38,27 +38,14 @@ export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
 				setIsOpen(false);
 				setShowGithubModal(false);
 				setShowCoffeeModal(false);
-				setShowBugModal(false);
+				closeBugModal();
 			}
 		};
 		window.addEventListener("keydown", handleEscape);
 		return () => {
 			window.removeEventListener("keydown", handleEscape);
 		};
-	}, [setShowBugModal]);
-
-	useEffect(() => {
-		const loadInitialState = () => {
-			try {
-				const platformName = platform();
-				setCurrentPlatform(platformName);
-			} catch (error) {
-				console.error("Error al cargar la plataforma:", error);
-				setCurrentPlatform("unknown");
-			}
-		};
-		loadInitialState();
-	}, []);
+	}, [closeBugModal]);
 
 	const handleGithubRedirect = async () => {
 		await openUrl("https://github.com/Yoyiyoniu/cima-sync");
@@ -78,7 +65,7 @@ export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
 		<>
 			<button
 				type="button"
-				className={`left-0 absolute bg-white/5 rounded-full p-2 hover:bg-white/20 transition-all duration-300 m-3 ${currentPlatform === "android" || currentPlatform === "ios" ? "top-7" : "top-0"}`}
+				className={`left-0 absolute bg-white/5 rounded-full p-2 hover:bg-white/20 transition-all duration-300 m-3 ${isMobile ? "top-7" : "top-0"}`}
 				onClick={() => setIsOpen(!isOpen)}
 			>
 				<OptionsIcon width={30} height={30} className="text-white" />
@@ -116,7 +103,7 @@ export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
 			<div
 				className={`fixed top-0 left-0 h-full w-80 bg-white/10 backdrop-blur-md border-r border-white/20 z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
 			>
-				<div className={`p-6 h-full flex flex-col ${currentPlatform === "android" || currentPlatform === "ios" ? "pt-10" : ""}`}>
+				<div className={`p-6 h-full flex flex-col ${isMobile ? "pt-10" : ""}`}>
 					<div className="flex items-center justify-between mb-6">
 						<h1 className="text-xl font-bold text-white">
 							{t("Settings.title")}
@@ -185,9 +172,7 @@ export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
 								{t("Settings.config.title")}
 							</h2>
 							<div className="space-y-3">
-								{(currentPlatform === "windows" ||
-									currentPlatform === "macos" ||
-									currentPlatform === "linux") && <AutoStartConfig />}
+								{isDesktop && <AutoStartConfig />}
 								<button
 									type="button"
 									className="flex items-center justify-between cursor-pointer rounded-md w-full p-2 hover:bg-red-500/20 transition-colors duration-200"
@@ -216,7 +201,7 @@ export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
 								<button
 									className="flex items-center justify-between cursor-pointer rounded-md w-full p-2 text-white/80 hover:text-white hover:bg-amber-500/20 transition-colors duration-200"
 									type="button"
-									onClick={() => setShowBugModal(true)}
+									onClick={openBugModal}
 								>
 									<p className="text-white/80">{t("Settings.help.reportBug")}</p>
 									<BugIcon width={20} height={20} />

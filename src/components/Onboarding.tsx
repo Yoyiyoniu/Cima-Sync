@@ -4,13 +4,12 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 
-import { platform } from "@tauri-apps/plugin-os";
-
 import cimaLogo from "../assets/img/cima-sync-logo.avif";
 import {
 	setLanguagePreference,
 	setHasSeenOnboarding,
 } from "../controller/DbController";
+import { useDeviceStore } from "../store/deviceStore";
 
 export function Onboarding() {
 	const { t, i18n } = useTranslation();
@@ -20,20 +19,11 @@ export function Onboarding() {
 	const [showOutro, setShowOutro] = useState(false);
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [autoStartEnabled, setAutoStartEnabled] = useState(false);
-	const [isDesktop, setIsDesktop] = useState(false);
+	const isDesktop = useDeviceStore((state) => state.isDesktop);
 
 	useEffect(() => {
 		const timer = setTimeout(() => setShowIntro(false), 3000);
 		return () => clearTimeout(timer);
-	}, []);
-
-	useEffect(() => {
-		const currentPlatform = platform();
-		setIsDesktop(
-			currentPlatform === "linux" ||
-				currentPlatform === "macos" ||
-				currentPlatform === "windows",
-		);
 	}, []);
 
 	useEffect(() => {

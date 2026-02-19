@@ -145,6 +145,9 @@ fn parse_ssid_line(line: &str) -> Option<String> {
 }
 
 fn get_wifi_ssid(interface_name: &str) -> Option<String> {
+    #[cfg(target_os = "android")]
+    return None;
+
     let safe_name = match get_safe_interface_name(interface_name) {
         Some(name) => name,
         None => return Some("SSID no disponible".to_string()),
