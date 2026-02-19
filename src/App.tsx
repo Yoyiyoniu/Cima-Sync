@@ -26,6 +26,7 @@ import img from "./assets/img/cima-sync-logo.avif";
 
 import "@fontsource-variable/nunito";
 import "./css/Global.css";
+import { platform } from "@tauri-apps/plugin-os";
 
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
@@ -117,7 +118,9 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	return (
 		<main
-			className={`app-fade-in ${showApp ? "show" : ""} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}
+			className={`app-fade-in ${showApp ? "show" : ""} flex flex-col h-screen items-center justify-center 
+			text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden
+			${platform() === "android" || platform() === "ios" ? "pt-12" : "mt-[250px]"}`}
 		>
 			<img
 				src={img}
@@ -128,7 +131,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 			<SettingsMenu setShowBugModal={setShowBugModal} />
 
 			<div
-				className={`absolute top-4 right-4 flex items-center gap-2 z-50 app-fade-in ${showApp ? "show" : ""} transition-colors duration-300`}
+				className={`absolute right-4 flex items-center gap-2 z-50 app-fade-in ${showApp ? "show" : ""} transition-colors duration-300 ${platform() === "android" || platform() === "ios" ? "top-10" : "top-4"}`}
 			>
 				<WifiIcon
 					connected={isUabcConnected}
@@ -254,7 +257,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 								{t("App.error")}: {appState.error}
 							</div>
 						)}
-
 					</fieldset>
 					<div
 						className={`form-element ${showApp ? "show" : ""} flex w-full max-w-sm justify-center ${
@@ -265,9 +267,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 							id="login-button"
 							type="submit"
 							title={
-								!isUabcConnected
-									? t("App.networkUnavailable")
-									: t("App.login")
+								!isUabcConnected ? t("App.networkUnavailable") : t("App.login")
 							}
 							disabled={isLoginDisabled}
 							className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium
@@ -277,24 +277,24 @@ function App({ showTourFirstTime = false }: AppProps) {
 						>
 							<span className="login-button-glow" aria-hidden="true" />
 							<span className="login-button-text">
-								{appState.loading
-									? (
-											<LoadingText
-												isActive={appState.loading}
-												className="inline-block"
-												messages={[
-													`${t("App.connecting")}...`,
-													"Desbloqueando limitaciones cimarronas...",
-													"Puliendo credenciales interestelares...",
-													"Calibrando señal extraterrestre...",
-												]}
-											/>
-										)
-									: appState.success
-										? t("App.connected")
-										: !isUabcConnected
-											? t("App.networkUnavailable")
-											: t("App.login")}
+								{appState.loading ? (
+									<LoadingText
+										isActive={appState.loading}
+										className="inline-block"
+										messages={[
+											`${t("App.connecting")}...`,
+											"Desbloqueando limitaciones cimarronas...",
+											"Puliendo credenciales interestelares...",
+											"Calibrando señal extraterrestre...",
+										]}
+									/>
+								) : appState.success ? (
+									t("App.connected")
+								) : !isUabcConnected ? (
+									t("App.networkUnavailable")
+								) : (
+									t("App.login")
+								)}
 							</span>
 							<span className="login-button-sheen" aria-hidden="true" />
 						</button>
@@ -311,7 +311,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 							<StopIcon />
 						</button>
 					</div>
-
 				</form>
 			</div>
 

@@ -78,7 +78,7 @@ export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
 		<>
 			<button
 				type="button"
-				className="top-0 left-0 absolute bg-white/5 rounded-full p-2 hover:bg-white/20 transition-all duration-300 m-3"
+				className={`left-0 absolute bg-white/5 rounded-full p-2 hover:bg-white/20 transition-all duration-300 m-3 ${currentPlatform === "android" || currentPlatform === "ios" ? "top-7" : "top-0"}`}
 				onClick={() => setIsOpen(!isOpen)}
 			>
 				<OptionsIcon width={30} height={30} className="text-white" />
@@ -116,7 +116,7 @@ export const SettingsMenu = ({ setShowBugModal }: SettingsMenuProps) => {
 			<div
 				className={`fixed top-0 left-0 h-full w-80 bg-white/10 backdrop-blur-md border-r border-white/20 z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
 			>
-				<div className="p-6 h-full flex flex-col">
+				<div className={`p-6 h-full flex flex-col ${currentPlatform === "android" || currentPlatform === "ios" ? "pt-10" : ""}`}>
 					<div className="flex items-center justify-between mb-6">
 						<h1 className="text-xl font-bold text-white">
 							{t("Settings.title")}
