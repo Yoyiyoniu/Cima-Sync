@@ -3,7 +3,7 @@ name = "cima-sync"
 version = "0.1.0"
 description = "Autenticación automática para la red WiFi de la Universidad Autónoma de Baja California"
 authors = ["Rodrigo Gibran Felix Leon", "Yoyiyoniu 8)"]
-edition = "2024"
+edition = "2021"
 license = "GPL-3.0"
 repository = "https://github.com/Yoyiyoniu/Cima-Sync"
 keywords = ["uabc", "wifi", "authentication", "tauri", "rust"]
@@ -47,10 +47,6 @@ tauri-plugin-autostart = "2"
 secrecy = { version = "0.10", features = ["serde"] }
 zeroize = { version = "1.8", features = ["derive"] }
 regex = "1.10"
-
-[target.'cfg(target_os = "android")'.dependencies]
-jni = "0.21"
-ndk-context = "0.1"
 
 [profile.release]
 opt-level = "z"

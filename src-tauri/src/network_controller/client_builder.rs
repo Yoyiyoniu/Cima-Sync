@@ -66,8 +66,6 @@ impl ServerCertVerifier for PinnedCertVerifier {
 
 fn build_pinned_client(no_redirect: bool) -> reqwest::blocking::Client {
     // Mismo pin que en `cima-sync-cli`
-    // No sabes que es esto?
-    // checa este repo: https://github.com/Yoyiyoniu/cima-tool.git
     const CERT_SHA256_HEX: &str =
         "19DC98BB1F0806934A375019394A01A9DAD4A18758EB1E4BB82607CDEB1DD25B";
 

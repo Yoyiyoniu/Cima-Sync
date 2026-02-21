@@ -3,68 +3,43 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
 
-import { motion } from "motion/react";
-
 import { useAppBootstrap } from "./hooks/useAppBootstrap";
 import { useDisableContextMenu } from "./hooks/disableContextMenu";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
+import { useShowApp } from "./hooks/useShowApp";
 import { useTourAutoOpen } from "./hooks/useTourAutoOpen";
-import { useDeviceStore } from "./store/deviceStore";
-import { useUiStore } from "./store/uiStore";
 import type { AppProps, AppState } from "./types";
 
 import { setRememberSessionConfig } from "./controller/DbController";
 import { LoadingText } from "./components/LoadingText";
-import { BugModal } from "./components/BugModal";
 import { CertificateAlert } from "./components/CertificateAlert";
 import { CopyRightMenu } from "./components/ContactMe";
 import { Input } from "./components/Input";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { SuccessModal } from "./components/SuccessModal";
 
-import BugIcon from "./assets/icons/BugIcon";
 import StopIcon from "./assets/icons/StopIcon";
 import WifiIcon from "./assets/icons/WifiIcon";
 import img from "./assets/img/cima-sync-logo.avif";
 
 import "@fontsource-variable/nunito";
 import "./css/Global.css";
-import { forceWifi } from "./controller/forceWifi";
 
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
-
 	const { setIsOpen } = useTour();
-
 	const { credentials, setCredentials, rememberSession, setRememberSession } =
 		useAppBootstrap();
-
 	const [appState, setAppState] = useState<AppState>({
 		loading: false,
 		error: null,
 		success: false,
 	});
-
-	const showSuccessModal = useUiStore((state) => state.showSuccessModal);
-	const openSuccessModal = useUiStore((state) => state.openSuccessModal);
-	const closeSuccessModal = useUiStore((state) => state.closeSuccessModal);
-	const openCertificateAlert = useUiStore(
-		(state) => state.openCertificateAlert,
-	);
-	const openBugModal = useUiStore((state) => state.openBugModal);
-	const closeBugModal = useUiStore((state) => state.closeBugModal);
-
-	const showCertificateAlert = useUiStore(
-		(state) => state.showCertificateAlert,
-	);
-	const showBugModal = useUiStore((state) => state.showBugModal);
-
+	const [showSuccessModal, setShowSuccessModal] = useState(false);
+	const [showCertificateAlert, setShowCertificateAlert] = useState(false);
+	const { showApp } = useShowApp();
 	const { isUabcConnected } = useNetworkStatus();
-
-	const isMobile = useDeviceStore((state) => state.isMobile);
-
 	const isFormDisabled = appState.loading || appState.success;
-
 	const isLoginDisabled =
 		isFormDisabled ||
 		!credentials.email ||
@@ -81,23 +56,13 @@ function App({ showTourFirstTime = false }: AppProps) {
 		try {
 			await setRememberSessionConfig(rememberSession);
 
-			if (isMobile) {
-				await forceWifi({
-					function: async () =>
-						await invoke("login", {
-							email: credentials.email,
-							password: credentials.password,
-						}),
-				});
-			} else {
-				await invoke("login", {
-					email: credentials.email,
-					password: credentials.password,
-				});
-			}
+			await invoke("login", {
+				email: credentials.email,
+				password: credentials.password,
+			});
 
 			setAppState((prev) => ({ ...prev, success: true }));
-			openSuccessModal();
+			setShowSuccessModal(true);
 
 			if (rememberSession) {
 				await invoke("save_credentials", {
@@ -121,7 +86,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 				errorStr.includes("tls") ||
 				errorStr.includes("expired")
 			) {
-				openCertificateAlert();
+				setShowCertificateAlert(true);
 			}
 			setAppState((prev) => ({ ...prev, error: String(error) }));
 		} finally {
@@ -149,9 +114,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	return (
 		<main
-			className={`flex flex-col h-screen items-center justify-center 
-			text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden
-			${isMobile ? "pt-12" : ""}`}
+			className={`app-fade-in ${showApp ? "show" : ""} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}
 		>
 			<img
 				src={img}
@@ -161,30 +124,23 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 			<SettingsMenu />
 
-			{!isMobile && (
-				<div
-					className={`absolute right-4 flex items-center gap-2 z-50 app-fade-in show transition-colors duration-300 ${isMobile ? "top-10" : "top-4"}`}
-				>
-					<WifiIcon
-						connected={isUabcConnected}
-						className={`${isUabcConnected ? "text-green-400" : "text-gray-500"} w-5 h-5 transition-colors duration-300`}
-					/>
-					<span
-						className={`text-xs font-medium ${isUabcConnected ? "text-green-400" : "text-gray-500"} transition-colors duration-300`}
-					>
-						{isUabcConnected
-							? t("App.uabcConnection")
-							: t("App.networkUnavailable")}
-					</span>
-				</div>
-			)}
-
-			<motion.div
-				initial={{ opacity: 0, y: 12 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-				className="w-full p-5 relative z-10 flex flex-col items-center justify-center"
+			<div
+				className={`absolute top-4 right-4 flex items-center gap-2 z-50 app-fade-in ${showApp ? "show" : ""} transition-colors duration-300`}
 			>
+				<WifiIcon
+					connected={isUabcConnected}
+					className={`${isUabcConnected ? "text-green-400" : "text-gray-500"} w-5 h-5 transition-colors duration-300`}
+				/>
+				<span
+					className={`text-xs font-medium ${isUabcConnected ? "text-green-400" : "text-gray-500"} transition-colors duration-300`}
+				>
+					{isUabcConnected
+						? t("App.uabcConnection")
+						: t("App.networkUnavailable")}
+				</span>
+			</div>
+
+			<div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
 				<CopyRightMenu />
 				<form
 					className={`login-form w-full max-w-sm flex flex-col gap-3 mb-8 ${isFormDisabled ? "is-loading" : ""}`}
@@ -192,15 +148,19 @@ function App({ showTourFirstTime = false }: AppProps) {
 					aria-busy={appState.loading}
 				>
 					<div className="text-center mb-8">
-						<h1 className={`app-title show text-2xl font-medium`}>
+						<h1
+							className={`app-title ${showApp ? "show" : ""} text-2xl font-medium`}
+						>
 							{t("App.title")}
 						</h1>
-						<p className={`app-subtitle show`}>{t("App.subtitle")}</p>
+						<p className={`app-subtitle ${showApp ? "show" : ""}`}>
+							{t("App.subtitle")}
+						</p>
 					</div>
 
 					{appState.success && (
 						<div
-							className={`form-element show bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3`}
+							className={`form-element ${showApp ? "show" : ""} bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3`}
 						>
 							{t("App.success")}
 						</div>
@@ -210,7 +170,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 						disabled={isFormDisabled}
 						className={`login-fieldset flex flex-col gap-3 ${isFormDisabled ? "is-disabled" : ""}`}
 					>
-						<div className={`form-element show`}>
+						<div className={`form-element ${showApp ? "show" : ""}`}>
 							<Input
 								id="email"
 								type="email"
@@ -227,7 +187,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 							/>
 						</div>
 
-						<div className={`form-element show`}>
+						<div className={`form-element ${showApp ? "show" : ""}`}>
 							<Input
 								id="password"
 								type="password"
@@ -244,7 +204,9 @@ function App({ showTourFirstTime = false }: AppProps) {
 							/>
 						</div>
 
-						<div className={`form-element show flex items-center`}>
+						<div
+							className={`form-element ${showApp ? "show" : ""} flex items-center`}
+						>
 							<div className="relative flex items-center">
 								<input
 									type="checkbox"
@@ -284,14 +246,15 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 						{appState.error && (
 							<div
-								className={`form-element show bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}
+								className={`form-element ${showApp ? "show" : ""} bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}
 							>
 								{t("App.error")}: {appState.error}
 							</div>
 						)}
+
 					</fieldset>
 					<div
-						className={`form-element show flex w-full max-w-sm justify-center ${
+						className={`form-element ${showApp ? "show" : ""} flex w-full max-w-sm justify-center ${
 							appState.success ? "gap-2" : "gap-0"
 						}`}
 					>
@@ -299,7 +262,9 @@ function App({ showTourFirstTime = false }: AppProps) {
 							id="login-button"
 							type="submit"
 							title={
-								!isUabcConnected ? t("App.networkUnavailable") : t("App.login")
+								!isUabcConnected
+									? t("App.networkUnavailable")
+									: t("App.login")
 							}
 							disabled={isLoginDisabled}
 							className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium
@@ -309,24 +274,24 @@ function App({ showTourFirstTime = false }: AppProps) {
 						>
 							<span className="login-button-glow" aria-hidden="true" />
 							<span className="login-button-text">
-								{appState.loading ? (
-									<LoadingText
-										isActive={appState.loading}
-										className="inline-block"
-										messages={[
-											`${t("App.connecting")}...`,
-											"Desbloqueando limitaciones cimarronas...",
-											"Puliendo credenciales interestelares...",
-											"Calibrando señal extraterrestre...",
-										]}
-									/>
-								) : appState.success ? (
-									t("App.connected")
-								) : !isUabcConnected ? (
-									t("App.networkUnavailable")
-								) : (
-									t("App.login")
-								)}
+								{appState.loading
+									? (
+											<LoadingText
+												isActive={appState.loading}
+												className="inline-block"
+												messages={[
+													`${t("App.connecting")}...`,
+													"Desbloqueando limitaciones cimarronas...",
+													"Puliendo credenciales interestelares...",
+													"Calibrando señal extraterrestre...",
+												]}
+											/>
+										)
+									: appState.success
+										? t("App.connected")
+										: !isUabcConnected
+											? t("App.networkUnavailable")
+											: t("App.login")}
 							</span>
 							<span className="login-button-sheen" aria-hidden="true" />
 						</button>
@@ -343,26 +308,16 @@ function App({ showTourFirstTime = false }: AppProps) {
 							<StopIcon />
 						</button>
 					</div>
+
 				</form>
-			</motion.div>
+			</div>
 
-			<SuccessModal isOpen={showSuccessModal} onClose={closeSuccessModal} />
-
-			<CertificateAlert isVisible={showCertificateAlert} />
-
-			<BugModal
-				showModal={showBugModal}
-				setShowModal={(show) => (show ? openBugModal() : closeBugModal())}
+			<SuccessModal
+				isOpen={showSuccessModal}
+				onClose={() => setShowSuccessModal(false)}
 			/>
 
-			<button
-				type="button"
-				title={t("Settings.help.reportBug")}
-				onClick={openBugModal}
-				className="fixed bottom-5 right-5 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white shadow-lg transition-all duration-300 hover:scale-105"
-			>
-				<BugIcon width={24} height={24} />
-			</button>
+			<CertificateAlert isVisible={showCertificateAlert} />
 		</main>
 	);
 }

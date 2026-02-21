@@ -1,27 +1,20 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { platform } from "@tauri-apps/plugin-os";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
-import {
-	removeDatabase,
-	resetCredentialsSystem,
-} from "../controller/DbController";
-import { useDeviceStore } from "../store/deviceStore";
-import { useUiStore } from "../store/uiStore";
-
+import { removeDatabase, resetCredentialsSystem } from "../controller/DbController";
 import CoffeeIcon from "../assets/icons/CoffeeIcon";
 import GithubIcon from "../assets/icons/GithubIcon";
+import HelpIcon from "../assets/icons/HelpIcon";
 import OptionsIcon from "../assets/icons/OptionsIcon";
 import TrashIcon from "../assets/icons/TrashIcon";
 import XIcon from "../assets/icons/XIcon";
-import BugIcon from "../assets/icons/BugIcon";
-
 import { Modal } from "./Modal";
 import { AutoStartConfig } from "./SettingsMenu/AutoStartConfig";
 import { LanguageSelector } from "./SettingsMenu/LanguageSelector";
 import { TourButton } from "./SettingsMenu/TourButton";
-
 export const SettingsMenu = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -30,10 +23,8 @@ export const SettingsMenu = () => {
 	const [showGithubModal, setShowGithubModal] = useState(false);
 	const [showRemoveDatabaseModal, setShowRemoveDatabaseModal] = useState(false);
 	const [showCoffeeModal, setShowCoffeeModal] = useState(false);
-	const isMobile = useDeviceStore((state) => state.isMobile);
-	const isDesktop = useDeviceStore((state) => state.isDesktop);
-	const closeBugModal = useUiStore((state) => state.closeBugModal);
-	const openBugModal = useUiStore((state) => state.openBugModal);
+	const [showIssuesModal, setShowIssuesModal] = useState(false);
+	const [currentPlatform, setCurrentPlatform] = useState<string>("");
 
 	useEffect(() => {
 		const handleEscape = (e: KeyboardEvent) => {
@@ -41,14 +32,27 @@ export const SettingsMenu = () => {
 				setIsOpen(false);
 				setShowGithubModal(false);
 				setShowCoffeeModal(false);
-				closeBugModal();
+				setShowIssuesModal(false);
 			}
 		};
 		window.addEventListener("keydown", handleEscape);
 		return () => {
 			window.removeEventListener("keydown", handleEscape);
 		};
-	}, [closeBugModal]);
+	}, []);
+
+	useEffect(() => {
+		const loadInitialState = () => {
+			try {
+				const platformName = platform();
+				setCurrentPlatform(platformName);
+			} catch (error) {
+				console.error("Error al cargar la plataforma:", error);
+				setCurrentPlatform("unknown");
+			}
+		};
+		loadInitialState();
+	}, []);
 
 	const handleGithubRedirect = async () => {
 		await openUrl("https://github.com/Yoyiyoniu/cima-sync");
@@ -56,6 +60,10 @@ export const SettingsMenu = () => {
 
 	const handleCoffeeRedirect = async () => {
 		await openUrl(t("support.koFiUrl"));
+	};
+
+	const handleIssuesRedirect = async () => {
+		await openUrl("https://github.com/Yoyiyoniu/cima-sync/issues");
 	};
 
 	const handleRemoveDatabase = async () => {
@@ -68,7 +76,7 @@ export const SettingsMenu = () => {
 		<>
 			<button
 				type="button"
-				className={`left-0 absolute bg-white/5 border border-white/20 rounded-full p-2 hover:bg-white/20 hover:border-white/30 transition-all duration-300 m-3 ${isMobile ? "top-12" : "top-0"}`}
+				className="top-0 left-0 absolute bg-white/5 rounded-full p-2 hover:bg-white/20 transition-all duration-300 m-3"
 				onClick={() => setIsOpen(!isOpen)}
 			>
 				<OptionsIcon width={30} height={30} className="text-white" />
@@ -103,10 +111,17 @@ export const SettingsMenu = () => {
 				handleModalFunction={handleRemoveDatabase}
 			/>
 
+			<Modal
+				showModal={showIssuesModal}
+				title={t("Modal.issues.title")}
+				modalText={t("Modal.issues.description")}
+				setShowModal={setShowIssuesModal}
+				handleModalFunction={handleIssuesRedirect}
+			/>
 			<div
 				className={`fixed top-0 left-0 h-full w-80 bg-white/10 backdrop-blur-md border-r border-white/20 z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
 			>
-				<div className={`p-6 h-full flex flex-col ${isMobile ? "pt-20" : ""}`}>
+				<div className="p-6 h-full flex flex-col">
 					<div className="flex items-center justify-between mb-6">
 						<h1 className="text-xl font-bold text-white">
 							{t("Settings.title")}
@@ -125,7 +140,7 @@ export const SettingsMenu = () => {
 						onClick={() => {
 							setShowCoffeeModal(true);
 						}}
-						className="group relative mb-4 overflow-hidden rounded-lg bg-linear-to-r from-amber-500/20 via-amber-600/20 to-amber-500/20 border border-amber-500/40 hover:border-amber-400/60 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/20 p-3 w-full min-h-20"
+						className="group relative mb-4 overflow-hidden rounded-lg bg-linear-to-r from-amber-500/20 via-amber-600/20 to-amber-500/20 border border-amber-500/40 hover:border-amber-400/60 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/20 p-3 w-full"
 					>
 						<div className="flex items-center gap-3">
 							<div className="relative">
@@ -157,7 +172,7 @@ export const SettingsMenu = () => {
 							</svg>
 						</div>
 					</button>
-					<div className="flex-1 space-y-6 items-center justify-center">
+					<div className="flex-1 space-y-6">
 						<div className="space-y-4">
 							<h2 className="text-lg font-semibold text-white">
 								{t("Settings.appInfo.title")}
@@ -175,10 +190,12 @@ export const SettingsMenu = () => {
 								{t("Settings.config.title")}
 							</h2>
 							<div className="space-y-3">
-								{isDesktop && <AutoStartConfig />}
+								{(currentPlatform === "windows" ||
+									currentPlatform === "macos" ||
+									currentPlatform === "linux") && <AutoStartConfig />}
 								<button
 									type="button"
-									className="flex items-center justify-between cursor-pointer rounded-l-xl rounded-r-xl w-full p-2 border border-white/20 hover:bg-red-500/20 hover:border-red-500/40 transition-colors duration-200"
+									className="flex items-center justify-between cursor-pointer rounded-md w-full p-2 hover:bg-red-500/20 transition-colors duration-200"
 									onClick={() => {
 										setShowRemoveDatabaseModal(true);
 									}}
@@ -202,14 +219,12 @@ export const SettingsMenu = () => {
 							</h2>
 							<div className="space-y-2">
 								<button
-									className="flex items-center justify-between cursor-pointer rounded-l-xl rounded-r-xl w-full p-2 border border-white/20 text-white/80 hover:text-white hover:bg-amber-500/20 hover:border-amber-500/40 transition-colors duration-200"
+									className="flex items-center gap-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 transition-colors duration-200 rounded-md p-2 w-full"
 									type="button"
-									onClick={openBugModal}
+									onClick={() => setShowIssuesModal(true)}
 								>
-									<p className="text-white/80">
-										{t("Settings.help.reportBug")}
-									</p>
-									<BugIcon width={20} height={20} />
+									<HelpIcon width={20} height={20} />
+									{t("Settings.help.button")}
 								</button>
 							</div>
 						</div>
@@ -219,7 +234,7 @@ export const SettingsMenu = () => {
 						type="button"
 						title="Abrir proyecto de github"
 						onClick={() => setShowGithubModal(true)}
-						className="p-2 mb-2 mt-2 rounded-l-xl rounded-r-xl bg-black/40 border border-white/20 hover:bg-black/60 hover:border-white/30 transition-colors duration-200 flex items-center gap-2 w-full"
+						className="p-2 mb-2 mt-2 rounded-md bg-black/40 hover:bg-black/60 transition-colors duration-200 flex items-center gap-2 w-full"
 					>
 						<GithubIcon width={30} height={30} />
 						<p className="text-white/80 text-sm">{t("Settings.github")}</p>
