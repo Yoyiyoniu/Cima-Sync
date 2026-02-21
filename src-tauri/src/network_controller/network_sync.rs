@@ -2,6 +2,7 @@ use lazy_static::lazy_static;
 use netwatcher::{watch_interfaces, Interface, Update};
 use regex::Regex;
 use std::collections::HashMap;
+#[cfg(not(target_os = "android"))]
 use std::process::Command;
 use std::sync::{Arc, Mutex, Once};
 use std::thread;
@@ -144,10 +145,13 @@ fn parse_ssid_line(line: &str) -> Option<String> {
     }
 }
 
-fn get_wifi_ssid(interface_name: &str) -> Option<String> {
-    #[cfg(target_os = "android")]
-    return None;
+#[cfg(target_os = "android")]
+fn get_wifi_ssid(_interface_name: &str) -> Option<String> {
+    None
+}
 
+#[cfg(not(target_os = "android"))]
+fn get_wifi_ssid(interface_name: &str) -> Option<String> {
     let safe_name = match get_safe_interface_name(interface_name) {
         Some(name) => name,
         None => return Some("SSID no disponible".to_string()),

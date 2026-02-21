@@ -11,8 +11,8 @@ use crate::tray::system_tray;
 
 use crate::commands::{
     auto_auth, clear_crypto, decrypt_credentials, delete_credentials, encrypt_credentials,
-    get_credentials, get_network_status, init_crypto, login, save_credentials, set_crypto_key,
-    stop_auth,
+    force_wifi, get_credentials, get_network_status, init_crypto, login, release_wifi,
+    save_credentials, set_crypto_key, stop_auth,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -64,7 +64,9 @@ pub fn run() {
             save_credentials,
             get_credentials,
             delete_credentials,
-            get_network_status
+            get_network_status,
+            force_wifi,
+            release_wifi
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
