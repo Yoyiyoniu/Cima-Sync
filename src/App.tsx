@@ -29,6 +29,7 @@ import img from "./assets/img/cima-sync-logo.avif";
 
 import "@fontsource-variable/nunito";
 import "./css/Global.css";
+import { forceWifi } from "./controller/forceWifi";
 
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
@@ -80,10 +81,20 @@ function App({ showTourFirstTime = false }: AppProps) {
 		try {
 			await setRememberSessionConfig(rememberSession);
 
-			await invoke("login", {
-				email: credentials.email,
-				password: credentials.password,
-			});
+			if (isMobile) {
+				await forceWifi({
+					function: async () =>
+						await invoke("login", {
+							email: credentials.email,
+							password: credentials.password,
+						}),
+				});
+			} else {
+				await invoke("login", {
+					email: credentials.email,
+					password: credentials.password,
+				});
+			}
 
 			setAppState((prev) => ({ ...prev, success: true }));
 			openSuccessModal();

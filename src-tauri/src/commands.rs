@@ -5,6 +5,9 @@ use crate::keyring_controller::keyring::{
 };
 
 use crate::auth::Auth;
+use crate::network_controller::android_wifi::{
+    force_wifi_binding_android, release_wifi_binding_android,
+};
 use crate::network_controller::network_sync::get_current_network_status;
 
 use regex::Regex;
@@ -202,4 +205,14 @@ pub fn set_crypto_key(_key_b64: &str) -> Result<String, String> {
 #[tauri::command]
 pub fn get_network_status() -> serde_json::Value {
     get_current_network_status()
+}
+
+#[tauri::command]
+pub fn force_wifi() -> Result<bool, String> {
+    force_wifi_binding_android()
+}
+
+#[tauri::command]
+pub fn release_wifi() -> Result<bool, String> {
+    release_wifi_binding_android()
 }
