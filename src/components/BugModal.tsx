@@ -76,7 +76,7 @@ export const BugModal = ({ showModal, setShowModal }: BugModalProps) => {
 					{t("BugModal.description")}
 				</p>
 
-				<div className="space-y-4 mb-6">
+				<div className="text-start space-y-4 mb-6">
 					<div>
 						<label
 							htmlFor="bug-title"
