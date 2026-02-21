@@ -1,56 +1,57 @@
 {
-  "name": "cima-sync",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "description": "Autenticación automática para la red WiFi de la Universidad Autónoma de Baja California",
-  "author": "Rodrigo Gibran Felix Leon",
-  "license": "GPL-3.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Yoyiyoniu/Cima-Sync.git"
-  },
-  "keywords": [
-    "uabc",
-    "wifi",
-    "authentication",
-    "tauri",
-    "rust",
-    "react"
-  ],
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri",
-    "build:windows": "bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc && ./scripts/check-builds-windows.sh",
-    "build:linux": "./scripts/build-linux.sh && ./scripts/check-builds-linux.sh",
-    "build:all": "./build-and-check.sh"
-  },
-  "dependencies": {
-    "@fontsource-variable/nunito": "^5.2.7",
-    "@reactour/tour": "^3.8.0",
-    "@tailwindcss/vite": "^4.1.17",
-    "@tauri-apps/api": "^2.9.1",
-    "@tauri-apps/plugin-autostart": "~2.5.1",
-    "@tauri-apps/plugin-opener": "^2.5.2",
-    "@tauri-apps/plugin-os": "~2.3.2",
-    "@tauri-apps/plugin-sql": "~2.3.1",
-    "framer-motion": "^11.18.2",
-    "i18next": "^25.7.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-i18next": "^15.7.4",
-    "react-router": "^7.11.0",
-    "tailwindcss": "^4.1.17",
-    "tauri-plugin-network-api": "^2.0.5"
-  },
-  "devDependencies": {
-    "@tauri-apps/cli": "^2.9.5",
-    "@types/react": "^18.3.27",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react": "^4.7.0",
-    "typescript": "~5.6.3",
-    "vite": "^6.4.1"
-  }
+	"name": "cima-sync",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "Autenticación automática para la red WiFi de la Universidad Autónoma de Baja California",
+	"author": "Rodrigo Gibran Felix Leon",
+	"license": "GPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Yoyiyoniu/Cima-Sync.git"
+	},
+	"keywords": [
+		"uabc",
+		"wifi",
+		"authentication",
+		"tauri",
+		"rust",
+		"react"
+	],
+	"scripts": {
+		"dev": "vite --host",
+		"build": "tsc && vite build",
+		"preview": "vite preview",
+		"tauri": "tauri",
+		"build:windows": "bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc && ./scripts/check-builds-windows.sh",
+		"build:linux": "./scripts/build-linux.sh && ./scripts/check-builds-linux.sh",
+		"build:all": "./build-and-check.sh"
+	},
+	"dependencies": {
+		"@fontsource-variable/nunito": "^5.2.7",
+		"@reactour/tour": "^3.8.0",
+		"@tailwindcss/vite": "^4.1.18",
+		"@tauri-apps/api": "^2.10.1",
+		"@tauri-apps/plugin-autostart": "~2.5.1",
+		"@tauri-apps/plugin-opener": "^2.5.3",
+		"@tauri-apps/plugin-os": "~2.3.2",
+		"@tauri-apps/plugin-sql": "~2.3.2",
+		"i18next": "^25.8.10",
+		"motion": "^12.34.2",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"react-i18next": "^15.7.4",
+		"react-router": "^7.13.0",
+		"tailwindcss": "^4.1.18",
+		"tauri-plugin-network-api": "^2.0.5",
+		"zustand": "^5.0.11"
+	},
+	"devDependencies": {
+		"@tauri-apps/cli": "^2.10.0",
+		"@types/react": "^18.3.28",
+		"@types/react-dom": "^18.3.7",
+		"@vitejs/plugin-react": "^4.7.0",
+		"typescript": "~5.6.3",
+		"vite": "^6.4.1"
+	}
 }

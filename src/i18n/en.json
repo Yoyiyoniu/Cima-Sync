@@ -12,7 +12,7 @@
 		"appInfo": {
 			"title": "App info",
 			"name": "Cima Sync",
-			"version": "1.0.0",
+			"version": "1.1.0",
 			"description": "Seamlessly connect to the Cimarrón WiFi. No more manual logins."
 		},
 		"config": {
@@ -23,7 +23,8 @@
 			"title": "Help",
 			"description1": "Automatically authenticates you to the Cimarrón campus WiFi network.",
 			"description2": "Questions or issues? Reach out to the developer.",
-			"button": "Report an issue"
+			"button": "Report an issue",
+			"reportBug": "Report error / bug"
 		},
 		"removeDatabase": "Delete app data",
 		"tour": "Guided tour",
@@ -80,6 +81,17 @@
 			"title": "You're exiting the app",
 			"description": "You will be redirected to the GitHub issues page to report a problem or suggest an improvement. Do you want to continue?"
 		}
+	},
+	"BugModal": {
+		"title": "Report a bug",
+		"description": "Describe the problem. We'll open your email client to send the report.",
+		"titleLabel": "Title",
+		"titlePlaceholder": "Short summary of the issue",
+		"descriptionLabel": "Description",
+		"descriptionPlaceholder": "Describe what happened, steps to reproduce...",
+		"send": "Open email",
+		"defaultSubject": "Bug report",
+		"defaultBody": "(Describe the bug here)"
 	},
 	"Onboarding": {
 		"progress": "Step {{current}} of {{total}}",

@@ -54,6 +54,9 @@ pids
 *.seed
 *.pid.lock
 
+# keystore
+src-tauri/gen/android/keystore.properties
+
 # miscellaneous
 /.vs
 .DS_Store

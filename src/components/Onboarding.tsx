@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
@@ -9,6 +9,7 @@ import {
 	setLanguagePreference,
 	setHasSeenOnboarding,
 } from "../controller/DbController";
+import { useDeviceStore } from "../store/deviceStore";
 
 export function Onboarding() {
 	const { t, i18n } = useTranslation();
@@ -18,6 +19,7 @@ export function Onboarding() {
 	const [showOutro, setShowOutro] = useState(false);
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [autoStartEnabled, setAutoStartEnabled] = useState(false);
+	const isDesktop = useDeviceStore((state) => state.isDesktop);
 
 	useEffect(() => {
 		const timer = setTimeout(() => setShowIntro(false), 3000);
@@ -25,6 +27,7 @@ export function Onboarding() {
 	}, []);
 
 	useEffect(() => {
+		if (!isDesktop) return;
 		const checkAutoStart = async () => {
 			try {
 				const enabled = await isEnabled();
@@ -34,7 +37,7 @@ export function Onboarding() {
 			}
 		};
 		checkAutoStart();
-	}, []);
+	}, [isDesktop]);
 
 	const handleAutoStartToggle = async () => {
 		try {
@@ -70,18 +73,21 @@ export function Onboarding() {
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, [dropdownOpen]);
 
-	const handleLanguageChange = useCallback(async (language: string) => {
-		try {
-			await i18n.changeLanguage(language);
-			await setLanguagePreference(language);
-			setDropdownOpen(false);
-		} catch (error) {
-			console.error("Error saving language:", error);
-		}
-	}, [i18n]);
+	const handleLanguageChange = useCallback(
+		async (language: string) => {
+			try {
+				await i18n.changeLanguage(language);
+				await setLanguagePreference(language);
+				setDropdownOpen(false);
+			} catch (error) {
+				console.error("Error saving language:", error);
+			}
+		},
+		[i18n],
+	);
 
-	const steps = useMemo(
-		() => [
+	const steps = useMemo(() => {
+		const allSteps = [
 			{
 				id: "language",
 				title: t("Onboarding.step1.title"),
@@ -104,28 +110,32 @@ export function Onboarding() {
 				),
 				showLanguageSelector: true,
 			},
-			{
-				id: "autostart",
-				title: t("Onboarding.step4.title"),
-				description: t("Onboarding.step4.description"),
-				icon: (
-					<svg
-						aria-hidden="true"
-						className="w-12 h-12"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={1.5}
-							d="M13 10V3L4 14h7v7l9-11h-7z"
-						/>
-					</svg>
-				),
-				showAutoStart: true,
-			},
+			...(isDesktop
+				? [
+						{
+							id: "autostart",
+							title: t("Onboarding.step4.title"),
+							description: t("Onboarding.step4.description"),
+							icon: (
+								<svg
+									aria-hidden="true"
+									className="w-12 h-12"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={1.5}
+										d="M13 10V3L4 14h7v7l9-11h-7z"
+									/>
+								</svg>
+							),
+							showAutoStart: true,
+						},
+					]
+				: []),
 			{
 				id: "session",
 				title: t("Onboarding.step2.title"),
@@ -168,9 +178,9 @@ export function Onboarding() {
 					</svg>
 				),
 			},
-		],
-		[i18n.language, t],
-	);
+		];
+		return allSteps;
+	}, [t, isDesktop]);
 
 	const isLast = step === steps.length - 1;
 
@@ -580,7 +590,6 @@ export function Onboarding() {
 													</p>
 												</motion.div>
 											)}
-
 										</motion.div>
 									</AnimatePresence>
 								</div>
