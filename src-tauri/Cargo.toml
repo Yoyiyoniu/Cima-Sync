@@ -48,6 +48,9 @@ secrecy = { version = "0.10", features = ["serde"] }
 zeroize = { version = "1.8", features = ["derive"] }
 regex = "1.10"
 
+# Widgets
+tauri-plugin-widget = "0.1.2"
+
 [target.'cfg(target_os = "android")'.dependencies]
 jni = "0.21"
 ndk-context = "0.1"

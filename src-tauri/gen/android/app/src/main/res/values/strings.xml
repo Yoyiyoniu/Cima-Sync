@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">cima-sync</string>
     <string name="main_activity_title">cima-sync</string>
+    <!-- Cima Widget -->
+    <string name="cima_widget_label">Cima Widget</string>
+    <string name="widget_description">Inicio de sesión rápido con Cima Sync</string>
+    <string name="cima_widget_title">Cima Sync</string>
+    <string name="cima_widget_subtitle">Inicio de sesión rápido</string>
+    <string name="cima_widget_logo_description">Logo</string>
+    <string name="cima_widget_wifi_description">WiFi tethering</string>
 </resources>

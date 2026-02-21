@@ -23,6 +23,11 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init());
 
+    #[cfg(target_os = "android")]
+    {
+        builder = builder.plugin(tauri_plugin_widget::init());
+    }
+
     #[cfg(desktop)]
     {
         builder = builder

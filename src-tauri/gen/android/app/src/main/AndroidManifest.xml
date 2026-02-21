@@ -27,6 +27,19 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".CimaWidget"
+            android:exported="true"
+            android:label="@string/cima_widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/cima_widget_info" />
+        </receiver>
+
         <provider
           android:name="androidx.core.content.FileProvider"
           android:authorities="${applicationId}.fileprovider"

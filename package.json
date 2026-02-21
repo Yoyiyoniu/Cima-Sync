@@ -44,6 +44,7 @@
 		"react-router": "^7.13.0",
 		"tailwindcss": "^4.1.18",
 		"tauri-plugin-network-api": "^2.0.5",
+		"tauri-plugin-widget-api": "^0.1.1",
 		"zustand": "^5.0.11"
 	},
 	"devDependencies": {

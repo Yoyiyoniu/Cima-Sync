@@ -573,6 +573,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-os",
  "tauri-plugin-sql",
+ "tauri-plugin-widget",
  "webpki-roots 0.26.11",
  "zeroize",
 ]
@@ -4878,6 +4879,19 @@ dependencies = [
  "time",
  "tokio",
  "uuid",
+]
+
+[[package]]
+name = "tauri-plugin-widget"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8f90091d09d6f8d9636c577cf073211a90d734f1f8680e92fa5832f8083f472"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
