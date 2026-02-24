@@ -13,7 +13,7 @@ static MONITOR_ONCE: Once = Once::new();
 
 lazy_static! {
     static ref LAST_STATE: Mutex<Option<WifiState>> = Mutex::new(None);
-    static ref INTERFACE_NAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_\-\.]+$")
+    static ref INTERFACE_NAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_\-\. ]+$")
         .expect("Regex de interfaz inválido");
 }
 
@@ -191,40 +191,54 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
 
     #[cfg(target_os = "windows")]
     {
-        if let Ok(output) = Command::new("netsh")
+        match Command::new("netsh")
             .args(["wlan", "show", "interfaces"])
             .output()
         {
-            if output.status.success() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let mut current_interface = false;
+            Ok(output) => {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let mut current_interface = false;
 
-                for line in stdout.lines() {
-                    let line_lower = line.to_lowercase();
-                    if line_lower.contains("nombre") || line_lower.contains("name") {
-                        current_interface = line.contains(&safe_name as &str);
-                        continue;
+                    for line in stdout.lines() {
+                        let line_lower = line.to_lowercase();
+                        if line_lower.contains("nombre") || line_lower.contains("name") {
+                            current_interface = line.contains(&safe_name as &str);
+                            continue;
+                        }
+                        if current_interface {
+                            if let Some(ssid) = parse_ssid_line(line) {
+                                return Some(ssid);
+                            }
+                        }
                     }
-                    if current_interface {
+
+                    for line in stdout.lines() {
                         if let Some(ssid) = parse_ssid_line(line) {
                             return Some(ssid);
                         }
                     }
+                } else {
+                    eprintln!(
+                        "[network-sync] 'netsh wlan show interfaces' falló (status: {:?}): {}",
+                        output.status,
+                        String::from_utf8_lossy(&output.stderr)
+                    );
                 }
-
-                for line in stdout.lines() {
-                    if let Some(ssid) = parse_ssid_line(line) {
-                        return Some(ssid);
-                    }
-                }
+            }
+            Err(e) => {
+                eprintln!(
+                    "[network-sync] Error al ejecutar 'netsh wlan show interfaces': {}",
+                    e
+                );
             }
         }
 
         let escaped_name = safe_name.replace("'", "''");
-        if let Ok(output) = Command::new("powershell")
+        match Command::new("powershell")
             .args([
                 "-NoProfile",
-                "-NonInteractive", 
+                "-NonInteractive",
                 "-Command",
                 &format!(
                     "(Get-NetConnectionProfile | Where-Object {{ $_.InterfaceAlias -like '*{}*' }}).Name",
@@ -233,10 +247,25 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
             ])
             .output()
         {
-            if output.status.success() {
-                if let Some(ssid) = extract_ssid_from_line(&String::from_utf8_lossy(&output.stdout)) {
-                    return Some(ssid);
+            Ok(output) => {
+                if output.status.success() {
+                    let ssid = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    if !ssid.is_empty() {
+                        return Some(ssid);
+                    }
+                } else {
+                    eprintln!(
+                        "[network-sync] PowerShell Get-NetConnectionProfile falló (status: {:?}): {}",
+                        output.status,
+                        String::from_utf8_lossy(&output.stderr)
+                    );
                 }
+            }
+            Err(e) => {
+                eprintln!(
+                    "[network-sync] Error al ejecutar PowerShell Get-NetConnectionProfile: {}",
+                    e
+                );
             }
         }
     }
