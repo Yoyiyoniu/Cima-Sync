@@ -1,3 +1,10 @@
+use std::time::{Duration, Instant};
+
+// Android API level constants
+const ANDROID_API_M: i32 = 23; // Android 6.0 (API 23)
+const BIND_WIFI_TIMEOUT_MS: u64 = 5000; // 5 seconds timeout
+const POLL_INTERVAL_MS: u64 = 100; // 100ms polling interval
+
 #[cfg(target_os = "android")]
 fn sdk_int(env: &mut jni::JNIEnv) -> Result<i32, String> {
     env.get_static_field("android/os/Build$VERSION", "SDK_INT", "I")
