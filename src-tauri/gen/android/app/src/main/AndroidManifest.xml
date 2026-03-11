@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- bindProcessToNetwork en android_wifi.rs (forzar uso de WiFi para cuando el usuario tenga datos móviles) -->
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <!-- Animación fluida del widget (~600ms) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <!-- AndroidTV support -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
@@ -27,12 +29,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Cima Widget -->
         <receiver
             android:name=".CimaWidget"
             android:exported="true"
             android:label="@string/cima_widget_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="app.cimasync.action.WIDGET_PULSE" />
             </intent-filter>
 
             <meta-data

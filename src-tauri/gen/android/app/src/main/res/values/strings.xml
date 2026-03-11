@@ -8,4 +8,6 @@
     <string name="cima_widget_subtitle">Inicio de sesión rápido</string>
     <string name="cima_widget_logo_description">Logo</string>
     <string name="cima_widget_wifi_description">WiFi tethering</string>
+    <string name="cima_widget_status_online">Tiene acceso a internet</string>
+    <string name="cima_widget_status_offline">Sin Internet</string>
 </resources>

@@ -1,8 +1,9 @@
 use std::time::{Duration, Instant};
 
-const BIND_WIFI_TIMEOUT_MS: u64 = 15_000;
-const POLL_INTERVAL_MS: u64 = 250;
-const ANDROID_API_M: i32 = 23;
+// Android API level constants
+const ANDROID_API_M: i32 = 23; // Android 6.0 (API 23)
+const BIND_WIFI_TIMEOUT_MS: u64 = 5000; // 5 seconds timeout
+const POLL_INTERVAL_MS: u64 = 100; // 100ms polling interval
 
 #[cfg(target_os = "android")]
 fn sdk_int(env: &mut jni::JNIEnv) -> Result<i32, String> {
