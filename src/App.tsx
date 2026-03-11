@@ -25,6 +25,7 @@ import { SuccessModal } from "./components/SuccessModal";
 import BugIcon from "./assets/icons/BugIcon";
 import StopIcon from "./assets/icons/StopIcon";
 import WifiIcon from "./assets/icons/WifiIcon";
+import CheckIcon from "./assets/icons/CheckIcon";
 import img from "./assets/img/cima-sync-logo.avif";
 
 import "@fontsource-variable/nunito";
@@ -89,27 +90,24 @@ function App({ showTourFirstTime = false }: AppProps) {
 							password: credentials.password,
 						}),
 				});
-			} else {
-				await invoke("login", {
-					email: credentials.email,
-					password: credentials.password,
-				});
 			}
-
-			setAppState((prev) => ({ ...prev, success: true }));
-			openSuccessModal();
 
 			if (rememberSession) {
 				await invoke("save_credentials", {
 					email: credentials.email,
 					password: credentials.password,
 				});
+			}
 
-				await invoke("auto_auth", {
-					email: credentials.email,
-					password: credentials.password,
-				});
-			} else {
+			await invoke("auto_auth", {
+				email: credentials.email,
+				password: credentials.password,
+			});
+
+			setAppState((prev) => ({ ...prev, success: true }));
+			openSuccessModal();
+
+			if (!rememberSession) {
 				await invoke("delete_credentials");
 			}
 		} catch (error) {
@@ -196,6 +194,11 @@ function App({ showTourFirstTime = false }: AppProps) {
 							{t("App.title")}
 						</h1>
 						<p className={`app-subtitle show`}>{t("App.subtitle")}</p>
+						{isUabcConnected && (
+							<p className="mt-2 text-sm text-green-400 app-subtitle show">
+								{t("App.connectedWifiMessage")}
+							</p>
+						)}
 					</div>
 
 					{appState.success && (
@@ -290,25 +293,28 @@ function App({ showTourFirstTime = false }: AppProps) {
 							</div>
 						)}
 					</fieldset>
-					<div
-						className={`form-element show flex w-full max-w-sm justify-center ${
-							appState.success ? "gap-2" : "gap-0"
-						}`}
-					>
+					<div className="form-element show flex w-full max-w-sm justify-center items-center gap-2">
+						{isUabcConnected && !appState.loading && !appState.success && (
+							<div
+								className="h-11 px-3 flex items-center justify-center rounded-md font-medium bg-[#22c55e] hover:bg-[#16a34a] text-white transition-all duration-300 shadow-sm cursor-default"
+								title={t("App.alreadyAuthenticatedTooltip")}
+							>
+								<CheckIcon className="w-5 h-5" />
+							</div>
+						)}
 						<button
 							id="login-button"
 							type="submit"
 							title={
-								!isUabcConnected ? t("App.networkUnavailable") : t("App.login")
+								!isUabcConnected
+									? t("App.networkUnavailable")
+									: t("App.alreadyAuthenticatedTooltip")
 							}
 							disabled={isLoginDisabled}
-							className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium
-                        bg-[#006633] hover:bg-[#005528] text-white 
-                        disabled:cursor-not-allowed
-                        transition-all duration-300 shadow-sm cursor-pointer w-full"
+							className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium bg-[#22c55e] hover:bg-[#16a34a] text-white disabled:cursor-not-allowed transition-all duration-300 shadow-sm cursor-pointer w-full"
 						>
 							<span className="login-button-glow" aria-hidden="true" />
-							<span className="login-button-text">
+							<span className="login-button-text flex items-center justify-center gap-2">
 								{appState.loading ? (
 									<LoadingText
 										isActive={appState.loading}
@@ -325,7 +331,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 								) : !isUabcConnected ? (
 									t("App.networkUnavailable")
 								) : (
-									t("App.login")
+									t("App.activateCimaSync")
 								)}
 							</span>
 							<span className="login-button-sheen" aria-hidden="true" />
