@@ -21,8 +21,16 @@ import { CopyRightMenu } from "./components/ContactMe";
 import { Input } from "./components/Input";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { SuccessModal } from "./components/SuccessModal";
+import {
+	CIMA_SYNC_STOPPED_TOAST_DURATION,
+	NetworkStateToastManager,
+	showAuthErrorToast,
+	showCimaSyncActiveToast,
+	showCimaSyncStoppedToast,
+	showFineConnectionToast,
+	showNetworkStateToast,
+} from "./components/ToastManager";
 
-import { ConnectionStatusCard } from "./components/ConnectionStatusCard";
 import BugIcon from "./assets/icons/BugIcon";
 import StopIcon from "./assets/icons/StopIcon";
 import CheckIcon from "./assets/icons/CheckIcon";
@@ -60,7 +68,8 @@ function App({ showTourFirstTime = false }: AppProps) {
 	);
 	const showBugModal = useUiStore((state) => state.showBugModal);
 
-	const { isUabcConnected, statusText, networkState } = useNetworkStatus();
+	const { isUabcConnected, statusText, networkState, ssid } =
+		useNetworkStatus();
 	const [isCimaSyncActive, setIsCimaSyncActive] = useState(false);
 	const isBackendAuthenticated = networkState === "fineConnection";
 
@@ -120,6 +129,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 			});
 
 			setIsCimaSyncActive(true);
+			showCimaSyncActiveToast();
 			setAppState((prev) => ({ ...prev, success: true }));
 			openSuccessModal();
 
@@ -128,6 +138,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 			}
 		} catch (error) {
 			console.error("Login error:", error);
+			showAuthErrorToast(String(error));
 			const errorStr = String(error).toLowerCase();
 			if (
 				errorStr.includes("certificate") ||
@@ -146,6 +157,12 @@ function App({ showTourFirstTime = false }: AppProps) {
 	const handleLogout = async () => {
 		await invoke("stop_auth");
 		setIsCimaSyncActive(false);
+		showCimaSyncStoppedToast();
+		setTimeout(() => {
+			if (isUabcConnected) {
+				showFineConnectionToast();
+			}
+		}, CIMA_SYNC_STOPPED_TOAST_DURATION);
 		setAppState({ loading: false, error: null, success: false });
 	};
 
@@ -168,6 +185,11 @@ function App({ showTourFirstTime = false }: AppProps) {
 			text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden
 			${isMobile ? "pt-12" : ""}`}
 		>
+			<NetworkStateToastManager
+				networkState={networkState}
+				isUabcConnected={isUabcConnected}
+			/>
+
 			<img
 				src={img}
 				alt=""
@@ -183,12 +205,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 				className="w-full p-5 relative z-10 flex flex-col items-center justify-center"
 			>
 				<CopyRightMenu />
-
-				<ConnectionStatusCard
-					networkState={networkState}
-					statusText={statusText}
-					isUabcConnected={isUabcConnected}
-				/>
 
 				<form
 					className={`login-form w-full max-w-sm flex flex-col gap-3 mb-8 ${isFormDisabled ? "is-loading" : ""}`}
