@@ -41,7 +41,7 @@ body {
 }
 
 [data-sileo-toast] {
-	border-radius: 16px;
+	border-radius: 16px 16px 0 0;
 	filter: drop-shadow(var(--cima-toast-shadow));
 }
 
@@ -51,7 +51,18 @@ body {
 	border: 1px solid var(--cima-toast-border);
 	backdrop-filter: blur(14px) saturate(140%);
 	-webkit-backdrop-filter: blur(14px) saturate(140%);
-	border-radius: 16px;
+}
+
+[data-sileo-header] {
+	border-radius: 16px 16px 0 0;
+}
+
+[data-sileo-content] {
+	border-radius: 0 16px 16px 16px;
+}
+
+[data-sileo-header] + [data-sileo-content] {
+	border-radius: 16px 0 16px 16px;
 }
 
 [data-sileo-description] {

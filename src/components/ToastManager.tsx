@@ -40,19 +40,19 @@ export function showNetworkStatusToast({
 	if (!networkState || !statusText) return;
 
 	sileo.action({
-		title: "Estado de red",
+		title: "Estado de la red",
 		description: statusText,
 		icon: <span aria-hidden="true">📡</span>,
 		button: {
-			title: "Ver info",
+			title: "Ver detalles",
 			onClick: () => {
 				sileo.info({
-					title: "Informacion de red",
+					title: "Detalles de la red",
 					description: (
 						<div className="flex flex-col gap-1">
 							<span>Estado: {statusText}</span>
 							<span>SSID: {ssid ?? "No disponible"}</span>
-							<span>Network state: {networkState}</span>
+							<span>Estado interno: {networkState}</span>
 						</div>
 					),
 					icon: <span aria-hidden="true">ℹ️</span>,
@@ -153,40 +153,40 @@ export function NetworkStateToastManager({
 
 export function showCimaSyncActiveToast() {
 	sileo.success({
-		title: "Cima Sync activo",
+		title: "Cima Sync está activo",
 		description:
-			"Te autenticaras automáticamente si te desconectas de la red Cimarrón.",
+			"Si pierdes la red Cimarrón, te re conectaremos automáticamente.",
 		icon: <CimaSyncLogo color="green" />,
 	});
 }
 
 export function showFineConnectionToast() {
 	sileo.success({
-		title: "Internet disponible",
-		description: "Ya disfrutas de tu conexion a internet cimarron.",
+		title: "Internet listo",
+		description: "Ya tienes conexión a internet Cimarrón.",
 		icon: <CimaSyncLogo color="white" />,
 	});
 }
 
 export function showRequiereLoginToast() {
 	sileo.info({
-		title: "Inicia sesion",
-		description: "Necesitas autenticarte para acceder a internet.",
+		title: "Necesitamos iniciar sesión",
+		description: "Inicia sesión para poder navegar en internet.",
 		icon: <LoginIcon />,
 	});
 }
 
 export function showNoUabcConnectionToast() {
 	sileo.info({
-		title: "Sin red Cimarron",
-		description: "Conectate a la red UABC para continuar.",
+		title: "No estás en la red UABC",
+		description: "Conéctate a la red UABC para continuar.",
 		icon: <NoWifiIcon />,
 	});
 }
 
 export function showAuthErrorToast(message: string) {
 	sileo.error({
-		title: "Error al iniciar sesión",
+		title: "No pudimos iniciar sesión",
 		description: message,
 		icon: <AlertIcon />,
 	});
@@ -194,8 +194,8 @@ export function showAuthErrorToast(message: string) {
 
 export function showCimaSyncStoppedToast() {
 	sileo.info({
-		title: "Cima Sync detenido",
-		description: "El monitoreo automatico se ha detenido.",
+		title: "Cima Sync pausado",
+		description: "Cima Sync está desactivado por ahora.",
 		duration: CIMA_SYNC_STOPPED_TOAST_DURATION,
 		icon: <HandStopIcon />,
 	});
