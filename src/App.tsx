@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
 
@@ -22,9 +22,9 @@ import { Input } from "./components/Input";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { SuccessModal } from "./components/SuccessModal";
 
+import { ConnectionStatusCard } from "./components/ConnectionStatusCard";
 import BugIcon from "./assets/icons/BugIcon";
 import StopIcon from "./assets/icons/StopIcon";
-import WifiIcon from "./assets/icons/WifiIcon";
 import CheckIcon from "./assets/icons/CheckIcon";
 import img from "./assets/img/cima-sync-logo.avif";
 
@@ -60,11 +60,13 @@ function App({ showTourFirstTime = false }: AppProps) {
 	);
 	const showBugModal = useUiStore((state) => state.showBugModal);
 
-	const { isUabcConnected } = useNetworkStatus();
+	const { isUabcConnected, statusText, networkState } = useNetworkStatus();
+	const [isCimaSyncActive, setIsCimaSyncActive] = useState(false);
+	const isBackendAuthenticated = networkState === "fineConnection";
 
 	const isMobile = useDeviceStore((state) => state.isMobile);
 
-	const isFormDisabled = appState.loading || appState.success;
+	const isFormDisabled = appState.loading || isCimaSyncActive;
 
 	const isLoginDisabled =
 		isFormDisabled ||
@@ -72,9 +74,22 @@ function App({ showTourFirstTime = false }: AppProps) {
 		!credentials.password ||
 		!isUabcConnected;
 
+	const refreshAuthStatus = useCallback(async () => {
+		try {
+			const status = await invoke<{ is_active?: boolean }>("get_auth_status");
+			setIsCimaSyncActive(Boolean(status?.is_active));
+		} catch (error) {
+			console.error("Error getting auth status:", error);
+		}
+	}, []);
+
 	useDisableContextMenu();
 
 	useTourAutoOpen({ showTourFirstTime, setIsOpen });
+
+	useEffect(() => {
+		void refreshAuthStatus();
+	}, [refreshAuthStatus]);
 
 	const handleLogin = async (e: FormEvent) => {
 		e.preventDefault();
@@ -104,6 +119,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 				password: credentials.password,
 			});
 
+			setIsCimaSyncActive(true);
 			setAppState((prev) => ({ ...prev, success: true }));
 			openSuccessModal();
 
@@ -129,6 +145,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	const handleLogout = async () => {
 		await invoke("stop_auth");
+		setIsCimaSyncActive(false);
 		setAppState({ loading: false, error: null, success: false });
 	};
 
@@ -159,24 +176,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 			<SettingsMenu />
 
-			{!isMobile && (
-				<div
-					className={`absolute right-4 flex items-center gap-2 z-50 app-fade-in show transition-colors duration-300 ${isMobile ? "top-10" : "top-4"}`}
-				>
-					<WifiIcon
-						connected={isUabcConnected}
-						className={`${isUabcConnected ? "text-green-400" : "text-gray-500"} w-5 h-5 transition-colors duration-300`}
-					/>
-					<span
-						className={`text-xs font-medium ${isUabcConnected ? "text-green-400" : "text-gray-500"} transition-colors duration-300`}
-					>
-						{isUabcConnected
-							? t("App.uabcConnection")
-							: t("App.networkUnavailable")}
-					</span>
-				</div>
-			)}
-
 			<motion.div
 				initial={{ opacity: 0, y: 12 }}
 				animate={{ opacity: 1, y: 0 }}
@@ -184,6 +183,13 @@ function App({ showTourFirstTime = false }: AppProps) {
 				className="w-full p-5 relative z-10 flex flex-col items-center justify-center"
 			>
 				<CopyRightMenu />
+
+				<ConnectionStatusCard
+					networkState={networkState}
+					statusText={statusText}
+					isUabcConnected={isUabcConnected}
+				/>
+
 				<form
 					className={`login-form w-full max-w-sm flex flex-col gap-3 mb-8 ${isFormDisabled ? "is-loading" : ""}`}
 					onSubmit={handleLogin}
@@ -194,20 +200,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 							{t("App.title")}
 						</h1>
 						<p className={`app-subtitle show`}>{t("App.subtitle")}</p>
-						{isUabcConnected && (
-							<p className="mt-2 text-sm text-green-400 app-subtitle show">
-								{t("App.connectedWifiMessage")}
-							</p>
-						)}
 					</div>
-
-					{appState.success && (
-						<div
-							className={`form-element show bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3`}
-						>
-							{t("App.success")}
-						</div>
-					)}
 
 					<fieldset
 						disabled={isFormDisabled}
@@ -294,7 +287,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 						)}
 					</fieldset>
 					<div className="form-element show flex w-full max-w-sm justify-center items-center gap-2">
-						{isUabcConnected && !appState.loading && !appState.success && (
+						{isUabcConnected && !appState.loading && isBackendAuthenticated && (
 							<div
 								className="h-11 px-3 flex items-center justify-center rounded-md font-medium bg-[#22c55e] hover:bg-[#16a34a] text-white transition-all duration-300 shadow-sm cursor-default"
 								title={t("App.alreadyAuthenticatedTooltip")}
@@ -326,7 +319,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 											"Calibrando señal extraterrestre...",
 										]}
 									/>
-								) : appState.success ? (
+								) : isCimaSyncActive ? (
 									t("App.connected")
 								) : !isUabcConnected ? (
 									t("App.networkUnavailable")
@@ -344,7 +337,7 @@ function App({ showTourFirstTime = false }: AppProps) {
                       bg-red-600 hover:bg-red-700 text-white
                       disabled:opacity-70 disabled:cursor-not-allowed
                       transition-all duration-300 shadow-sm cursor-pointer
-                      ${appState.success ? "w-20 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-0 pointer-events-none"}`}
+									${isCimaSyncActive ? "w-20 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-0 pointer-events-none"}`}
 						>
 							<StopIcon />
 						</button>

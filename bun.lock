@@ -19,6 +19,7 @@
         "react-dom": "^18.3.1",
         "react-i18next": "^15.7.4",
         "react-router": "^7.13.0",
+        "sileo": "^0.1.5",
         "tailwindcss": "^4.1.18",
         "tauri-plugin-network-api": "^2.0.5",
         "tauri-plugin-widget-api": "^0.1.1",
@@ -396,6 +397,8 @@
     "semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 
     "set-cookie-parser": ["set-cookie-parser@2.7.2", "", {}, "sha512-oeM1lpU/UvhTxw+g3cIfxXHyJRc/uidd3yK1P242gzHds0udQBYzs3y8j4gCCW+ZJ7ad0yctld8RYO+bdurlvw=="],
+
+    "sileo": ["sileo@0.1.5", "", { "dependencies": { "motion": "^12.34.0" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }, "sha512-Fc/3VNFWgQlZttkyvAdnPlzWrLTaii6FIas7nMivlx3uGuKpuNNRZGtSgNRFqTHFn70ZxEjKYxsBIO0nQlDGAg=="],
 
     "source-map-js": ["source-map-js@1.2.1", "", {}, "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="],
 

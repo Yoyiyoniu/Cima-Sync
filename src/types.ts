@@ -7,3 +7,18 @@ export interface AppState {
 	error: string | null;
 	success: boolean;
 }
+
+export type NetworkSyncState =
+	| "fineConnection"
+	| "haveCautivePortal"
+	| "invalidConnection"
+	| "mobileConnection"
+	| "mobileConnectionRequiereAuth";
+
+export interface NetworkStatusPayload {
+	connected: boolean;
+	ssid: string | null;
+	is_uabc: boolean;
+	network_state: NetworkSyncState;
+	status_text: string;
+}

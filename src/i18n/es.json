@@ -132,6 +132,13 @@
 	"support": {
 		"koFiUrl": "https://ko-fi.com/yoyiyo"
 	},
+	"ConnectionStatus": {
+		"authenticated": "WI-FI Cimarrón Autenticado",
+		"available": "Red UABC disponible, inicia sesión",
+		"loading": "Verificando conexión...",
+		"unavailable": "WI-FI Cimarrón No Disponible",
+		"noConnection": "Sin conexión a la red de la universidad"
+	},
 	"CertificateAlert": {
 		"buttonTitle": "Actualización disponible",
 		"title": "Actualización requerida",

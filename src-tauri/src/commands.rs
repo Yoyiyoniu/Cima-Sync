@@ -100,9 +100,10 @@ fn sanitize_text(text: &str) -> Result<String, ValidationError> {
 #[tauri::command]
 pub fn stop_auth() -> String {
     match CURRENT_AUTH.lock() {
-        Ok(guard) => {
+        Ok(mut guard) => {
             if let Some(auth) = guard.as_ref() {
                 auth.stop_monitoring();
+                *guard = None;
                 "Proceso de monitoreo detenido".to_string()
             } else {
                 "No hay proceso de monitoreo activo".to_string()
@@ -110,6 +111,18 @@ pub fn stop_auth() -> String {
         }
         Err(_) => "Error al acceder al estado de autenticación".to_string(),
     }
+}
+
+#[tauri::command]
+pub fn get_auth_status() -> serde_json::Value {
+    let is_active = match CURRENT_AUTH.lock() {
+        Ok(guard) => guard.is_some(),
+        Err(_) => false,
+    };
+
+    serde_json::json!({
+        "is_active": is_active,
+    })
 }
 
 #[tauri::command]
@@ -124,6 +137,9 @@ pub fn auto_auth(email: &str, password: &str) -> Result<String, String> {
     
     match CURRENT_AUTH.lock() {
         Ok(mut guard) => {
+            if guard.is_some() {
+                return Ok("El monitoreo de Cima Sync ya está activo".to_string());
+            }
             *guard = Some(auth);
         }
         Err(_) => return Err("Error al inicializar autenticación".to_string()),
