@@ -1,6 +1,7 @@
 use lazy_static::lazy_static;
 use netwatcher::{watch_interfaces, Interface, Update};
 use regex::Regex;
+use reqwest::blocking::Client;
 use std::collections::HashMap;
 use std::process::Command;
 use std::sync::{Arc, Mutex, Once};
@@ -12,12 +13,47 @@ static MONITOR_ONCE: Once = Once::new();
 
 lazy_static! {
     static ref LAST_STATE: Mutex<Option<WifiState>> = Mutex::new(None);
-    static ref INTERFACE_NAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_\-\.]+$")
+    static ref LAST_SYNC_NETWORK_STATE: Mutex<Option<SyncNetworkState>> = Mutex::new(None);
+    static ref INTERFACE_NAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_\-\. ]+$")
         .expect("Regex de interfaz inválido");
 }
 
 const SSID_RETRY_DELAY_MS: u64 = 500;
 const MAX_INTERFACE_NAME_LENGTH: usize = 64;
+const CONNECTIVITY_TIMEOUT_SECS: u64 = 3;
+const GENERATE_204_URL: &str = "http://clients3.google.com/generate_204";
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SyncNetworkState {
+    FineConnection,
+    HaveCautivePortal,
+    InvalidConnection,
+    MobileConnection,
+    MobileConnectionRequiereAuth,
+}
+
+impl SyncNetworkState {
+    fn as_key(self) -> &'static str {
+        match self {
+            SyncNetworkState::FineConnection => "fineConnection",
+            SyncNetworkState::HaveCautivePortal => "haveCautivePortal",
+            SyncNetworkState::InvalidConnection => "invalidConnection",
+            SyncNetworkState::MobileConnection => "mobileConnection",
+            SyncNetworkState::MobileConnectionRequiereAuth => "mobileConnectionRequiereAuth",
+        }
+    }
+
+    fn as_status_text(self) -> &'static str {
+        match self {
+            SyncNetworkState::FineConnection => "WI-FI Cimarrón Autenticado",
+            SyncNetworkState::HaveCautivePortal | SyncNetworkState::MobileConnectionRequiereAuth => {
+                "Red UABC disponible, inicia sesión"
+            }
+            SyncNetworkState::InvalidConnection => "WI-FI Cimarrón No Disponible",
+            SyncNetworkState::MobileConnection => "Sin conexión a la red de la universidad",
+        }
+    }
+}
 
 #[derive(Debug)]
 enum InterfaceValidation {
@@ -104,14 +140,89 @@ fn check_is_uabc(ssid: Option<&str>) -> bool {
     ssid.map(|s| s.contains("UABC")).unwrap_or(false)
 }
 
+fn has_internet_access() -> bool {
+    let client = match Client::builder()
+        .timeout(Duration::from_secs(CONNECTIVITY_TIMEOUT_SECS))
+        .build()
+    {
+        Ok(client) => client,
+        Err(err) => {
+            eprintln!("[network-sync] Error creando cliente HTTP para verificación: {err}");
+            return false;
+        }
+    };
+
+    match client.get(GENERATE_204_URL).send() {
+        Ok(response) => response.status().as_u16() == 204,
+        Err(err) => {
+            eprintln!("[network-sync] Falló generate_204: {err}");
+            false
+        }
+    }
+}
+
+fn resolve_sync_network_state(ssid: Option<&str>, connected: bool, is_uabc: bool) -> SyncNetworkState {
+    let has_wifi = has_internet_access();
+
+    if connected && is_uabc {
+        if has_wifi {
+            return SyncNetworkState::FineConnection;
+        }
+        return SyncNetworkState::HaveCautivePortal;
+    }
+
+    if !connected && has_wifi {
+        return SyncNetworkState::MobileConnection;
+    }
+
+    if !connected && !has_wifi && ssid.map(|s| s.contains("UABC")).unwrap_or(false) {
+        return SyncNetworkState::MobileConnectionRequiereAuth;
+    }
+
+    SyncNetworkState::InvalidConnection
+}
+
+fn log_state_transition(new_state: SyncNetworkState, ssid: Option<&str>, connected: bool, is_uabc: bool) {
+    let mut guard = match LAST_SYNC_NETWORK_STATE.lock() {
+        Ok(g) => g,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+
+    let previous = *guard;
+    if previous != Some(new_state) {
+        println!(
+            "[network-sync] Estado actualizado: {:?} -> {:?} | texto='{}' | connected={} | is_uabc={} | ssid={}",
+            previous,
+            Some(new_state),
+            new_state.as_status_text(),
+            connected,
+            is_uabc,
+            ssid.unwrap_or("<none>")
+        );
+        *guard = Some(new_state);
+    }
+}
+
 fn create_status_payload(ssid: Option<&str>) -> serde_json::Value {
     let is_uabc = check_is_uabc(ssid);
     let connected = ssid.is_some();
+    let network_state = resolve_sync_network_state(ssid, connected, is_uabc);
+
+    print!("[network-sync] Creando payload de estado:\n connected={},\n ssid={},\n is_uabc={},\n network_state={:?}",
+        connected,
+        ssid.unwrap_or("<none>"),
+        is_uabc,
+        network_state
+    );
+
+    log_state_transition(network_state, ssid, connected, is_uabc);
 
     serde_json::json!({
         "connected": connected,
         "ssid": ssid,
-        "is_uabc": is_uabc
+        "is_uabc": is_uabc,
+        "network_state": network_state.as_key(),
+        "status_text": network_state.as_status_text()
     })
 }
 
@@ -184,40 +295,54 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
 
     #[cfg(target_os = "windows")]
     {
-        if let Ok(output) = Command::new("netsh")
+        match Command::new("netsh")
             .args(["wlan", "show", "interfaces"])
             .output()
         {
-            if output.status.success() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let mut current_interface = false;
+            Ok(output) => {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let mut current_interface = false;
 
-                for line in stdout.lines() {
-                    let line_lower = line.to_lowercase();
-                    if line_lower.contains("nombre") || line_lower.contains("name") {
-                        current_interface = line.contains(&safe_name as &str);
-                        continue;
+                    for line in stdout.lines() {
+                        let line_lower = line.to_lowercase();
+                        if line_lower.contains("nombre") || line_lower.contains("name") {
+                            current_interface = line.contains(&safe_name as &str);
+                            continue;
+                        }
+                        if current_interface {
+                            if let Some(ssid) = parse_ssid_line(line) {
+                                return Some(ssid);
+                            }
+                        }
                     }
-                    if current_interface {
+
+                    for line in stdout.lines() {
                         if let Some(ssid) = parse_ssid_line(line) {
                             return Some(ssid);
                         }
                     }
+                } else {
+                    eprintln!(
+                        "[network-sync] 'netsh wlan show interfaces' falló (status: {:?}): {}",
+                        output.status,
+                        String::from_utf8_lossy(&output.stderr)
+                    );
                 }
-
-                for line in stdout.lines() {
-                    if let Some(ssid) = parse_ssid_line(line) {
-                        return Some(ssid);
-                    }
-                }
+            }
+            Err(e) => {
+                eprintln!(
+                    "[network-sync] Error al ejecutar 'netsh wlan show interfaces': {}",
+                    e
+                );
             }
         }
 
         let escaped_name = safe_name.replace("'", "''");
-        if let Ok(output) = Command::new("powershell")
+        match Command::new("powershell")
             .args([
                 "-NoProfile",
-                "-NonInteractive", 
+                "-NonInteractive",
                 "-Command",
                 &format!(
                     "(Get-NetConnectionProfile | Where-Object {{ $_.InterfaceAlias -like '*{}*' }}).Name",
@@ -226,10 +351,25 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
             ])
             .output()
         {
-            if output.status.success() {
-                if let Some(ssid) = extract_ssid_from_line(&String::from_utf8_lossy(&output.stdout)) {
-                    return Some(ssid);
+            Ok(output) => {
+                if output.status.success() {
+                    let ssid = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    if !ssid.is_empty() {
+                        return Some(ssid);
+                    }
+                } else {
+                    eprintln!(
+                        "[network-sync] PowerShell Get-NetConnectionProfile falló (status: {:?}): {}",
+                        output.status,
+                        String::from_utf8_lossy(&output.stderr)
+                    );
                 }
+            }
+            Err(e) => {
+                eprintln!(
+                    "[network-sync] Error al ejecutar PowerShell Get-NetConnectionProfile: {}",
+                    e
+                );
             }
         }
     }

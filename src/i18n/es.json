@@ -34,6 +34,9 @@
 		"title": "Inicio de sesión automático",
 		"subtitle": "Sistema Cimarrón de inicio de sesión",
 		"success": "Conexión establecida correctamente.",
+		"activateCimaSync": "Activar modo Cima Sync",
+		"alreadyAuthenticatedTooltip": "Ya estás autenticado en la red Cimarrón",
+		"connectedWifiMessage": "Ya te encuentras conectado al WiFi Cimarrón.",
 		"email": "Correo",
 		"password": "Contraseña",
 		"remember": "Recordar sesión",
@@ -116,6 +119,13 @@
 	},
 	"support": {
 		"koFiUrl": "https://ko-fi.com/yoyiyo"
+	},
+	"ConnectionStatus": {
+		"authenticated": "WI-FI Cimarrón Autenticado",
+		"available": "Red UABC disponible, inicia sesión",
+		"loading": "Verificando conexión...",
+		"unavailable": "WI-FI Cimarrón No Disponible",
+		"noConnection": "Sin conexión a la red de la universidad"
 	},
 	"CertificateAlert": {
 		"buttonTitle": "Actualización disponible",

@@ -83,6 +83,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "android-native-keyring-store"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c68e578910ed6fb7d3731069791db664cf68a02171b6df429f16dd7e409bf2b"
+dependencies = [
+ "base64 0.22.1",
+ "jni",
+ "keyring-core",
+ "log",
+ "ndk-context",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tracing",
+]
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -552,9 +570,11 @@ name = "cima-sync"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",
+ "android-native-keyring-store",
  "base64 0.22.1",
  "hex",
  "keyring",
+ "keyring-core",
  "lazy_static",
  "netwatcher",
  "rand 0.8.5",
@@ -571,6 +591,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-os",
  "tauri-plugin-sql",
+ "tauri-plugin-widget",
  "webpki-roots 0.26.11",
  "zeroize",
 ]
@@ -2207,6 +2228,15 @@ dependencies = [
  "security-framework 3.5.1",
  "windows-sys 0.60.2",
  "zeroize",
+]
+
+[[package]]
+name = "keyring-core"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d8286c3ab222af2fa9e57874fe419893d967f739c7bf1743f98a88678edbf08"
+dependencies = [
+ "log",
 ]
 
 [[package]]
@@ -4806,6 +4836,19 @@ dependencies = [
  "thiserror 2.0.17",
  "time",
  "tokio",
+]
+
+[[package]]
+name = "tauri-plugin-widget"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8f90091d09d6f8d9636c577cf073211a90d734f1f8680e92fa5832f8083f472"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

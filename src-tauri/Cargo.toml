@@ -35,7 +35,12 @@ aes-gcm = "0.9"
 base64 = "0.22"
 rand = "0.8"
 netwatcher = "0.4.0"
-keyring = { version = "3.6.3", features = ["apple-native", "windows-native", "linux-native", "sync-secret-service"] }
+keyring = { version = "3.6.3", features = [
+    "apple-native", 
+    "windows-native", 
+    "linux-native", 
+    "sync-secret-service"
+    ] }
 
 # Tauri Plugins
 tauri-plugin-sql = { version = "2", features = ["sqlite"], default-features = false }
@@ -47,6 +52,15 @@ tauri-plugin-autostart = "2"
 secrecy = { version = "0.10", features = ["serde"] }
 zeroize = { version = "1.8", features = ["derive"] }
 regex = "1.10"
+
+# Widgets
+tauri-plugin-widget = "0.1.2"
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+ndk-context = "0.1"
+android-native-keyring-store = "0.6.0"
+keyring-core = "0.7.4"
 
 [profile.release]
 opt-level = "z"

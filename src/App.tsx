@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
 
@@ -17,9 +17,17 @@ import { CopyRightMenu } from "./components/ContactMe";
 import { Input } from "./components/Input";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { SuccessModal } from "./components/SuccessModal";
+import {
+	CIMA_SYNC_STOPPED_TOAST_DURATION,
+	NetworkStateToastManager,
+	showAuthErrorToast,
+	showCimaSyncActiveToast,
+	showCimaSyncStoppedToast,
+	showFineConnectionToast
+} from "./components/ToastManager";
 
 import StopIcon from "./assets/icons/StopIcon";
-import WifiIcon from "./assets/icons/WifiIcon";
+import CheckIcon from "./assets/icons/CheckIcon";
 import img from "./assets/img/cima-sync-logo.avif";
 
 import "@fontsource-variable/nunito";
@@ -35,20 +43,53 @@ function App({ showTourFirstTime = false }: AppProps) {
 		error: null,
 		success: false,
 	});
-	const [showSuccessModal, setShowSuccessModal] = useState(false);
-	const [showCertificateAlert, setShowCertificateAlert] = useState(false);
-	const { showApp } = useShowApp();
-	const { isUabcConnected } = useNetworkStatus();
-	const isFormDisabled = appState.loading || appState.success;
+
+	const showSuccessModal = useUiStore((state) => state.showSuccessModal);
+	const openSuccessModal = useUiStore((state) => state.openSuccessModal);
+	const closeSuccessModal = useUiStore((state) => state.closeSuccessModal);
+	const openCertificateAlert = useUiStore(
+		(state) => state.openCertificateAlert,
+	);
+	const openBugModal = useUiStore((state) => state.openBugModal);
+	const closeBugModal = useUiStore((state) => state.closeBugModal);
+
+	const showCertificateAlert = useUiStore(
+		(state) => state.showCertificateAlert,
+	);
+	const showBugModal = useUiStore((state) => state.showBugModal);
+
+	const { isUabcConnected, networkState } =
+		useNetworkStatus();
+	const [isCimaSyncActive, setIsCimaSyncActive] = useState(false);
+	const isBackendAuthenticated = networkState === "fineConnection";
+
+	const isMobile = useDeviceStore((state) => state.isMobile);
+	const platform = useDeviceStore((state) => state.platform);
+	const isAndroid = platform === "android";
+
+	const isFormDisabled = appState.loading || isCimaSyncActive;
+
 	const isLoginDisabled =
 		isFormDisabled ||
-		!credentials.email ||
-		!credentials.password ||
-		!isUabcConnected;
+		(!isMobile &&
+			(!credentials.email || !credentials.password || !isUabcConnected));
+
+	const refreshAuthStatus = useCallback(async () => {
+		try {
+			const status = await invoke<{ is_active?: boolean }>("get_auth_status");
+			setIsCimaSyncActive(Boolean(status?.is_active));
+		} catch (error) {
+			console.error("Error getting auth status:", error);
+		}
+	}, []);
 
 	useDisableContextMenu();
 
 	useTourAutoOpen({ showTourFirstTime, setIsOpen });
+
+	useEffect(() => {
+		void refreshAuthStatus();
+	}, [refreshAuthStatus]);
 
 	const handleLogin = async (e: FormEvent) => {
 		e.preventDefault();
@@ -56,29 +97,40 @@ function App({ showTourFirstTime = false }: AppProps) {
 		try {
 			await setRememberSessionConfig(rememberSession);
 
-			await invoke("login", {
-				email: credentials.email,
-				password: credentials.password,
-			});
-
-			setAppState((prev) => ({ ...prev, success: true }));
-			setShowSuccessModal(true);
-
+			// Guardar primero para que persista incluso si falla la autenticación.
 			if (rememberSession) {
 				await invoke("save_credentials", {
 					email: credentials.email,
 					password: credentials.password,
 				});
+			}
 
-				await invoke("auto_auth", {
-					email: credentials.email,
-					password: credentials.password,
+			if (isMobile) {
+				await forceWifi({
+					function: async () =>
+						await invoke("login", {
+							email: credentials.email,
+							password: credentials.password,
+						}),
 				});
-			} else {
+			}
+
+			await invoke("auto_auth", {
+				email: credentials.email,
+				password: credentials.password,
+			});
+
+			setIsCimaSyncActive(true);
+			showCimaSyncActiveToast();
+			setAppState((prev) => ({ ...prev, success: true }));
+			setShowSuccessModal(true);
+
+			if (!rememberSession) {
 				await invoke("delete_credentials");
 			}
 		} catch (error) {
 			console.error("Login error:", error);
+			showAuthErrorToast(String(error));
 			const errorStr = String(error).toLowerCase();
 			if (
 				errorStr.includes("certificate") ||
@@ -96,6 +148,15 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	const handleLogout = async () => {
 		await invoke("stop_auth");
+		setIsCimaSyncActive(false);
+		if (!isAndroid) {
+			showCimaSyncStoppedToast();
+			setTimeout(() => {
+				if (isUabcConnected) {
+					showFineConnectionToast();
+				}
+			}, CIMA_SYNC_STOPPED_TOAST_DURATION);
+		}
 		setAppState({ loading: false, error: null, success: false });
 	};
 
@@ -116,6 +177,13 @@ function App({ showTourFirstTime = false }: AppProps) {
 		<main
 			className={`app-fade-in ${showApp ? "show" : ""} flex flex-col h-screen items-center justify-center text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden`}
 		>
+			{!isAndroid && (
+				<NetworkStateToastManager
+					networkState={networkState}
+					isUabcConnected={isUabcConnected}
+				/>
+			)}
+
 			<img
 				src={img}
 				alt=""
@@ -124,8 +192,11 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 			<SettingsMenu />
 
-			<div
-				className={`absolute top-4 right-4 flex items-center gap-2 z-50 app-fade-in ${showApp ? "show" : ""} transition-colors duration-300`}
+			<motion.div
+				initial={{ opacity: 0, y: 12 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+				className="w-full p-5 relative z-10 flex flex-col items-center justify-center"
 			>
 				<WifiIcon
 					connected={isUabcConnected}
@@ -142,6 +213,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 			<div className="w-full p-5 relative z-10 flex flex-col items-center justify-center">
 				<CopyRightMenu />
+
 				<form
 					className={`login-form w-full max-w-sm flex flex-col gap-3 mb-8 ${isFormDisabled ? "is-loading" : ""}`}
 					onSubmit={handleLogin}
@@ -157,14 +229,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 							{t("App.subtitle")}
 						</p>
 					</div>
-
-					{appState.success && (
-						<div
-							className={`form-element ${showApp ? "show" : ""} bg-green-500/20 border border-green-500/50 text-white p-3 rounded-md mb-3`}
-						>
-							{t("App.success")}
-						</div>
-					)}
 
 					<fieldset
 						disabled={isFormDisabled}
@@ -244,54 +308,47 @@ function App({ showTourFirstTime = false }: AppProps) {
 							</label>
 						</div>
 
-						{appState.error && (
+					</fieldset>
+					<div className="form-element show flex w-full max-w-sm justify-center items-center gap-2">
+						{isUabcConnected && !appState.loading && isBackendAuthenticated && (
 							<div
-								className={`form-element ${showApp ? "show" : ""} bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}
+								className="h-11 px-3 flex items-center justify-center rounded-md font-medium bg-[#22c55e] hover:bg-[#16a34a] text-white transition-all duration-300 shadow-sm cursor-default"
+								title={t("App.alreadyAuthenticatedTooltip")}
 							>
-								{t("App.error")}: {appState.error}
+								<CheckIcon className="w-5 h-5" />
 							</div>
 						)}
-
-					</fieldset>
-					<div
-						className={`form-element ${showApp ? "show" : ""} flex w-full max-w-sm justify-center ${
-							appState.success ? "gap-2" : "gap-0"
-						}`}
-					>
 						<button
 							id="login-button"
 							type="submit"
 							title={
-								!isUabcConnected
+								!isUabcConnected && !isMobile
 									? t("App.networkUnavailable")
-									: t("App.login")
+									: t("App.alreadyAuthenticatedTooltip")
 							}
 							disabled={isLoginDisabled}
-							className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium
-                        bg-[#006633] hover:bg-[#005528] text-white 
-                        disabled:cursor-not-allowed
-                        transition-all duration-300 shadow-sm cursor-pointer w-full"
+							className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium bg-[#22c55e] hover:bg-[#16a34a] text-white disabled:cursor-not-allowed transition-all duration-300 shadow-sm cursor-pointer w-full"
 						>
 							<span className="login-button-glow" aria-hidden="true" />
-							<span className="login-button-text">
-								{appState.loading
-									? (
-											<LoadingText
-												isActive={appState.loading}
-												className="inline-block"
-												messages={[
-													`${t("App.connecting")}...`,
-													"Desbloqueando limitaciones cimarronas...",
-													"Puliendo credenciales interestelares...",
-													"Calibrando señal extraterrestre...",
-												]}
-											/>
-										)
-									: appState.success
-										? t("App.connected")
-										: !isUabcConnected
-											? t("App.networkUnavailable")
-											: t("App.login")}
+							<span className="login-button-text flex items-center justify-center gap-2">
+								{appState.loading ? (
+									<LoadingText
+										isActive={appState.loading}
+										className="inline-block"
+										messages={[
+											`${t("App.connecting")}...`,
+											"Desbloqueando limitaciones cimarronas...",
+											"Puliendo credenciales interestelares...",
+											"Calibrando señal extraterrestre...",
+										]}
+									/>
+								) : isCimaSyncActive ? (
+									t("App.connected")
+								) : !isUabcConnected && !isMobile ? (
+									t("App.networkUnavailable")
+								) : (
+									t("App.activateCimaSync")
+								)}
 							</span>
 							<span className="login-button-sheen" aria-hidden="true" />
 						</button>
@@ -303,7 +360,7 @@ function App({ showTourFirstTime = false }: AppProps) {
                       bg-red-600 hover:bg-red-700 text-white
                       disabled:opacity-70 disabled:cursor-not-allowed
                       transition-all duration-300 shadow-sm cursor-pointer
-                      ${appState.success ? "w-20 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-0 pointer-events-none"}`}
+									${isCimaSyncActive ? "w-20 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-0 pointer-events-none"}`}
 						>
 							<StopIcon />
 						</button>

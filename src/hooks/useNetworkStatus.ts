@@ -3,7 +3,14 @@ import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 
 export const useNetworkStatus = () => {
-	const [isUabcConnected, setIsUabcConnected] = useState(false);
+	const isMobile = useDeviceStore((state) => state.isMobile);
+	const statusText = useNetworkStore((state) => state.statusText);
+	const networkState = useNetworkStore((state) => state.networkState);
+	const ssid = useNetworkStore((state) => state.ssid);
+	const isConnected = useNetworkStore((state) => state.isConnected);
+	const isUabcConnected = useNetworkStore((state) => state.isUabcConnected);
+	const startListening = useNetworkStore((state) => state.startListening);
+	const stopListening = useNetworkStore((state) => state.stopListening);
 
 	useEffect(() => {
 		const setupNetworkListener = async () => {
@@ -49,5 +56,5 @@ export const useNetworkStatus = () => {
 		};
 	}, []);
 
-	return { isUabcConnected };
+	return { isUabcConnected, isConnected, ssid, networkState, statusText };
 };

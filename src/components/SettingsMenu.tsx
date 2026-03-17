@@ -76,7 +76,7 @@ export const SettingsMenu = () => {
 		<>
 			<button
 				type="button"
-				className="top-0 left-0 absolute bg-white/5 rounded-full p-2 hover:bg-white/20 transition-all duration-300 m-3"
+				className={`left-0 absolute z-60 bg-white/5 border border-white/20 rounded-full p-2 hover:bg-white/20 hover:border-white/30 transition-all duration-300 m-3 ${isMobile ? "top-12" : "top-0"}`}
 				onClick={() => setIsOpen(!isOpen)}
 			>
 				<OptionsIcon width={30} height={30} className="text-white" />

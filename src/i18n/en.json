@@ -34,6 +34,9 @@
 		"title": "Auto login",
 		"subtitle": "Cimarrón Institutional System",
 		"success": "Connection established successfully.",
+		"activateCimaSync": "Activate Cima Sync mode",
+		"alreadyAuthenticatedTooltip": "You are already authenticated on the Cimarrón network",
+		"connectedWifiMessage": "You are already connected to the Cimarrón WiFi.",
 		"email": "Email",
 		"password": "Password",
 		"remember": "Remember session",
@@ -116,6 +119,13 @@
 	},
 	"support": {
 		"koFiUrl": "https://ko-fi.com/yoyiyo"
+	},
+	"ConnectionStatus": {
+		"authenticated": "Cimarrón WI-FI Authenticated",
+		"available": "UABC Network available, log in",
+		"loading": "Checking connection...",
+		"unavailable": "Cimarrón WI-FI Not Available",
+		"noConnection": "No connection to university network"
 	},
 	"CertificateAlert": {
 		"buttonTitle": "Update available",

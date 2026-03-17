@@ -28,3 +28,47 @@ body {
 .animate-logo-pop {
 	animation: logo-pop 600ms ease-out both;
 }
+
+/* Acrylic styling for Sileo toasts */
+:root {
+	--cima-toast-bg: linear-gradient(
+		135deg,
+		rgba(12, 14, 20, 0.86),
+		rgba(18, 22, 30, 0.72)
+	);
+	--cima-toast-border: rgba(255, 255, 255, 0.12);
+	--cima-toast-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+[data-sileo-toast] {
+	border-radius: 16px 16px 0 0;
+	filter: drop-shadow(var(--cima-toast-shadow));
+}
+
+[data-sileo-header],
+[data-sileo-content] {
+	background: var(--cima-toast-bg);
+	border: 1px solid var(--cima-toast-border);
+	backdrop-filter: blur(14px) saturate(140%);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+[data-sileo-header] {
+	border-radius: 16px 16px 0 0;
+}
+
+[data-sileo-content] {
+	border-radius: 0 16px 16px 16px;
+}
+
+[data-sileo-header] + [data-sileo-content] {
+	border-radius: 16px 0 16px 16px;
+}
+
+[data-sileo-description] {
+	color: rgba(226, 232, 240, 0.88);
+}
+
+[data-sileo-title] {
+	text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
