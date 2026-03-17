@@ -106,6 +106,14 @@ function App({ showTourFirstTime = false }: AppProps) {
 		try {
 			await setRememberSessionConfig(rememberSession);
 
+			// Guardar primero para que persista incluso si falla la autenticación.
+			if (rememberSession) {
+				await invoke("save_credentials", {
+					email: credentials.email,
+					password: credentials.password,
+				});
+			}
+
 			if (isMobile) {
 				await forceWifi({
 					function: async () =>
@@ -113,13 +121,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 							email: credentials.email,
 							password: credentials.password,
 						}),
-				});
-			}
-
-			if (rememberSession) {
-				await invoke("save_credentials", {
-					email: credentials.email,
-					password: credentials.password,
 				});
 			}
 

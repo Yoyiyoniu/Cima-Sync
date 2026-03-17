@@ -1,16 +1,36 @@
 use crate::keyring_controller::crypto::{decrypt_text, encrypt_text, generate_session_key};
 use base64::{engine::general_purpose, Engine as _};
-use keyring::Entry;
 use lazy_static::lazy_static;
 use secrecy::{ExposeSecret, SecretBox};
 use serde::{Deserialize, Serialize};
+#[cfg(target_os = "android")]
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+#[cfg(target_os = "android")]
+use std::sync::OnceLock;
 use zeroize::Zeroize;
+
+#[cfg(not(target_os = "android"))]
+use keyring::Entry as PlatformEntry;
+#[cfg(not(target_os = "android"))]
+use keyring::Error as PlatformError;
+
+#[cfg(target_os = "android")]
+use android_native_keyring_store::Store as AndroidStore;
+#[cfg(target_os = "android")]
+use keyring_core::api::CredentialStoreApi;
+#[cfg(target_os = "android")]
+use keyring_core::Entry as PlatformEntry;
+#[cfg(target_os = "android")]
+use keyring_core::Error as PlatformError;
 
 const SERVICE_NAME: &str = "cima-sync";
 const KEY_USER: &str = "master_key";
 const KEY_CREDS: &str = "user_creds";
 const KEYRING_KEY_PREFIX: &str = "cimasync:";
+
+#[cfg(target_os = "android")]
+const ANDROID_STORE_NAME: &str = "cima-sync";
 
 #[derive(Clone)]
 pub struct SecureKey(Vec<u8>);
@@ -47,9 +67,44 @@ pub struct UserCredentials {
     pub password: String,
 }
 
-fn get_keyring_entry(key_name: &str) -> Result<Entry, String> {
+#[cfg(target_os = "android")]
+fn android_store() -> Result<Arc<AndroidStore>, String> {
+    static STORE: OnceLock<Result<Arc<AndroidStore>, String>> = OnceLock::new();
+    STORE
+        .get_or_init(|| {
+            let result = std::panic::catch_unwind(|| {
+                let mut config: HashMap<&str, &str> = HashMap::new();
+                config.insert("name", ANDROID_STORE_NAME);
+                AndroidStore::new_with_configuration(&config)
+            })
+            .map_err(|_| {
+                "Android context no inicializado (ndk-context). Asegúrate de inicializar el contexto Android antes de usar el keyring.".to_string()
+            })?;
+
+            result.map_err(|e| format!("Error inicializando Android keyring store: {e}"))
+        })
+        .clone()
+}
+
+fn get_keyring_entry(key_name: &str) -> Result<PlatformEntry, String> {
     let namespaced_key = format!("{}{}", KEYRING_KEY_PREFIX, key_name);
-    Entry::new(SERVICE_NAME, &namespaced_key).map_err(|e| e.to_string())
+
+    #[cfg(target_os = "android")]
+    {
+        let store = android_store()?;
+        return store
+            .build(SERVICE_NAME, &namespaced_key, None)
+            .map_err(|e: PlatformError| e.to_string());
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        return PlatformEntry::new(SERVICE_NAME, &namespaced_key).map_err(|e| e.to_string());
+    }
+}
+
+fn is_no_entry(err: &PlatformError) -> bool {
+    matches!(err, PlatformError::NoEntry)
 }
 
 pub fn get_session_key() -> Result<Vec<u8>, String> {
@@ -77,7 +132,7 @@ pub fn get_session_key() -> Result<Vec<u8>, String> {
             *session_key = Some(secure_key);
             Ok(key)
         }
-        Err(keyring::Error::NoEntry) => {
+        Err(e) if is_no_entry(&e) => {
             let key = generate_session_key();
             let key_b64 = general_purpose::STANDARD.encode(&key);
 
@@ -117,8 +172,8 @@ pub fn get_credentials_from_keyring() -> Result<UserCredentials, String> {
     let entry = get_keyring_entry(KEY_CREDS)?;
 
     let encrypted = entry.get_password().map_err(|e| match e {
-        keyring::Error::NoEntry => "No se encontraron credenciales".to_string(),
-        keyring::Error::BadEncoding(_) => {
+        PlatformError::NoEntry => "No se encontraron credenciales".to_string(),
+        PlatformError::BadEncoding(_) => {
             "Datos de keyring corruptos o invalidos".to_string()
         }
         other => format!("Error de keyring: {}", other),
