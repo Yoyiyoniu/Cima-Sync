@@ -27,8 +27,7 @@ import {
 	showAuthErrorToast,
 	showCimaSyncActiveToast,
 	showCimaSyncStoppedToast,
-	showFineConnectionToast,
-	showNetworkStateToast,
+	showFineConnectionToast
 } from "./components/ToastManager";
 
 import BugIcon from "./assets/icons/BugIcon";
@@ -68,7 +67,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 	);
 	const showBugModal = useUiStore((state) => state.showBugModal);
 
-	const { isUabcConnected, statusText, networkState, ssid } =
+	const { isUabcConnected, networkState } =
 		useNetworkStatus();
 	const [isCimaSyncActive, setIsCimaSyncActive] = useState(false);
 	const isBackendAuthenticated = networkState === "fineConnection";

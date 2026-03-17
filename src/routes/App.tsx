@@ -3,10 +3,12 @@ import { useSearchParams } from "react-router";
 import { Toaster } from "sileo";
 import App from "../App";
 import { tourSteps, tourStyles } from "../tourConfig";
+import { useDeviceStore } from "../store/deviceStore";
 
 export const AppWrapper = () => {
 	const [searchParams] = useSearchParams();
 	const showTour = searchParams.get("tour") === "true";
+	const isMobile = useDeviceStore((state) => state.isMobile);
 
 	return (
 		<TourProvider
@@ -21,6 +23,8 @@ export const AppWrapper = () => {
 		>
 			<Toaster
 				position="top-right"
+				offset={isMobile ? { top: "3rem", left: "5rem" } : undefined}
+				theme="dark"
 				options={{
 					duration: null,
 					fill: "#00000000",
