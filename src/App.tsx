@@ -298,13 +298,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 							</label>
 						</div>
 
-						{appState.error && (
-							<div
-								className={`form-element show bg-red-500/20 border border-red-500/50 text-white p-3 rounded-md mb-3`}
-							>
-								{t("App.error")}: {appState.error}
-							</div>
-						)}
 					</fieldset>
 					<div className="form-element show flex w-full max-w-sm justify-center items-center gap-2">
 						{isUabcConnected && !appState.loading && isBackendAuthenticated && (
