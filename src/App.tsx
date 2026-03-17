@@ -73,6 +73,8 @@ function App({ showTourFirstTime = false }: AppProps) {
 	const isBackendAuthenticated = networkState === "fineConnection";
 
 	const isMobile = useDeviceStore((state) => state.isMobile);
+	const platform = useDeviceStore((state) => state.platform);
+	const isAndroid = platform === "android";
 
 	const isFormDisabled = appState.loading || isCimaSyncActive;
 
@@ -156,12 +158,14 @@ function App({ showTourFirstTime = false }: AppProps) {
 	const handleLogout = async () => {
 		await invoke("stop_auth");
 		setIsCimaSyncActive(false);
-		showCimaSyncStoppedToast();
-		setTimeout(() => {
-			if (isUabcConnected) {
-				showFineConnectionToast();
-			}
-		}, CIMA_SYNC_STOPPED_TOAST_DURATION);
+		if (!isAndroid) {
+			showCimaSyncStoppedToast();
+			setTimeout(() => {
+				if (isUabcConnected) {
+					showFineConnectionToast();
+				}
+			}, CIMA_SYNC_STOPPED_TOAST_DURATION);
+		}
 		setAppState({ loading: false, error: null, success: false });
 	};
 
@@ -184,10 +188,12 @@ function App({ showTourFirstTime = false }: AppProps) {
 			text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden
 			${isMobile ? "pt-12" : ""}`}
 		>
-			<NetworkStateToastManager
-				networkState={networkState}
-				isUabcConnected={isUabcConnected}
-			/>
+			{!isAndroid && (
+				<NetworkStateToastManager
+					networkState={networkState}
+					isUabcConnected={isUabcConnected}
+				/>
+			)}
 
 			<img
 				src={img}
