@@ -23,7 +23,7 @@
 		"build": "tsc && vite build",
 		"preview": "vite preview",
 		"tauri": "tauri",
-		"build:windows": "bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc && ./scripts/check-builds-windows.sh",
+		"build:windows": "PATH=\"$HOME/.cargo/bin:$PATH\" bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc && ./scripts/check-builds-windows.sh",
 		"build:linux": "./scripts/build-linux.sh && ./scripts/check-builds-linux.sh",
 		"build:all": "./build-and-check.sh"
 	},
