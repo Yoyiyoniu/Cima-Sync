@@ -80,9 +80,8 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	const isLoginDisabled =
 		isFormDisabled ||
-		!credentials.email ||
-		!credentials.password ||
-		!isUabcConnected;
+		(!isMobile &&
+			(!credentials.email || !credentials.password || !isUabcConnected));
 
 	const refreshAuthStatus = useCallback(async () => {
 		try {
@@ -320,7 +319,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 							id="login-button"
 							type="submit"
 							title={
-								!isUabcConnected
+								!isUabcConnected && !isMobile
 									? t("App.networkUnavailable")
 									: t("App.alreadyAuthenticatedTooltip")
 							}
@@ -342,7 +341,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 									/>
 								) : isCimaSyncActive ? (
 									t("App.connected")
-								) : !isUabcConnected ? (
+								) : !isUabcConnected && !isMobile ? (
 									t("App.networkUnavailable")
 								) : (
 									t("App.activateCimaSync")
