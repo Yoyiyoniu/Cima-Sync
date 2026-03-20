@@ -236,10 +236,30 @@ pub fn get_current_network_status() -> serde_json::Value {
     create_status_payload(ssid)
 }
 
+#[cfg(any(target_os = "windows", target_os = "macos"))]
 fn extract_ssid_from_line(line: &str) -> Option<String> {
     line.find(':')
         .map(|pos| line[pos + 1..].trim().to_string())
         .filter(|s| !s.is_empty())
+}
+
+#[cfg(target_os = "linux")]
+fn parse_nmcli_wifi_line(line: &str) -> Option<(&str, String, &str)> {
+    let first = line.find(':')?;
+    let last = line.rfind(':')?;
+    if first == last {
+        return None;
+    }
+
+    let active = line[..first].trim();
+    let ssid = line[first + 1..last]
+        .replace(r#"\:"#, ":")
+        .replace(r#"\\"#, r#"\"#)
+        .trim()
+        .to_string();
+    let device = line[last + 1..].trim();
+
+    Some((active, ssid, device))
 }
 
 #[cfg(target_os = "windows")]
@@ -289,9 +309,8 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
         {
             if output.status.success() {
                 for line in String::from_utf8_lossy(&output.stdout).lines() {
-                    let parts: Vec<&str> = line.split(':').collect();
-                    if parts.len() >= 3 && parts[0] == "yes" && parts[2] == safe_name {
-                        if let Some(ssid) = extract_ssid_from_line(parts[1]) {
+                    if let Some((active, ssid, device)) = parse_nmcli_wifi_line(line) {
+                        if active == "yes" && device == safe_name && !ssid.is_empty() {
                             return Some(ssid);
                         }
                     }
