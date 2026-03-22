@@ -1,8 +1,12 @@
+#[cfg(target_os = "android")]
 use std::time::{Duration, Instant};
 
 // Android API level constants
+#[cfg(target_os = "android")]
 const ANDROID_API_M: i32 = 23; // Android 6.0 (API 23)
+#[cfg(target_os = "android")]
 const BIND_WIFI_TIMEOUT_MS: u64 = 5000; // 5 seconds timeout
+#[cfg(target_os = "android")]
 const POLL_INTERVAL_MS: u64 = 100; // 100ms polling interval
 
 #[cfg(target_os = "android")]
