@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { invoke } from "@tauri-apps/api/core";
 
 import {
 	removeDatabase,
@@ -32,8 +33,40 @@ export const SettingsMenu = () => {
 	const [showCoffeeModal, setShowCoffeeModal] = useState(false);
 	const isMobile = useDeviceStore((state) => state.isMobile);
 	const isDesktop = useDeviceStore((state) => state.isDesktop);
+	const platform = useDeviceStore((state) => state.platform);
+	const isAndroid = platform === "android";
 	const closeBugModal = useUiStore((state) => state.closeBugModal);
 	const openBugModal = useUiStore((state) => state.openBugModal);
+
+	const isDebug = import.meta.env.DEV;
+	const [serviceRunning, setServiceRunning] = useState(false);
+	const [serviceLoading, setServiceLoading] = useState(false);
+	const [serviceError, setServiceError] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (!isDebug || !isAndroid || !isOpen) return;
+		invoke<{ running: boolean }>("plugin:android-services|is_running")
+			.then((res) => setServiceRunning(res.running))
+			.catch(() => setServiceRunning(false));
+	}, [isDebug, isAndroid, isOpen]);
+
+	const handleToggleService = async () => {
+		setServiceLoading(true);
+		setServiceError(null);
+		try {
+			if (serviceRunning) {
+				await invoke("plugin:android-services|stop_service");
+				setServiceRunning(false);
+			} else {
+				await invoke("plugin:android-services|start_service");
+				setServiceRunning(true);
+			}
+		} catch (err) {
+			setServiceError(String(err));
+		} finally {
+			setServiceLoading(false);
+		}
+	};
 
 	useEffect(() => {
 		const handleEscape = (e: KeyboardEvent) => {
@@ -214,6 +247,61 @@ export const SettingsMenu = () => {
 							</div>
 						</div>
 					</div>
+
+					{isDebug && isAndroid && (
+						<div className="mt-4 space-y-3">
+							<div className="flex items-center gap-2">
+								<span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/80 bg-amber-400/10 border border-amber-400/30 rounded px-1.5 py-0.5">
+									debug
+								</span>
+								<span className="text-xs text-white/40">Android Services</span>
+							</div>
+
+							<div className="rounded-lg border border-white/10 bg-black/30 p-3 space-y-3">
+								<div className="flex items-center justify-between">
+									<div className="flex items-center gap-2">
+										<span className={`h-2 w-2 rounded-full ${serviceRunning ? "bg-emerald-400 shadow-[0_0_6px_#34d399]" : "bg-white/20"}`} />
+										<span className="text-xs text-white/70">Foreground Service</span>
+									</div>
+									<span className={`text-xs font-medium ${serviceRunning ? "text-emerald-400" : "text-white/30"}`}>
+										{serviceRunning ? "ACTIVO" : "INACTIVO"}
+									</span>
+								</div>
+
+								<button
+									type="button"
+									disabled={serviceLoading}
+									onClick={handleToggleService}
+									className={`w-full flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+										${serviceRunning
+											? "bg-red-500/20 border border-red-500/40 text-red-300 hover:bg-red-500/30"
+											: "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30"
+										}`}
+								>
+									{serviceLoading ? (
+										<svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+										</svg>
+									) : serviceRunning ? (
+										<svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+											<rect x="4" y="4" width="12" height="12" rx="1" />
+										</svg>
+									) : (
+										<svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+											<path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+										</svg>
+									)}
+									{serviceLoading ? "Procesando..." : serviceRunning ? "Detener servicio" : "Iniciar servicio"}
+								</button>
+
+								{serviceError && (
+									<p className="text-[10px] text-red-400/80 break-all">{serviceError}</p>
+								)}
+							</div>
+						</div>
+					)}
+
 					<LanguageSelector />
 					<button
 						type="button"
