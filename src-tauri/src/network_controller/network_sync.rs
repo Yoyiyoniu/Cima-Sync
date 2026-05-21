@@ -1,7 +1,9 @@
 use lazy_static::lazy_static;
+#[cfg(not(target_os = "android"))]
 use netwatcher::{watch_interfaces, Interface, Update};
 use regex::Regex;
 use reqwest::blocking::Client;
+#[cfg(not(target_os = "android"))]
 use std::collections::HashMap;
 #[cfg(not(target_os = "android"))]
 use std::process::Command;
@@ -117,6 +119,7 @@ struct WifiState {
     ipv4: Option<Box<str>>,
 }
 
+#[cfg(not(target_os = "android"))]
 impl WifiState {
     fn from_interfaces(interfaces: &HashMap<u32, Interface>) -> Option<Self> {
         interfaces
@@ -521,49 +524,90 @@ pub fn start_network_monitor(app: tauri::AppHandle) {
 }
 
 fn monitor_loop(app: tauri::AppHandle) {
-    let is_first_update = Arc::new(Mutex::new(true));
-    let is_first_clone = Arc::clone(&is_first_update);
-    let app_clone = app.clone();
+    #[cfg(target_os = "android")]
+    {
+        android_monitor_loop(app);
+        return;
+    }
 
-    match watch_interfaces(move |update: Update| {
-        handle_network_update(update, &is_first_clone, &app_clone);
-    }) {
-        Ok(_handle) => {
-            loop {
-                thread::park();
+    #[cfg(not(target_os = "android"))]
+    {
+        let is_first_update = Arc::new(Mutex::new(true));
+        let is_first_clone = Arc::clone(&is_first_update);
+        let app_clone = app.clone();
+
+        match watch_interfaces(move |update: Update| {
+            handle_network_update(update, &is_first_clone, &app_clone);
+        }) {
+            Ok(_handle) => {
+                loop {
+                    thread::park();
+                }
             }
-        }
-        Err(err) => {
-            eprintln!("[network-sync] Error al iniciar el monitor de red: {err}");
-            let _ = app.emit("network-status", serde_json::json!({
-                "connected": false,
-                "ssid": null,
-                "is_uabc": false,
-                "error": format!("No se pudo iniciar el monitor de red: {}", err)
-            }));
-            
-            loop {
-                thread::sleep(Duration::from_secs(30));
-                
-                let is_first_retry = Arc::new(Mutex::new(true));
-                let is_first_retry_clone = Arc::clone(&is_first_retry);
-                let app_retry = app.clone();
-                
-                match watch_interfaces(move |update: Update| {
-                    handle_network_update(update, &is_first_retry_clone, &app_retry);
-                }) {
-                    Ok(_new_handle) => {
-                        eprintln!("[network-sync] Monitor de red reiniciado exitosamente");
-                        loop {
-                            thread::park();
+            Err(err) => {
+                eprintln!("[network-sync] Error al iniciar el monitor de red: {err}");
+                let _ = app.emit("network-status", serde_json::json!({
+                    "connected": false,
+                    "ssid": null,
+                    "is_uabc": false,
+                    "error": format!("No se pudo iniciar el monitor de red: {}", err)
+                }));
+
+                loop {
+                    thread::sleep(Duration::from_secs(30));
+
+                    let is_first_retry = Arc::new(Mutex::new(true));
+                    let is_first_retry_clone = Arc::clone(&is_first_retry);
+                    let app_retry = app.clone();
+
+                    match watch_interfaces(move |update: Update| {
+                        handle_network_update(update, &is_first_retry_clone, &app_retry);
+                    }) {
+                        Ok(_new_handle) => {
+                            eprintln!("[network-sync] Monitor de red reiniciado exitosamente");
+                            loop {
+                                thread::park();
+                            }
                         }
-                    }
-                    Err(retry_err) => {
-                        eprintln!("[network-sync] Reintento fallido: {retry_err}");
+                        Err(retry_err) => {
+                            eprintln!("[network-sync] Reintento fallido: {retry_err}");
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+#[cfg(target_os = "android")]
+fn android_monitor_loop(app: tauri::AppHandle) {
+    // netwatcher no soporta Android y crashea con 'android context was not initialized'.
+    // En Android usamos polling HTTP puro para detectar conectividad.
+    // El SSID se obtiene via tauri-plugin-wifi-interface desde el frontend.
+    const POLL_INTERVAL_SECS: u64 = 8;
+
+    let emit_state = |has_internet: bool| {
+        let state = if has_internet {
+            SyncNetworkState::MobileConnection
+        } else {
+            SyncNetworkState::InvalidConnection
+        };
+        let payload = serde_json::json!({
+            "connected": false,
+            "ssid": null,
+            "is_uabc": false,
+            "network_state": state.as_key(),
+            "status_text": state.as_status_text()
+        });
+        let _ = app.emit("network-status", payload);
+    };
+
+    // Estado inicial
+    emit_state(has_internet_access());
+
+    loop {
+        thread::sleep(Duration::from_secs(POLL_INTERVAL_SECS));
+        emit_state(has_internet_access());
     }
 }
 
@@ -576,6 +620,7 @@ fn emit_network_status(app: &tauri::AppHandle, ssid: Option<&str>) {
     }
 }
 
+#[cfg(not(target_os = "android"))]
 fn handle_network_update(
     update: Update,
     is_first_update: &Arc<Mutex<bool>>,
