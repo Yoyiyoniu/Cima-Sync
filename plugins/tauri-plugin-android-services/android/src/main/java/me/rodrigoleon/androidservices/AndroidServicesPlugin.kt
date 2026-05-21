@@ -1,10 +1,15 @@
 package me.rodrigoleon.androidservices
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import androidx.core.content.ContextCompat
+import app.tauri.PermissionHelper
 import app.tauri.annotation.Command
 import app.tauri.annotation.InvokeArg
+import app.tauri.annotation.Permission
+import app.tauri.annotation.PermissionCallback
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
@@ -16,11 +21,34 @@ class ExecuteTaskArgs {
     var params: String = ""
 }
 
-@TauriPlugin
+@TauriPlugin(permissions = [
+    Permission(strings = ["android.permission.POST_NOTIFICATIONS"], alias = "postNotifications")
+])
 class AndroidServicesPlugin(private val activity: Activity) : Plugin(activity) {
+
+    @PermissionCallback
+    fun postNotificationsResult(invoke: Invoke) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            PermissionHelper.hasPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        ) {
+            doStartService(invoke)
+        } else {
+            invoke.reject("Permiso POST_NOTIFICATIONS denegado. Actívalo en Ajustes > Notificaciones.")
+        }
+    }
 
     @Command
     fun startService(invoke: Invoke) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !PermissionHelper.hasPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        ) {
+            requestPermissionForAlias("postNotifications", invoke, "postNotificationsResult")
+            return
+        }
+        doStartService(invoke)
+    }
+
+    private fun doStartService(invoke: Invoke) {
         if (CimaForegroundService.isRunning) {
             invoke.resolve(JSObject().apply { put("started", false) })
             return
