@@ -9,7 +9,7 @@ import {
 	setLanguagePreference,
 	setHasSeenOnboarding,
 } from "../controller/DbController";
-import { startBackgroundService } from "../controller/backgroundService";
+import { requestNotificationsPermission } from "../controller/backgroundService";
 import { useDeviceStore } from "../store/deviceStore";
 
 import LanguageIcon from "../assets/icons/LanguageIcon";
@@ -392,7 +392,7 @@ export function Onboarding() {
 																onClick={async () => {
 																	setRequestingPermission(true);
 																	try {
-																		await startBackgroundService();
+																		await requestNotificationsPermission();
 																	} catch (_) {
 																		// denegado — avanzamos igual
 																	} finally {

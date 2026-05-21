@@ -24,6 +24,12 @@ pub struct TaskQueueResult {
     pub queued: bool,
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NotificationsPermissionResult {
+    pub granted: bool,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExecuteTaskRequest {

@@ -26,3 +26,10 @@ pub(crate) async fn execute_task<R: Runtime>(
 ) -> Result<TaskQueueResult> {
     app.android_services().execute_task(payload)
 }
+
+#[command]
+pub(crate) async fn request_notifications_permission<R: Runtime>(
+    app: AppHandle<R>,
+) -> Result<NotificationsPermissionResult> {
+    app.android_services().request_notifications_permission()
+}

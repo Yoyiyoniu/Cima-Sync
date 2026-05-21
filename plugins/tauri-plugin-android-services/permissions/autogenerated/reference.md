@@ -8,6 +8,7 @@ Default permissions for the android-services plugin
 - `allow-stop-service`
 - `allow-is-running`
 - `allow-execute-task`
+- `allow-request-notifications-permission`
 
 ## Permission Table
 
@@ -144,6 +145,32 @@ Enables the ping command without any pre-configured scope.
 <td>
 
 Denies the ping command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`android-services:allow-request-notifications-permission`
+
+</td>
+<td>
+
+Enables the request_notifications_permission command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`android-services:deny-request-notifications-permission`
+
+</td>
+<td>
+
+Denies the request_notifications_permission command without any pre-configured scope.
 
 </td>
 </tr>

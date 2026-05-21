@@ -1,5 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
 
+export async function requestNotificationsPermission(): Promise<boolean> {
+	const result = await invoke<{ granted: boolean }>(
+		"plugin:android-services|request_notifications_permission",
+	);
+	return result.granted;
+}
+
 export async function startBackgroundService(): Promise<void> {
 	await invoke<{ started: boolean }>("plugin:android-services|start_service");
 }

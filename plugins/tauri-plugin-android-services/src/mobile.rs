@@ -39,4 +39,8 @@ impl<R: Runtime> AndroidServices<R> {
     pub fn execute_task(&self, payload: ExecuteTaskRequest) -> crate::Result<TaskQueueResult> {
         self.0.run_mobile_plugin("executeTask", payload).map_err(Into::into)
     }
+
+    pub fn request_notifications_permission(&self) -> crate::Result<NotificationsPermissionResult> {
+        self.0.run_mobile_plugin("requestNotificationsPermission", ()).map_err(Into::into)
+    }
 }

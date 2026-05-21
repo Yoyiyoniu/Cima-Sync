@@ -37,6 +37,24 @@ class AndroidServicesPlugin(private val activity: Activity) : Plugin(activity) {
         }
     }
 
+    @PermissionCallback
+    fun notificationsOnlyResult(invoke: Invoke) {
+        val granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            PermissionHelper.hasPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        invoke.resolve(JSObject().apply { put("granted", granted) })
+    }
+
+    @Command
+    fun requestNotificationsPermission(invoke: Invoke) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            PermissionHelper.hasPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        ) {
+            invoke.resolve(JSObject().apply { put("granted", true) })
+            return
+        }
+        requestPermissionForAlias("postNotifications", invoke, "notificationsOnlyResult")
+    }
+
     @Command
     fun startService(invoke: Invoke) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&

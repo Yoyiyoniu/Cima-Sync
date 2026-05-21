@@ -57,6 +57,7 @@
 	"SuccessModal": {
 		"title": "¡Todo Listo!",
 		"message": "Conexión establecida correctamente.",
+		"hint": "El dispositivo puede tardar ~10 segundos en tener internet.",
 		"button": "Entendido"
 	},
 	"Input": {

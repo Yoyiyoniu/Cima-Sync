@@ -28,4 +28,8 @@ impl<R: Runtime> AndroidServices<R> {
     pub fn execute_task(&self, _payload: ExecuteTaskRequest) -> crate::Result<TaskQueueResult> {
         Err(crate::Error::NotSupported)
     }
+
+    pub fn request_notifications_permission(&self) -> crate::Result<NotificationsPermissionResult> {
+        Err(crate::Error::NotSupported)
+    }
 }

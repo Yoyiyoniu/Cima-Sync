@@ -92,7 +92,8 @@ export const SuccessModal = ({ isOpen, onClose }: SuccessModalProps) => {
 				<h3 className="text-xl font-bold text-white mb-2">
 					{t("SuccessModal.title")}
 				</h3>
-				<p className="text-green-300/80 mb-4">{t("SuccessModal.message")}</p>
+				<p className="text-green-300/80 mb-3">{t("SuccessModal.message")}</p>
+				<p className="text-white/40 text-xs mb-4">{t("SuccessModal.hint")}</p>
 
 				{/* Botón de cerrar */}
 				<button

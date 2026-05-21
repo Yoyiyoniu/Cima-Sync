@@ -57,6 +57,7 @@
 	"SuccessModal": {
 		"title": "All Ready!",
 		"message": "Connection established successfully.",
+		"hint": "Your device may take ~10 seconds to get internet access.",
 		"button": "Got it"
 	},
 	"Input": {

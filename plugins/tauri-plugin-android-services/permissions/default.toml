@@ -5,4 +5,5 @@ permissions = [
   "allow-stop-service",
   "allow-is-running",
   "allow-execute-task",
+  "allow-request-notifications-permission",
 ]

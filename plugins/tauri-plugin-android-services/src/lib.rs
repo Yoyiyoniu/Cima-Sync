@@ -38,6 +38,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::stop_service,
             commands::is_running,
             commands::execute_task,
+            commands::request_notifications_permission,
         ])
         .setup(|app, api| {
             #[cfg(mobile)]
