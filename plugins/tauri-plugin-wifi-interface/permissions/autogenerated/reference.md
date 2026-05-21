@@ -20,6 +20,110 @@ Default permissions for the wifi-interface plugin
 <tr>
 <td>
 
+`wifi-interface:allow-bind-to-wifi`
+
+</td>
+<td>
+
+Enables the bind_to_wifi command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:deny-bind-to-wifi`
+
+</td>
+<td>
+
+Denies the bind_to_wifi command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:allow-bind-to-wifi`
+
+</td>
+<td>
+
+Enables the bind_to_wifi command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:deny-bind-to-wifi`
+
+</td>
+<td>
+
+Denies the bind_to_wifi command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:allow-get-wifi-status`
+
+</td>
+<td>
+
+Enables the get_wifi_status command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:deny-get-wifi-status`
+
+</td>
+<td>
+
+Denies the get_wifi_status command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:allow-get-wifi-status`
+
+</td>
+<td>
+
+Enables the get_wifi_status command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:deny-get-wifi-status`
+
+</td>
+<td>
+
+Denies the get_wifi_status command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `wifi-interface:allow-ping`
 
 </td>
@@ -39,6 +143,58 @@ Enables the ping command without any pre-configured scope.
 <td>
 
 Denies the ping command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:allow-unbind-network`
+
+</td>
+<td>
+
+Enables the unbind_network command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:deny-unbind-network`
+
+</td>
+<td>
+
+Denies the unbind_network command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:allow-unbind-network`
+
+</td>
+<td>
+
+Enables the unbind_network command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:deny-unbind-network`
+
+</td>
+<td>
+
+Denies the unbind_network command without any pre-configured scope.
 
 </td>
 </tr>

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-bind-to-wifi"
+description = "Enables the bind_to_wifi command without any pre-configured scope."
+commands.allow = ["bind_to_wifi"]
+
+[[permission]]
+identifier = "deny-bind-to-wifi"
+description = "Denies the bind_to_wifi command without any pre-configured scope."
+commands.deny = ["bind_to_wifi"]

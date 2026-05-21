@@ -295,6 +295,54 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "Enables the bind_to_wifi command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-bind-to-wifi",
+          "markdownDescription": "Enables the bind_to_wifi command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the bind_to_wifi command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-bind-to-wifi",
+          "markdownDescription": "Denies the bind_to_wifi command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the bind_to_wifi command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-bind-to-wifi",
+          "markdownDescription": "Enables the bind_to_wifi command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the bind_to_wifi command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-bind-to-wifi",
+          "markdownDescription": "Denies the bind_to_wifi command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_wifi_status command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-wifi-status",
+          "markdownDescription": "Enables the get_wifi_status command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_wifi_status command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-wifi-status",
+          "markdownDescription": "Denies the get_wifi_status command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_wifi_status command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-wifi-status",
+          "markdownDescription": "Enables the get_wifi_status command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_wifi_status command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-wifi-status",
+          "markdownDescription": "Denies the get_wifi_status command without any pre-configured scope."
+        },
+        {
           "description": "Enables the ping command without any pre-configured scope.",
           "type": "string",
           "const": "allow-ping",
@@ -305,6 +353,30 @@
           "type": "string",
           "const": "deny-ping",
           "markdownDescription": "Denies the ping command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the unbind_network command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-unbind-network",
+          "markdownDescription": "Enables the unbind_network command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the unbind_network command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-unbind-network",
+          "markdownDescription": "Denies the unbind_network command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the unbind_network command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-unbind-network",
+          "markdownDescription": "Enables the unbind_network command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the unbind_network command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-unbind-network",
+          "markdownDescription": "Denies the unbind_network command without any pre-configured scope."
         },
         {
           "description": "Default permissions for the wifi-interface plugin\n#### This default permission set includes:\n\n- `allow-bind-to-wifi`\n- `allow-unbind-network`\n- `allow-get-wifi-status`",

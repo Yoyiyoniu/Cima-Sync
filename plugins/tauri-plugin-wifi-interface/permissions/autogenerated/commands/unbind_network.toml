@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-unbind-network"
+description = "Enables the unbind_network command without any pre-configured scope."
+commands.allow = ["unbind_network"]
+
+[[permission]]
+identifier = "deny-unbind-network"
+description = "Denies the unbind_network command without any pre-configured scope."
+commands.deny = ["unbind_network"]

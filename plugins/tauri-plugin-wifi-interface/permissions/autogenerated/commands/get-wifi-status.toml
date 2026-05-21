@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-get-wifi-status"
+description = "Enables the get_wifi_status command without any pre-configured scope."
+commands.allow = ["get_wifi_status"]
+
+[[permission]]
+identifier = "deny-get-wifi-status"
+description = "Denies the get_wifi_status command without any pre-configured scope."
+commands.deny = ["get_wifi_status"]
