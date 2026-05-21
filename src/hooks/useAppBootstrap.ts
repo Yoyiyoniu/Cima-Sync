@@ -6,11 +6,12 @@ export const useAppBootstrap = () => {
 	const setCredentials = useSessionStore((state) => state.setCredentials);
 	const rememberSession = useSessionStore((state) => state.rememberSession);
 	const setRememberSession = useSessionStore((state) => state.setRememberSession);
+	const isBootstrapping = useSessionStore((state) => state.isBootstrapping);
 	const bootstrap = useSessionStore((state) => state.bootstrap);
 
 	useEffect(() => {
 		void bootstrap();
 	}, [bootstrap]);
 
-	return { credentials, setCredentials, rememberSession, setRememberSession };
+	return { credentials, setCredentials, rememberSession, setRememberSession, isBootstrapping };
 };

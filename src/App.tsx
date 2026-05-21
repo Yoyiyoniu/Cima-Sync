@@ -44,7 +44,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	const { setIsOpen } = useTour();
 
-	const { credentials, setCredentials, rememberSession, setRememberSession } =
+	const { credentials, setCredentials, rememberSession, setRememberSession, isBootstrapping } =
 		useAppBootstrap();
 
 	const [appState, setAppState] = useState<AppState>({
@@ -174,6 +174,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 		await setRememberSessionConfig(checked);
 
 		if (!checked) {
+			setCredentials({ email: "", password: "" });
 			try {
 				await invoke("delete_credentials");
 			} catch (_error) {
@@ -241,6 +242,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 									}));
 								}}
 								disabled={isFormDisabled}
+								loading={isBootstrapping}
 							/>
 						</div>
 
@@ -258,6 +260,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 									}));
 								}}
 								disabled={isFormDisabled}
+								loading={isBootstrapping}
 							/>
 						</div>
 

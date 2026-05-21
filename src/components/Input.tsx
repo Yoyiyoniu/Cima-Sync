@@ -6,6 +6,7 @@ interface InputWithIconProps {
     value: string
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
     disabled?: boolean
+    loading?: boolean
     icon?: React.ReactNode
 }
 
@@ -17,6 +18,7 @@ export const Input = ({
     value,
     onChange,
     disabled = false,
+    loading = false,
     icon,
 }: InputWithIconProps) => {
     return (
@@ -24,26 +26,30 @@ export const Input = ({
             <label htmlFor={id} className="block text-white font-medium text-sm">
                 {label}
             </label>
-            <div className="relative">
-                {icon && (
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        {icon}
-                    </div>
-                )}
-                <input
-                    id={id}
-                    type={type}
-                    placeholder={placeholder}
-                    value={value}
-                    onChange={onChange}
-                    required
-                    disabled={disabled}
-                    className={`w-full px-4 py-2 bg-black/40 border border-[#006633]/30 rounded-md text-white placeholder-gray-500 
-                    focus:outline-none focus:ring-2 focus:ring-[#006633] focus:border-[#006633] 
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    transition-colors duration-200`}
-                />
-            </div>
+            {loading ? (
+                <div className="skeleton-shine h-[38px] w-full rounded-md bg-black/40 border border-[#006633]/20" />
+            ) : (
+                <div className="relative">
+                    {icon && (
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            {icon}
+                        </div>
+                    )}
+                    <input
+                        id={id}
+                        type={type}
+                        placeholder={placeholder}
+                        value={value}
+                        onChange={onChange}
+                        required
+                        disabled={disabled}
+                        className={`w-full px-4 py-2 bg-black/40 border border-[#006633]/30 rounded-md text-white placeholder-gray-500
+                        focus:outline-none focus:ring-2 focus:ring-[#006633] focus:border-[#006633]
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        transition-colors duration-200`}
+                    />
+                </div>
+            )}
         </div>
     )
 }

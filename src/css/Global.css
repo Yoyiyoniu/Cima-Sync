@@ -9,6 +9,33 @@ body {
 	font-family: "Nunito Variable", sans-serif;
 }
 
+@keyframes skeleton-shine {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+.skeleton-shine {
+	position: relative;
+	overflow: hidden;
+}
+
+.skeleton-shine::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		105deg,
+		transparent 35%,
+		rgba(255, 255, 255, 0.08) 50%,
+		transparent 65%
+	);
+	animation: skeleton-shine 1.4s ease-in-out infinite;
+}
+
 @keyframes logo-pop {
 	0% {
 		transform: scale(0.8);
