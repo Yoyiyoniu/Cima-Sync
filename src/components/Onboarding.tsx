@@ -25,9 +25,9 @@ const fadeIn = {
 };
 
 const slideIn = {
-	initial: { x: 30, opacity: 0 },
-	animate: { x: 0, opacity: 1 },
-	exit: { x: -30, opacity: 0 },
+	initial: { x: 8, opacity: 0, filter: "blur(3px)" },
+	animate: { x: 0, opacity: 1, filter: "blur(0px)" },
+	exit: { x: -8, opacity: 0, filter: "blur(3px)" },
 };
 
 export function Onboarding() {
@@ -37,6 +37,7 @@ export function Onboarding() {
 	const [showIntro, setShowIntro] = useState(true);
 	const [showOutro, setShowOutro] = useState(false);
 	const [dropdownOpen, setDropdownOpen] = useState(false);
+	const [dropdownClosing, setDropdownClosing] = useState(false);
 	const [autoStartEnabled, setAutoStartEnabled] = useState(false);
 	const isDesktop = useDeviceStore((state) => state.isDesktop);
 	const platform = useDeviceStore((state) => state.platform);
@@ -76,27 +77,35 @@ export function Onboarding() {
 		navigate("/app?tour=true", { replace: true });
 	}, [navigate]);
 
+	const closeDropdown = useCallback(() => {
+		setDropdownClosing(true);
+		setTimeout(() => {
+			setDropdownOpen(false);
+			setDropdownClosing(false);
+		}, 150);
+	}, []);
+
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (!dropdownOpen) return;
 			const target = event.target as Element;
-			if (!target.closest(".language-dropdown")) setDropdownOpen(false);
+			if (!target.closest(".language-dropdown")) closeDropdown();
 		};
 		document.addEventListener("mousedown", handleClickOutside);
 		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, [dropdownOpen]);
+	}, [dropdownOpen, closeDropdown]);
 
 	const handleLanguageChange = useCallback(
 		async (language: string) => {
 			try {
 				await i18n.changeLanguage(language);
 				await setLanguagePreference(language);
-				setDropdownOpen(false);
+				closeDropdown();
 			} catch (error) {
 				console.error("Error saving language:", error);
 			}
 		},
-		[i18n],
+		[i18n, closeDropdown],
 	);
 	const steps = [
 		{
@@ -299,7 +308,10 @@ export function Onboarding() {
 											<button
 												type="button"
 												className="w-full flex items-center justify-between rounded-lg p-3 bg-gray-800/60 text-white border border-gray-600/50 focus:ring-2 focus:ring-gray-500/50 transition-colors hover:bg-gray-700/60"
-												onClick={() => setDropdownOpen(!dropdownOpen)}
+												onClick={() => {
+													if (dropdownOpen && !dropdownClosing) closeDropdown();
+													else if (!dropdownOpen) setDropdownOpen(true);
+												}}
 											>
 												<span className="flex items-center gap-3">
 													<span className="text-lg">
@@ -309,14 +321,12 @@ export function Onboarding() {
 														? t("Settings.language.es")
 														: t("Settings.language.en")}
 												</span>
-												<motion.svg
+												<svg
 													aria-hidden="true"
-													className="w-5 h-5"
+													className={`w-5 h-5 transition-transform duration-200 ${dropdownOpen && !dropdownClosing ? "rotate-180" : ""}`}
 													fill="none"
 													stroke="currentColor"
 													viewBox="0 0 24 24"
-													animate={{ rotate: dropdownOpen ? 180 : 0 }}
-													transition={{ duration: 0.2 }}
 												>
 													<path
 														strokeLinecap="round"
@@ -324,33 +334,28 @@ export function Onboarding() {
 														strokeWidth={2}
 														d="M19 9l-7 7-7-7"
 													/>
-												</motion.svg>
+												</svg>
 											</button>
 
-											<AnimatePresence>
-												{dropdownOpen && (
-													<motion.ul
-														className="absolute z-20 mt-2 w-full bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 py-2"
-														initial={{ opacity: 0, y: -8 }}
-														animate={{ opacity: 1, y: 0 }}
-														exit={{ opacity: 0, y: -8 }}
-														transition={{ duration: 0.15 }}
-													>
-														<LanguageOption
-															lang="es"
-															flag="🇲🇽"
-															isSelected={i18n.language === "es"}
-															onSelect={() => handleLanguageChange("es")}
-														/>
-														<LanguageOption
-															lang="en"
-															flag="🇺🇸"
-															isSelected={i18n.language === "en"}
-															onSelect={() => handleLanguageChange("en")}
-														/>
-													</motion.ul>
-												)}
-											</AnimatePresence>
+											{(dropdownOpen || dropdownClosing) && (
+												<ul
+													className={`t-dropdown absolute z-20 mt-2 w-full bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 py-2${dropdownOpen && !dropdownClosing ? " is-open" : ""}${dropdownClosing ? " is-closing" : ""}`}
+													data-origin="top-center"
+												>
+													<LanguageOption
+														lang="es"
+														flag="🇲🇽"
+														isSelected={i18n.language === "es"}
+														onSelect={() => handleLanguageChange("es")}
+													/>
+													<LanguageOption
+														lang="en"
+														flag="🇺🇸"
+														isSelected={i18n.language === "en"}
+														onSelect={() => handleLanguageChange("en")}
+													/>
+												</ul>
+											)}
 										</div>
 									</motion.div>
 								)}
@@ -361,7 +366,7 @@ export function Onboarding() {
 										<motion.div
 											key={step}
 											{...slideIn}
-											transition={{ duration: 0.25 }}
+											transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
 											className="flex flex-col items-center"
 										>
 											<div className="mb-6 p-4 rounded-2xl bg-linear-to-br from-emerald-500/20 to-teal-600/20 text-emerald-400 border border-emerald-500/30">

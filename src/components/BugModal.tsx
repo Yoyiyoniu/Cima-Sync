@@ -15,9 +15,15 @@ interface BugModalProps {
 export const BugModal = ({ showModal, setShowModal }: BugModalProps) => {
 	const { t } = useTranslation();
 	const isMobile = useDeviceStore((state) => state.isMobile);
+	const [isOpen, setIsOpen] = useState(false);
 	const [isClosing, setIsClosing] = useState(false);
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
+
+	useEffect(() => {
+		const frame = requestAnimationFrame(() => setIsOpen(true));
+		return () => cancelAnimationFrame(frame);
+	}, []);
 
 	useEffect(() => {
 		const handleEscape = (e: KeyboardEvent) => {
@@ -32,13 +38,14 @@ export const BugModal = ({ showModal, setShowModal }: BugModalProps) => {
 	}, [showModal, setShowModal]);
 
 	const handleClose = () => {
+		setIsOpen(false);
 		setIsClosing(true);
 		setTimeout(() => {
 			setShowModal(false);
 			setTitle("");
 			setDescription("");
 			setIsClosing(false);
-		}, 280);
+		}, 150);
 	};
 
 	const handleSend = async () => {
@@ -58,12 +65,12 @@ export const BugModal = ({ showModal, setShowModal }: BugModalProps) => {
 	return (
 		<button
 			type="button"
-			className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center ${isClosing ? "animate-fadeOut" : ""}`}
+			className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center transition-opacity duration-[150ms] ${isOpen ? "opacity-100" : "opacity-0"}`}
 			onClick={handleClose}
 		>
 			<button
 				type="button"
-				className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 max-w-md mx-4 w-full ${isClosing ? "modal-content-closing" : "modal-content"}`}
+				className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 max-w-md mx-4 w-full t-modal${isOpen ? " is-open" : ""}${isClosing ? " is-closing" : ""}`}
 				onClick={(e) => e.stopPropagation()}
 			>
 				<div className="flex items-center gap-3 mb-4">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import GithubIcon from "../assets/icons/GithubIcon";
 
@@ -12,16 +12,24 @@ interface ModalProps {
 
 export const Modal = ({ setShowModal, handleModalFunction, modalText, title, showModal }: ModalProps) => {
     const { t } = useTranslation();
+    const [isOpen, setIsOpen] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => setIsOpen(true));
+        return () => cancelAnimationFrame(frame);
+    }, []);
+
+    const closeMs = 150;
+
     const handleClose = () => {
+        setIsOpen(false);
         setIsClosing(true);
-        setTimeout(() => {
-            setShowModal(false);
-        }, 280);
+        setTimeout(() => setShowModal(false), closeMs);
     };
 
     const handleConfirm = async () => {
+        setIsOpen(false);
         setIsClosing(true);
         setTimeout(async () => {
             try {
@@ -30,14 +38,14 @@ export const Modal = ({ setShowModal, handleModalFunction, modalText, title, sho
                 console.error('Error en la función del modal:', error);
             }
             setShowModal(false);
-        }, 280);
+        }, closeMs);
     };
 
     return (
         <>
-            {
-                showModal && <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center modal-backdrop ${isClosing ? 'modal-backdrop-closing' : ''}`}>
-                    <div className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 max-w-md mx-4 modal-content ${isClosing ? 'modal-content-closing' : ''}`}>
+            {showModal && (
+                <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center transition-opacity duration-[150ms] ${isOpen ? "opacity-100" : "opacity-0"}`}>
+                    <div className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-6 max-w-md mx-4 t-modal${isOpen ? " is-open" : ""}${isClosing ? " is-closing" : ""}`}>
                         <div className="flex items-center gap-3 mb-4">
                             <GithubIcon width={24} height={24} className="text-white" />
                             <h3 className="text-lg font-semibold text-white">{t(title)}</h3>
@@ -61,7 +69,7 @@ export const Modal = ({ setShowModal, handleModalFunction, modalText, title, sho
                         </div>
                     </div>
                 </div>
-            }
+            )}
         </>
-    )
-}
+    );
+};

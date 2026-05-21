@@ -1,16 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { setLanguagePreference } from "../../controller/DbController";
 
 export const LanguageSelector = () => {
     const { i18n, t } = useTranslation();
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [dropdownClosing, setDropdownClosing] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const closeDropdown = useCallback(() => {
+        setDropdownClosing(true);
+        setTimeout(() => {
+            setDropdownOpen(false);
+            setDropdownClosing(false);
+        }, 150);
+    }, []);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setDropdownOpen(false);
+                closeDropdown();
             }
         }
         if (dropdownOpen) {
@@ -21,15 +30,23 @@ export const LanguageSelector = () => {
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [dropdownOpen]);
+    }, [dropdownOpen, closeDropdown]);
 
     const handleLanguageChange = async (language: string) => {
         try {
             await i18n.changeLanguage(language);
             await setLanguagePreference(language);
-            setDropdownOpen(false);
+            closeDropdown();
         } catch (error) {
             console.error("Error saving language:", error);
+        }
+    };
+
+    const toggleDropdown = () => {
+        if (dropdownOpen && !dropdownClosing) {
+            closeDropdown();
+        } else if (!dropdownOpen) {
+            setDropdownOpen(true);
         }
     };
 
@@ -45,7 +62,7 @@ export const LanguageSelector = () => {
                 <button
                     type="button"
                     className="w-full flex items-center justify-between rounded p-2 bg-white/10 text-white border border-white/20 focus:ring-2 focus:ring-blue-500 transition-all"
-                    onClick={() => setDropdownOpen((open) => !open)}
+                    onClick={toggleDropdown}
                     aria-haspopup="listbox"
                     aria-expanded={dropdownOpen}
                 >
@@ -53,13 +70,20 @@ export const LanguageSelector = () => {
                         {i18n.language === 'es' ? '🇲🇽 ' : '🇺🇸 '}
                         {i18n.language === 'es' ? t('Settings.language.es') : t('Settings.language.en')}
                     </span>
-                    <svg className={`w-4 h-4 ml-2 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                        className={`w-4 h-4 ml-2 transition-transform duration-200 ${dropdownOpen && !dropdownClosing ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                 </button>
-                {dropdownOpen && (
+                {(dropdownOpen || dropdownClosing) && (
                     <ul
-                        className="absolute z-10 mt-2 w-full bg-black/90 backdrop-blur-md rounded shadow-lg border border-white/20 py-1"
+                        className={`t-dropdown absolute z-10 mt-2 w-full bg-black/90 backdrop-blur-md rounded shadow-lg border border-white/20 py-1${dropdownOpen && !dropdownClosing ? " is-open" : ""}${dropdownClosing ? " is-closing" : ""}`}
+                        data-origin="top-center"
                         role="listbox"
                         tabIndex={-1}
                     >

@@ -74,15 +74,6 @@
   }
 }
 
-@keyframes checkmarkDraw {
-  from {
-    stroke-dashoffset: 20;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
 @keyframes progressFill {
   from {
     width: 0%;
@@ -103,10 +94,6 @@
 
 .success-modal-enter {
   animation: successBounce 1s ease-in-out;
-}
-
-.checkmark-animate {
-  animation: checkmarkDraw 0.7s ease-in-out forwards;
 }
 
 .progress-animate {
