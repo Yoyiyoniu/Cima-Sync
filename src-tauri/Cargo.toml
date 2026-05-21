@@ -56,9 +56,10 @@ regex = "1.10"
 # Widgets
 tauri-plugin-widget = "0.1.2"
 
+# Local plugins
+tauri-plugin-wifi-interface = { path = "../plugins/tauri-plugin-wifi-interface" }
+
 [target.'cfg(target_os = "android")'.dependencies]
-jni = "0.21"
-ndk-context = "0.1"
 android-native-keyring-store = "0.6.0"
 keyring-core = "0.7.4"
 

@@ -11,8 +11,8 @@ use crate::tray::system_tray;
 
 use crate::commands::{
     auto_auth, clear_crypto, decrypt_credentials, delete_credentials, encrypt_credentials,
-    force_wifi, get_auth_status, get_credentials, get_network_status, init_crypto, login,
-    release_wifi, save_credentials, set_crypto_key, stop_auth,
+    get_auth_status, get_credentials, get_network_status, init_crypto, login,
+    save_credentials, set_crypto_key, stop_auth,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -25,7 +25,9 @@ pub fn run() {
 
     #[cfg(target_os = "android")]
     {
-        builder = builder.plugin(tauri_plugin_widget::init());
+        builder = builder
+            .plugin(tauri_plugin_widget::init())
+            .plugin(tauri_plugin_wifi_interface::init());
     }
 
     #[cfg(desktop)]
@@ -71,8 +73,6 @@ pub fn run() {
             delete_credentials,
             get_network_status,
             get_auth_status,
-            force_wifi,
-            release_wifi
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,0 +1,7 @@
+[default]
+description = "Default permissions for the wifi-interface plugin"
+permissions = [
+  "allow-bind-to-wifi",
+  "allow-unbind-network",
+  "allow-get-wifi-status",
+]
