@@ -5,10 +5,10 @@ interface ForceWifiProps {
 }
 
 export const forceWifi = async ({ function: fun }: ForceWifiProps) => {
-	await invoke<boolean>("force_wifi");
+	await invoke("plugin:wifi-interface|bind_to_wifi");
 	const result = await fun();
 	if (!result) {
 		throw new Error("Failed to force WiFi");
 	}
-	await invoke<boolean>("release_wifi");
+	await invoke("plugin:wifi-interface|unbind_network");
 };

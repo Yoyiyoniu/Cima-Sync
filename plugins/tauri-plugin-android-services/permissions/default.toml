@@ -1,0 +1,8 @@
+[default]
+description = "Default permissions for the android-services plugin"
+permissions = [
+  "allow-start-service",
+  "allow-stop-service",
+  "allow-is-running",
+  "allow-execute-task",
+]
