@@ -33,7 +33,12 @@ android {
                 keystoreProperties.load(FileInputStream(keystorePropertiesFile))
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["password"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
+                val storeFilePath = keystoreProperties["storeFile"] as String
+                storeFile = if (storeFilePath.startsWith("~/")) {
+                    file(System.getProperty("user.home") + storeFilePath.removePrefix("~"))
+                } else {
+                    file(storeFilePath)
+                }
                 storePassword = keystoreProperties["password"] as String
             }
         }
