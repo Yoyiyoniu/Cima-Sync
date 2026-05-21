@@ -167,6 +167,8 @@ pub fn login(email: &str, password: &str) -> Result<String, String> {
 
 #[tauri::command]
 pub fn init_crypto() -> Result<String, String> {
+    #[cfg(target_os = "android")]
+    crate::keyring_controller::keyring::init_ndk_context()?;
     init_crypto_system()?;
     Ok("Sistema de encriptación inicializado".to_string())
 }

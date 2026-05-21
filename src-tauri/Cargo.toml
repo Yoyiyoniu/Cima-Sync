@@ -61,8 +61,11 @@ tauri-plugin-wifi-interface = { path = "../plugins/tauri-plugin-wifi-interface" 
 tauri-plugin-android-services = { path = "../plugins/tauri-plugin-android-services" }
 
 [target.'cfg(target_os = "android")'.dependencies]
-android-native-keyring-store = "0.6.0"
-keyring-core = "0.7.4"
+android-native-keyring-store = "1.0.0"
+keyring-core = "1"
+ndk-context = "0.1"
+jni = { version = "0.21", default-features = false }
+wry = "0.55"
 
 [profile.release]
 opt-level = "z"

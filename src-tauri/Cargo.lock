@@ -84,9 +84,9 @@ dependencies = [
 
 [[package]]
 name = "android-native-keyring-store"
-version = "0.6.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c68e578910ed6fb7d3731069791db664cf68a02171b6df429f16dd7e409bf2b"
+checksum = "48c6349ddff23194f8fdce2ea8849380f5a4868c1648965b70e801e104cba9b3"
 dependencies = [
  "base64 0.22.1",
  "jni",
@@ -588,9 +588,11 @@ dependencies = [
  "android-native-keyring-store",
  "base64 0.22.1",
  "hex",
+ "jni",
  "keyring",
  "keyring-core",
  "lazy_static",
+ "ndk-context",
  "netwatcher",
  "rand 0.8.5",
  "regex",
@@ -610,6 +612,7 @@ dependencies = [
  "tauri-plugin-widget",
  "tauri-plugin-wifi-interface",
  "webpki-roots 0.26.11",
+ "wry",
  "zeroize",
 ]
 
@@ -2270,9 +2273,9 @@ dependencies = [
 
 [[package]]
 name = "keyring-core"
-version = "0.7.4"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d8286c3ab222af2fa9e57874fe419893d967f739c7bf1743f98a88678edbf08"
+checksum = "fb1e621458ca9c51aa110bd0339d4751a056b9576bf1253aee1aa560dda0fc9d"
 dependencies = [
  "log",
 ]

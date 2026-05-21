@@ -1,0 +1,17 @@
+{
+  "$schema": "../gen/schemas/android-schema.json",
+  "identifier": "mobile",
+  "description": "Capability for mobile platforms",
+  "windows": [
+    "main"
+  ],
+  "platforms": ["android", "iOS"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "sql:default",
+    "sql:allow-execute",
+    "wifi-interface:default",
+    "android-services:default"
+  ]
+}

@@ -18,6 +18,8 @@ use keyring::Error as PlatformError;
 #[cfg(target_os = "android")]
 use android_native_keyring_store::Store as AndroidStore;
 #[cfg(target_os = "android")]
+use jni::objects::GlobalRef;
+#[cfg(target_os = "android")]
 use keyring_core::api::CredentialStoreApi;
 #[cfg(target_os = "android")]
 use keyring_core::Entry as PlatformEntry;
@@ -68,22 +70,91 @@ pub struct UserCredentials {
 }
 
 #[cfg(target_os = "android")]
-fn android_store() -> Result<Arc<AndroidStore>, String> {
-    static STORE: OnceLock<Result<Arc<AndroidStore>, String>> = OnceLock::new();
-    STORE
-        .get_or_init(|| {
-            let result = std::panic::catch_unwind(|| {
-                let mut config: HashMap<&str, &str> = HashMap::new();
-                config.insert("name", ANDROID_STORE_NAME);
-                AndroidStore::new_with_configuration(&config)
-            })
-            .map_err(|_| {
-                "Android context no inicializado (ndk-context). Asegúrate de inicializar el contexto Android antes de usar el keyring.".to_string()
-            })?;
+static ANDROID_STORE: OnceLock<Arc<AndroidStore>> = OnceLock::new();
 
-            result.map_err(|e| format!("Error inicializando Android keyring store: {e}"))
-        })
-        .clone()
+// Keeps the JNI GlobalRef alive so the raw pointer stored in ndk-context remains valid.
+#[cfg(target_os = "android")]
+static ACTIVITY_GLOBAL_REF: OnceLock<GlobalRef> = OnceLock::new();
+
+// Guards a single call to ndk_context::initialize_android_context.
+#[cfg(target_os = "android")]
+static NDK_INIT_LOCK: Mutex<bool> = Mutex::new(false);
+
+// Initialize the Android NDK context using wry's dispatch mechanism.
+//
+// Must be called before any keyring operations on Android.
+// tao 0.35+ no longer calls ndk_context::initialize_android_context automatically,
+// so we must bridge the gap ourselves via wry::prelude::dispatch.
+#[cfg(target_os = "android")]
+pub fn init_ndk_context() -> Result<(), String> {
+    let mut initialized = NDK_INIT_LOCK
+        .lock()
+        .map_err(|_| "NDK init lock poisoned".to_string())?;
+
+    if *initialized {
+        return Ok(());
+    }
+
+    let (tx, rx) = std::sync::mpsc::channel::<Result<(), String>>();
+
+    wry::prelude::dispatch(move |env, activity, _webview| {
+        let result = (|| -> Result<(), String> {
+            let activity_ref = env
+                .new_global_ref(activity)
+                .map_err(|e| format!("Failed to create JNI global ref: {e}"))?;
+
+            let vm = env
+                .get_java_vm()
+                .map_err(|e| format!("Failed to get JavaVM: {e}"))?;
+
+            // Store the GlobalRef so the raw pointer in ndk_context is never dangling.
+            let _ = ACTIVITY_GLOBAL_REF.set(activity_ref);
+            let activity_ref = ACTIVITY_GLOBAL_REF
+                .get()
+                .expect("just set ACTIVITY_GLOBAL_REF");
+
+            unsafe {
+                ndk_context::initialize_android_context(
+                    vm.get_java_vm_pointer() as *mut _,
+                    activity_ref.as_obj().as_raw() as *mut _,
+                );
+            }
+
+            Ok(())
+        })();
+
+        let _ = tx.send(result);
+    });
+
+    rx.recv()
+        .map_err(|_| "NDK init channel closed unexpectedly".to_string())??;
+
+    *initialized = true;
+    Ok(())
+}
+
+#[cfg(target_os = "android")]
+fn android_store() -> Result<Arc<AndroidStore>, String> {
+    // Fast path: already successfully initialized.
+    if let Some(store) = ANDROID_STORE.get() {
+        return Ok(store.clone());
+    }
+
+    // Try to create the store. Only success is cached; on failure the caller can retry
+    // after ensuring the NDK context is initialized via init_ndk_context().
+    let mut config: HashMap<&str, &str> = HashMap::new();
+    config.insert("name", ANDROID_STORE_NAME);
+
+    let store = std::panic::catch_unwind(|| AndroidStore::new_with_configuration(&config))
+        .map_err(|_| {
+            "Android context no inicializado (ndk-context). \
+             Llama a init_ndk_context antes de usar el keyring."
+                .to_string()
+        })?
+        .map_err(|e| format!("Error inicializando Android keyring store: {e}"))?;
+
+    let _ = ANDROID_STORE.set(store);
+    Ok(ANDROID_STORE.get().expect("ANDROID_STORE set above").clone())
 }
 
 fn get_keyring_entry(key_name: &str) -> Result<PlatformEntry, String> {
@@ -199,7 +270,7 @@ pub fn clear_stored_key() -> Result<(), String> {
     let mut session_key = SESSION_KEY
         .lock()
         .map_err(|_| "Error al acceder a la clave de sesión".to_string())?;
-    
+
     *session_key = None;
 
     let entry_key = get_keyring_entry(KEY_USER)?;

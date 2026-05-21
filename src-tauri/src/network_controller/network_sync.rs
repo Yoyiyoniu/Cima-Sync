@@ -20,6 +20,7 @@ lazy_static! {
 }
 
 const SSID_RETRY_DELAY_MS: u64 = 500;
+#[cfg(not(target_os = "android"))]
 const MAX_INTERFACE_NAME_LENGTH: usize = 64;
 const CONNECTIVITY_TIMEOUT_SECS: u64 = 3;
 const GENERATE_204_URL: &str = "http://clients3.google.com/generate_204";
@@ -56,12 +57,14 @@ impl SyncNetworkState {
     }
 }
 
+#[cfg(not(target_os = "android"))]
 #[derive(Debug)]
 enum InterfaceValidation {
     Valid(String),
     Invalid(String),
 }
 
+#[cfg(not(target_os = "android"))]
 fn sanitize_interface_name(name: &str) -> InterfaceValidation {
     if name.len() > MAX_INTERFACE_NAME_LENGTH {
         return InterfaceValidation::Invalid(format!(
@@ -95,6 +98,7 @@ fn sanitize_interface_name(name: &str) -> InterfaceValidation {
     InterfaceValidation::Valid(name.to_string())
 }
 
+#[cfg(not(target_os = "android"))]
 fn get_safe_interface_name(name: &str) -> Option<String> {
     match sanitize_interface_name(name) {
         InterfaceValidation::Valid(safe_name) => Some(safe_name),
