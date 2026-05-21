@@ -124,6 +124,13 @@
 			"enabled": "✓ App will start automatically",
 			"disabled": "App won't start automatically"
 		},
+		"notifications": {
+			"title": "Notifications",
+			"description": "To keep your session active without opening the app, Cima Sync needs to show you a small background notification. You can disable it at any time from your system settings.",
+			"activate": "Enable notifications",
+			"requesting": "Opening permission...",
+			"hint": "Only used for Cima Sync mode."
+		},
 		"ready": {
 			"title": "All ready!",
 			"subtitle": "Starting your Cima Sync experience..."

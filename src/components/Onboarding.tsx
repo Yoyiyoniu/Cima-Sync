@@ -9,12 +9,14 @@ import {
 	setLanguagePreference,
 	setHasSeenOnboarding,
 } from "../controller/DbController";
+import { startBackgroundService } from "../controller/backgroundService";
 import { useDeviceStore } from "../store/deviceStore";
 
 import LanguageIcon from "../assets/icons/LanguageIcon";
 import AutostartIcon from "../assets/icons/AutostartIcon";
 import SessionIcon from "../assets/icons/SessionIcon";
 import PrivacyIcon from "../assets/icons/PrivacyIcon";
+import NotificationIcon from "../assets/icons/NotificationIcon";
 
 const fadeIn = {
 	initial: { opacity: 0 },
@@ -37,6 +39,10 @@ export function Onboarding() {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [autoStartEnabled, setAutoStartEnabled] = useState(false);
 	const isDesktop = useDeviceStore((state) => state.isDesktop);
+	const platform = useDeviceStore((state) => state.platform);
+	const isAndroid = platform === "android";
+	const [requestingPermission, setRequestingPermission] = useState(false);
+	const [notificationsHandled, setNotificationsHandled] = useState(false);
 	const finishCalledRef = useRef(false);
 
 	useEffect(() => {
@@ -123,6 +129,17 @@ export function Onboarding() {
 			description: t("Onboarding.step3.description"),
 			icon: <PrivacyIcon aria-hidden="true" className="w-12 h-12" />,
 		},
+		...(isAndroid
+			? [
+					{
+						id: "notifications",
+						title: t("Onboarding.notifications.title"),
+						description: t("Onboarding.notifications.description"),
+						icon: <NotificationIcon aria-hidden={true} className="w-12 h-12" />,
+						isNotificationsStep: true,
+					},
+				]
+			: []),
 	];
 
 	const isLast = step === steps.length - 1;
@@ -358,6 +375,49 @@ export function Onboarding() {
 												{steps[step].description}
 											</p>
 
+											{"isNotificationsStep" in steps[step] &&
+												steps[step].isNotificationsStep && (
+													<div className="mt-6 w-full flex flex-col items-center gap-3">
+														{notificationsHandled ? (
+															<div className="flex items-center gap-2 text-emerald-400 text-sm font-medium">
+																<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+																	<path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+																</svg>
+																{t("Onboarding.notifications.hint")}
+															</div>
+														) : (
+															<button
+																type="button"
+																disabled={requestingPermission}
+																onClick={async () => {
+																	setRequestingPermission(true);
+																	try {
+																		await startBackgroundService();
+																	} catch (_) {
+																		// denegado — avanzamos igual
+																	} finally {
+																		setRequestingPermission(false);
+																		setNotificationsHandled(true);
+																	}
+																}}
+																className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-60 text-white font-semibold shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+															>
+																{requestingPermission ? (
+																	<svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+																		<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+																		<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+																	</svg>
+																) : (
+																	<NotificationIcon aria-hidden={true} className="w-5 h-5" />
+																)}
+																{requestingPermission
+																	? t("Onboarding.notifications.requesting")
+																	: t("Onboarding.notifications.activate")}
+															</button>
+														)}
+													</div>
+												)}
+
 											{/* Toggle AutoStart */}
 											{"showAutoStart" in steps[step] &&
 												steps[step].showAutoStart && (
@@ -462,7 +522,12 @@ export function Onboarding() {
 
 									<button
 										type="button"
-										className="flex-1 px-8 py-3 rounded-xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white font-semibold shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
+										disabled={
+											"isNotificationsStep" in steps[step] &&
+											steps[step].isNotificationsStep &&
+											!notificationsHandled
+										}
+										className="flex-1 px-8 py-3 rounded-xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
 										onClick={() => {
 											if (isLast) setShowOutro(true);
 											else setStep((s) => Math.min(steps.length - 1, s + 1));

@@ -124,6 +124,13 @@
 			"enabled": "✓ La app iniciará automáticamente",
 			"disabled": "La app no iniciará automáticamente"
 		},
+		"notifications": {
+			"title": "Notificaciones",
+			"description": "Para mantener tu sesión activa sin abrir la app, Cima Sync necesita mostrarte una pequeña notificación en segundo plano. Puedes desactivarla en cualquier momento desde los ajustes del sistema.",
+			"activate": "Activar notificaciones",
+			"requesting": "Abriendo permiso...",
+			"hint": "Solo se usará para el modo Cima Sync."
+		},
 		"ready": {
 			"title": "¡Todo listo!",
 			"subtitle": "Comenzando tu experiencia con Cima Sync..."
