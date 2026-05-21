@@ -27,7 +27,8 @@ pub fn run() {
     {
         builder = builder
             .plugin(tauri_plugin_widget::init())
-            .plugin(tauri_plugin_wifi_interface::init());
+            .plugin(tauri_plugin_wifi_interface::init())
+            .plugin(tauri_plugin_android_services::init());
     }
 
     #[cfg(desktop)]
