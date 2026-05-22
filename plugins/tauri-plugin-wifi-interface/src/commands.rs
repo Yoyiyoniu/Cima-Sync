@@ -18,3 +18,13 @@ pub(crate) async fn unbind_network<R: Runtime>(app: AppHandle<R>) -> Result<Bind
 pub(crate) async fn get_wifi_status<R: Runtime>(app: AppHandle<R>) -> Result<WifiStatus> {
     app.wifi_interface().get_wifi_status()
 }
+
+#[command]
+pub(crate) async fn start_observing<R: Runtime>(app: AppHandle<R>) -> Result<ObserveResult> {
+    app.wifi_interface().start_observing()
+}
+
+#[command]
+pub(crate) async fn stop_observing<R: Runtime>(app: AppHandle<R>) -> Result<ObserveResult> {
+    app.wifi_interface().stop_observing()
+}

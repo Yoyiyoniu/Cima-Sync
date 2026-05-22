@@ -22,6 +22,12 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
 
 pub struct WifiInterface<R: Runtime>(PluginHandle<R>);
 
+impl<R: Runtime> Clone for WifiInterface<R> {
+    fn clone(&self) -> Self {
+        WifiInterface(self.0.clone())
+    }
+}
+
 impl<R: Runtime> WifiInterface<R> {
     pub fn bind_to_wifi(&self) -> crate::Result<BindResult> {
         self.0
@@ -38,6 +44,27 @@ impl<R: Runtime> WifiInterface<R> {
     pub fn get_wifi_status(&self) -> crate::Result<WifiStatus> {
         self.0
             .run_mobile_plugin("getWifiStatus", ())
+            .map_err(Into::into)
+    }
+
+    pub fn start_observing(&self) -> crate::Result<ObserveResult> {
+        self.0
+            .run_mobile_plugin("startObserving", ())
+            .map_err(Into::into)
+    }
+
+    pub fn stop_observing(&self) -> crate::Result<ObserveResult> {
+        self.0
+            .run_mobile_plugin("stopObserving", ())
+            .map_err(Into::into)
+    }
+
+    /// Bloquea el hilo llamante hasta que Android emite un evento WiFi.
+    /// Usar siempre dentro de `tauri::async_runtime::spawn_blocking`.
+    /// Devuelve Err si el observer fue detenido mientras esperaba.
+    pub fn next_wifi_event(&self) -> crate::Result<WifiEvent> {
+        self.0
+            .run_mobile_plugin("nextWifiEvent", ())
             .map_err(Into::into)
     }
 }
