@@ -105,6 +105,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 		error: null,
 		success: false,
 	});
+	const [pendingSource, setPendingSource] = useState<"login" | "activate" | null>(null);
 
 	const showSuccessModal = useUiStore((state) => state.showSuccessModal);
 	const openSuccessModal = useUiStore((state) => state.openSuccessModal);
@@ -128,6 +129,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	const isLoginDisabled =
 		appState.loading ||
+		isBootstrapping ||
 		isCimaSyncActive ||
 		(!isMobile && (!credentials.email || !credentials.password || !isUabcConnected));
 
@@ -151,9 +153,11 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 	const handleLogin = useCallback(async () => {
 		if (!credentials.email || !credentials.password) {
+			setPendingSource("login");
 			openProfileModal();
 			return;
 		}
+		setPendingSource(null);
 		setAppState({ loading: true, error: null, success: false });
 		try {
 			if (isMobile) {
@@ -209,6 +213,47 @@ function App({ showTourFirstTime = false }: AppProps) {
 		openCertificateAlert,
 	]);
 
+	const handleActivateMode = useCallback(async () => {
+		if (!credentials.email || !credentials.password) {
+			setPendingSource("activate");
+			openProfileModal();
+			return;
+		}
+		setPendingSource(null);
+		setAppState({ loading: true, error: null, success: false });
+		try {
+			if (isAndroid) {
+				await startBackgroundService();
+			}
+
+			await invoke("auto_auth", {
+				email: credentials.email,
+				password: credentials.password,
+			});
+
+			setIsCimaSyncActive(true);
+			showCimaSyncActiveToast();
+			setAppState((prev) => ({ ...prev, success: true }));
+			openSuccessModal();
+
+			if (!rememberSession) {
+				await invoke("delete_credentials");
+			}
+		} catch (error) {
+			console.error("Activate mode error:", error);
+			showAuthErrorToast(String(error));
+			setAppState((prev) => ({ ...prev, error: String(error) }));
+		} finally {
+			setAppState((prev) => ({ ...prev, loading: false }));
+		}
+	}, [
+		credentials,
+		rememberSession,
+		isAndroid,
+		openProfileModal,
+		openSuccessModal,
+	]);
+
 	const handleLogout = useCallback(async () => {
 		if (isAndroid) {
 			await stopBackgroundService().catch(() => {});
@@ -223,6 +268,25 @@ function App({ showTourFirstTime = false }: AppProps) {
 		}
 		setAppState({ loading: false, error: null, success: false });
 	}, [isAndroid, isUabcConnected]);
+
+	useEffect(() => {
+		if (
+			pendingSource !== null &&
+			!showProfileModal &&
+			credentials.email &&
+			credentials.password &&
+			!appState.loading &&
+			!isCimaSyncActive
+		) {
+			if (pendingSource === "login") {
+				setPendingSource(null);
+				void handleLogin();
+			} else {
+				setPendingSource(null);
+				void handleActivateMode();
+			}
+		}
+	}, [pendingSource, showProfileModal, credentials.email, credentials.password, appState.loading, isCimaSyncActive, handleLogin, handleActivateMode]);
 
 	const ringGlow = isCimaSyncActive
 		? "0 0 55px rgba(0,220,100,0.65), 0 0 110px rgba(0,160,60,0.35), 0 0 170px rgba(0,100,40,0.18)"
@@ -248,6 +312,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 				className="relative z-10 flex items-start justify-between px-4 py-3"
 			>
 				<button
+					id="tour-settings-btn"
 					type="button"
 					onClick={openSettingsMenu}
 					className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
@@ -256,6 +321,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 				</button>
 
 				<motion.div
+					id="tour-network-status"
 					key={networkState}
 					initial={{ opacity: 0, scale: 0.9 }}
 					animate={{ opacity: 1, scale: 1 }}
@@ -274,6 +340,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 				<div className="flex flex-col items-center gap-2">
 					<button
+						id="tour-profile-btn"
 						type="button"
 						onClick={openProfileModal}
 						className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
@@ -401,6 +468,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 					</div>
 
 					<motion.button
+						id="tour-activate-btn"
 						type="button"
 						initial={{ opacity: 0, scale: 0.8 }}
 						animate={{ opacity: 1, scale: 1 }}
@@ -505,7 +573,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 				isCimaSyncActive={isCimaSyncActive}
 				isLoading={appState.loading}
 				isDisabled={isLoginDisabled}
-				onActivate={handleLogin}
+				onActivate={handleActivateMode}
 				onDeactivate={handleLogout}
 			/>
 

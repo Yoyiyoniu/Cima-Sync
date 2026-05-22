@@ -9,9 +9,7 @@ export const TourStep = ({ content }: TourStepProps) => {
 	const { currentStep, setCurrentStep, steps, setIsOpen } = useTour();
 
 	const handlePrevious = () => {
-		if (currentStep > 0) {
-			setCurrentStep(currentStep - 1);
-		}
+		if (currentStep > 0) setCurrentStep(currentStep - 1);
 	};
 
 	const handleNext = async () => {
@@ -31,36 +29,77 @@ export const TourStep = ({ content }: TourStepProps) => {
 	const isLastStep = currentStep === steps.length - 1;
 
 	return (
-		<div className="tour-step-content">
-			<div className="tour-text">{content}</div>
+		<div style={{ minWidth: 220, maxWidth: 280 }}>
+			<div className="flex gap-1 mb-3">
+				{steps.map((_, i) => (
+					<div
+						key={String(i)}
+						style={{
+							height: 3,
+							flex: 1,
+							borderRadius: 99,
+							background: i <= currentStep ? "#00a854" : "rgba(255,255,255,0.15)",
+							transition: "background 0.3s ease",
+						}}
+					/>
+				))}
+			</div>
 
-			<div className="tour-navigation">
-				<div className="tour-buttons">
+			<p style={{ fontSize: 13, lineHeight: 1.55, color: "rgba(255,255,255,0.88)", marginBottom: 16 }}>
+				{content}
+			</p>
+
+			<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+				<div style={{ display: "flex", gap: 8 }}>
 					<button
 						type="button"
 						onClick={handlePrevious}
 						disabled={currentStep === 0}
-						className="tour-btn tour-btn-prev"
-						title="Anterior"
+						style={{
+							padding: "6px 12px",
+							borderRadius: 10,
+							fontSize: 12,
+							fontWeight: 500,
+							border: "1px solid rgba(255,255,255,0.15)",
+							background: "rgba(255,255,255,0.08)",
+							color: currentStep === 0 ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.75)",
+							cursor: currentStep === 0 ? "not-allowed" : "pointer",
+							transition: "all 0.2s ease",
+						}}
 					>
-						← Anterior
+						← Atrás
 					</button>
-
 					<button
 						type="button"
 						onClick={handleNext}
-						className="tour-btn tour-btn-next"
-						title={isLastStep ? "Finalizar" : "Siguiente"}
+						style={{
+							padding: "6px 14px",
+							borderRadius: 10,
+							fontSize: 12,
+							fontWeight: 600,
+							border: "none",
+							background: "linear-gradient(135deg, #006633 0%, #00a854 100%)",
+							color: "white",
+							cursor: "pointer",
+							transition: "all 0.2s ease",
+						}}
 					>
-						{isLastStep ? "Finalizar" : "Siguiente →"}
+						{isLastStep ? "Listo ✓" : "Siguiente →"}
 					</button>
 				</div>
 
 				<button
 					type="button"
 					onClick={handleClose}
-					className="tour-btn tour-btn-close"
-					title="Cerrar tour"
+					style={{
+						padding: "6px 10px",
+						borderRadius: 10,
+						fontSize: 11,
+						border: "none",
+						background: "transparent",
+						color: "rgba(255,255,255,0.35)",
+						cursor: "pointer",
+					}}
 				>
 					✕
 				</button>

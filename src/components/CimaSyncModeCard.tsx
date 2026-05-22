@@ -39,6 +39,7 @@ export const CimaSyncModeCard = ({
 			/>
 
 			<motion.div
+				id="tour-cimasync-card"
 				initial={{ opacity: 0, y: 40 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
