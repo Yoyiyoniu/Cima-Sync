@@ -19,7 +19,6 @@ import { CimaSyncModeCard } from "./components/CimaSyncModeCard";
 import { ProfileModal } from "./components/ProfileModal";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { SuccessModal } from "./components/SuccessModal";
-import { LoadingText } from "./components/LoadingText";
 import {
 	CIMA_SYNC_STOPPED_TOAST_DURATION,
 	NetworkStateToastManager,
@@ -234,7 +233,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 			setIsCimaSyncActive(true);
 			showCimaSyncActiveToast();
 			setAppState((prev) => ({ ...prev, success: true }));
-			openSuccessModal();
 
 			if (!rememberSession) {
 				await invoke("delete_credentials");
@@ -287,6 +285,12 @@ function App({ showTourFirstTime = false }: AppProps) {
 			}
 		}
 	}, [pendingSource, showProfileModal, credentials.email, credentials.password, appState.loading, isCimaSyncActive, handleLogin, handleActivateMode]);
+
+	useEffect(() => {
+		if (!appState.error) return;
+		const timer = setTimeout(() => setAppState((prev) => ({ ...prev, error: null })), 4000);
+		return () => clearTimeout(timer);
+	}, [appState.error]);
 
 	const ringGlow = isCimaSyncActive
 		? "0 0 55px rgba(0,220,100,0.65), 0 0 110px rgba(0,160,60,0.35), 0 0 170px rgba(0,100,40,0.18)"
@@ -373,15 +377,26 @@ function App({ showTourFirstTime = false }: AppProps) {
 							<motion.span
 								key="loading-label"
 								initial={{ opacity: 0, y: 4 }}
-								animate={{ opacity: 1, y: 0 }}
+								animate={{ opacity: [0.45, 0.9, 0.45] }}
 								exit={{ opacity: 0, y: -4 }}
-								transition={{ duration: 0.18 }}
+								transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+								className="text-white/70 text-base font-medium"
 							>
-								<LoadingText
-									isActive={appState.loading}
-									className="text-white/60 text-base font-medium"
-									messages={[t("App.connecting"), "Desbloqueando...", "Autenticando..."]}
-								/>
+								{t("App.connecting")}
+							</motion.span>
+						) : appState.error ? (
+							<motion.span
+								key="error-label"
+								initial={{ opacity: 0, y: 6 }}
+								animate={{ opacity: 1, y: 0 }}
+								exit={{ opacity: 0, y: -6 }}
+								transition={{ duration: 0.25 }}
+								className="text-red-400 text-sm font-medium text-center leading-tight"
+								style={{ maxWidth: 220 }}
+							>
+								{appState.error.length > 48
+									? `${appState.error.slice(0, 48)}…`
+									: appState.error}
 							</motion.span>
 						) : isCimaSyncActive ? (
 							<motion.span
@@ -426,44 +441,48 @@ function App({ showTourFirstTime = false }: AppProps) {
 					{/* Orbiting dots layer */}
 					<div className="absolute inset-0 pointer-events-none">
 						<AnimatePresence>
-							{!isCimaSyncActive && !appState.loading &&
-								ORBIT_DOTS.map((dot, i) => (
-									<motion.div
-										key={`orbit-dot-${i}`}
-										className="absolute rounded-full"
-										style={{
-											top: "50%",
-											left: "50%",
-											width: 12,
-											height: 12,
-											marginLeft: ORBIT_RADIUS - 6,
-											marginTop: -6,
-											transformOrigin: `${6 - ORBIT_RADIUS}px 6px`,
-											background:
-												"radial-gradient(circle, rgba(0,220,130,0.95) 0%, rgba(0,160,80,0.7) 100%)",
-											boxShadow:
-												"0 0 10px rgba(0,220,100,0.75), 0 0 22px rgba(0,160,80,0.45)",
-										}}
-										initial={{ rotate: dot.startAngle, opacity: 0, scale: 0 }}
-										animate={{ rotate: dot.startAngle + 360, opacity: 1, scale: 1 }}
-										transition={{
-											rotate: {
-												duration: ORBIT_DURATION,
-												repeat: Infinity,
-												ease: "linear",
-											},
-											opacity: { duration: 0.5, delay: dot.delay },
-											scale: {
-												duration: 0.4,
-												delay: dot.delay,
-												type: "spring",
-												stiffness: 300,
-												damping: 20,
-											},
-										}}
-										exit={{ opacity: 0, scale: 0, transition: { duration: 0.45 } }}
-									/>
-								))}
+							{!isCimaSyncActive && !appState.loading && (
+								<motion.div
+									key="orbit-container"
+									className="absolute inset-0"
+									initial={{ scale: 0.4, opacity: 0 }}
+									animate={{ scale: 1, opacity: 1 }}
+									exit={{ scale: 2.0, opacity: 0 }}
+									transition={{
+										scale: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
+										opacity: { duration: 0.5 },
+									}}
+								>
+									{ORBIT_DOTS.map((dot, i) => (
+										<motion.div
+											key={`orbit-dot-${i}`}
+											className="absolute rounded-full"
+											style={{
+												top: "50%",
+												left: "50%",
+												width: 12,
+												height: 12,
+												marginLeft: ORBIT_RADIUS - 6,
+												marginTop: -6,
+												transformOrigin: `${6 - ORBIT_RADIUS}px 6px`,
+												background:
+													"radial-gradient(circle, rgba(0,220,130,0.95) 0%, rgba(0,160,80,0.7) 100%)",
+												boxShadow:
+													"0 0 10px rgba(0,220,100,0.75), 0 0 22px rgba(0,160,80,0.45)",
+											}}
+											animate={{ rotate: dot.startAngle + 360 }}
+											initial={{ rotate: dot.startAngle }}
+											transition={{
+												rotate: {
+													duration: ORBIT_DURATION,
+													repeat: Infinity,
+													ease: "linear",
+												},
+											}}
+										/>
+									))}
+								</motion.div>
+							)}
 						</AnimatePresence>
 					</div>
 
@@ -479,21 +498,50 @@ function App({ showTourFirstTime = false }: AppProps) {
 						style={{ WebkitTapHighlightColor: "transparent" }}
 					>
 						{/* Outer glow ring */}
-						<div
-							className="absolute inset-[-8px] rounded-full transition-all duration-700 pointer-events-none"
-							style={{
+						<motion.div
+							className="absolute inset-[-8px] rounded-full pointer-events-none"
+							animate={appState.loading ? {
+								boxShadow: [
+									"0 0 0px rgba(0,220,100,0)",
+									"0 0 45px rgba(0,220,100,0.65), 0 0 90px rgba(0,180,80,0.3)",
+									"0 0 0px rgba(0,220,100,0)",
+								],
+							} : {
 								boxShadow: ringGlow,
+							}}
+							transition={appState.loading
+								? { duration: 2, repeat: Infinity, ease: "easeInOut" }
+								: { duration: 1.1 }
+							}
+							style={{
 								border: isCimaSyncActive
 									? "1px solid rgba(0,220,100,0.4)"
-									: isUabcConnected
-										? "1px solid rgba(0,114,63,0.2)"
-										: "1px solid rgba(255,255,255,0.06)",
+									: appState.loading
+										? "1px solid rgba(0,220,100,0.25)"
+										: isUabcConnected
+											? "1px solid rgba(0,114,63,0.2)"
+											: "1px solid rgba(255,255,255,0.06)",
 								borderRadius: "50%",
 							}}
 						/>
 
-						<div
-							className="relative w-52 h-52 rounded-full flex items-center justify-center overflow-hidden transition-all duration-700"
+						<motion.div
+							className="relative w-52 h-52 rounded-full flex items-center justify-center overflow-hidden"
+							animate={appState.loading ? {
+								boxShadow: [
+									"0 0 0px rgba(0,220,100,0), inset 0 0 0px rgba(0,220,100,0)",
+									"0 0 20px rgba(0,220,100,0.35), inset 0 0 30px rgba(0,180,80,0.22)",
+									"0 0 0px rgba(0,220,100,0), inset 0 0 0px rgba(0,220,100,0)",
+								],
+							} : {
+								boxShadow: isCimaSyncActive
+									? "inset 0 0 40px rgba(0,180,80,0.22), inset 0 0 80px rgba(0,100,50,0.12)"
+									: "none",
+							}}
+							transition={appState.loading
+								? { duration: 2, repeat: Infinity, ease: "easeInOut" }
+								: { duration: 1.1 }
+							}
 							style={{
 								background: isCimaSyncActive
 									? "radial-gradient(circle at 35% 35%, rgba(0,210,100,0.38) 0%, rgba(0,100,50,0.58) 100%)"
@@ -502,11 +550,10 @@ function App({ showTourFirstTime = false }: AppProps) {
 										: "radial-gradient(circle at 35% 35%, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.35) 100%)",
 								border: isCimaSyncActive
 									? "1.5px solid rgba(0,220,100,0.55)"
-									: "1px solid rgba(255,255,255,0.12)",
+									: appState.loading
+										? "1px solid rgba(0,220,100,0.3)"
+										: "1px solid rgba(255,255,255,0.12)",
 								backdropFilter: "blur(12px)",
-								boxShadow: isCimaSyncActive
-									? "inset 0 0 40px rgba(0,180,80,0.22), inset 0 0 80px rgba(0,100,50,0.12)"
-									: "none",
 							}}
 						>
 							<img
@@ -524,7 +571,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 										initial={{ opacity: 0, scale: 0.5 }}
 										animate={{ opacity: 1, scale: 1 }}
 										exit={{ opacity: 0, scale: 0.5 }}
-										transition={{ type: "spring", stiffness: 400, damping: 28 }}
+										transition={{ type: "spring", stiffness: 160, damping: 22 }}
 										className="absolute inset-0 flex items-center justify-center"
 									>
 										<div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
@@ -548,22 +595,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 								)}
 							</AnimatePresence>
 
-							<AnimatePresence>
-								{appState.loading && (
-									<motion.div
-										key="loading-overlay"
-										initial={{ opacity: 0 }}
-										animate={{ opacity: 1 }}
-										exit={{ opacity: 0 }}
-										transition={{ duration: 0.2 }}
-										className="absolute inset-0 flex items-center justify-center rounded-full"
-										style={{ background: "rgba(0,0,0,0.45)" }}
-									>
-										<div className="w-12 h-12 rounded-full border-[3px] border-white/15 border-t-white/80 animate-spin" />
-									</motion.div>
-								)}
-							</AnimatePresence>
-						</div>
+						</motion.div>
 
 					</motion.button>
 				</div>
