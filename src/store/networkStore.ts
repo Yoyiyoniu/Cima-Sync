@@ -1,7 +1,17 @@
-import { invoke } from "@tauri-apps/api/core";
+import { addPluginListener, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { create } from "zustand";
 import type { NetworkStatusPayload } from "../types";
+
+interface WifiEvent {
+	event: "available" | "lost" | "capabilitiesChanged" | "unavailable";
+	networkId?: number;
+	hasInternet?: boolean;
+	hasValidated?: boolean;
+	ssid?: string;
+	rssi?: number;
+	linkSpeed?: number;
+}
 
 type UnlistenFn = () => void;
 
@@ -97,6 +107,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 		if (isListening || unlistenFns.length > 0) return;
 
 		try {
+			// Escucha los eventos de estado de red emitidos por Rust
 			const unlistenStatus = await listen<NetworkStatusPayload>(
 				"network-status",
 				(event) => {
@@ -104,10 +115,35 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 				},
 			);
 
-			let unlistenWifiPoll: () => void = () => {};
+			let unlistenWifi: UnlistenFn = () => {};
+
 			if (isMobile) {
-				let lastSsid: string | null = undefined as unknown as null;
-				const wifiPollId = setInterval(async () => {
+				let lastSsid: string | null | undefined = undefined;
+
+				// ── Observer push (principal) ──────────────────────────────────
+				// El NetworkCallback de Android dispara este evento en <50 ms.
+				const pluginListener = await addPluginListener<WifiEvent>(
+					"wifi-interface",
+					"wifiStateChange",
+					(event) => {
+						const ssid =
+							event.event === "capabilitiesChanged"
+								? (event.ssid ?? null)
+								: event.event === "lost" || event.event === "unavailable"
+									? null
+									: undefined; // "available" → esperar capabilitiesChanged
+
+						if (ssid !== undefined && ssid !== lastSsid) {
+							lastSsid = ssid;
+							invoke("set_mobile_wifi_info", { ssid }).catch(() => {});
+						}
+					},
+				);
+
+				// ── Heartbeat de polling (fallback) ───────────────────────────
+				// Sincroniza el SSID si el observer pierde algún evento.
+				// 12 s es suficiente — el observer ya cubre el 99% de los casos.
+				const pollId = setInterval(async () => {
 					try {
 						const wifiStatus = await invoke<{ isBound: boolean; ssid: string }>(
 							"plugin:wifi-interface|get_wifi_status",
@@ -119,13 +155,18 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 							await invoke("set_mobile_wifi_info", { ssid });
 						}
 					} catch {
+						// silencioso — el observer sigue activo
 					}
-				}, 4000);
-				unlistenWifiPoll = () => clearInterval(wifiPollId);
+				}, 12_000);
+
+				unlistenWifi = () => {
+					pluginListener.unregister();
+					clearInterval(pollId);
+				};
 			}
 
 			set({
-				unlistenFns: [unlistenStatus, unlistenWifiPoll],
+				unlistenFns: [unlistenStatus, unlistenWifi],
 				isListening: true,
 				networkError: null,
 			});

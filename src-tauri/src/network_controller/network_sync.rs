@@ -8,6 +8,7 @@ use std::collections::HashMap;
 #[cfg(not(target_os = "android"))]
 use std::process::Command;
 use std::sync::{Arc, Mutex, Once};
+#[cfg(not(target_os = "android"))]
 use std::thread;
 use std::time::Duration;
 use tauri::Emitter;
@@ -19,27 +20,20 @@ lazy_static! {
     static ref LAST_SYNC_NETWORK_STATE: Mutex<Option<SyncNetworkState>> = Mutex::new(None);
     static ref INTERFACE_NAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_\-\. ]+$")
         .expect("Regex de interfaz inválido");
+    // Conservado para compatibilidad con get_current_network_status en Android
     static ref ANDROID_SSID: Mutex<Option<Box<str>>> = Mutex::new(None);
-    static ref ANDROID_TRIGGER_TX: Mutex<Option<std::sync::mpsc::Sender<()>>> = Mutex::new(None);
 }
 
 /// Actualiza el SSID en Android (llamado desde el frontend vía comando Tauri).
-/// Si el SSID cambió, despierta el monitor para re-emitir el estado de red sin esperar el poll.
+/// Con el observer activo este campo se actualiza directamente desde los eventos WiFi,
+/// pero se mantiene para que get_network_status() tenga siempre el último SSID conocido.
 pub fn update_android_ssid(ssid: Option<String>) {
     let new_ssid = ssid.as_deref().map(Box::from);
     let mut guard = match ANDROID_SSID.lock() {
         Ok(g) => g,
         Err(p) => p.into_inner(),
     };
-    if *guard != new_ssid {
-        *guard = new_ssid;
-        drop(guard);
-        if let Ok(tx_guard) = ANDROID_TRIGGER_TX.lock() {
-            if let Some(tx) = tx_guard.as_ref() {
-                let _ = tx.send(());
-            }
-        }
-    }
+    *guard = new_ssid;
 }
 
 const SSID_RETRY_DELAY_MS: u64 = 500;
@@ -132,10 +126,9 @@ fn get_safe_interface_name(name: &str) -> Option<String> {
     }
 }
 
-// Usar Box para reducir el tamaño del struct en stack
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct WifiState {
-    interface: Box<str>,  // Más eficiente que String para datos inmutables
+    interface: Box<str>,
     ssid: Option<Box<str>>,
     ipv4: Option<Box<str>>,
 }
@@ -220,13 +213,12 @@ fn log_state_transition(new_state: SyncNetworkState, ssid: Option<&str>, connect
     let previous = *guard;
     if previous != Some(new_state) {
         println!(
-            "[network-sync] Estado actualizado: {:?} -> {:?} | texto='{}' | connected={} | is_uabc={} | ssid={}",
+            "[network-sync] Estado: {:?} → {:?} | ssid={} | connected={} | is_uabc={}",
             previous,
             Some(new_state),
-            new_state.as_status_text(),
+            ssid.unwrap_or("<none>"),
             connected,
             is_uabc,
-            ssid.unwrap_or("<none>")
         );
         *guard = Some(new_state);
     }
@@ -236,13 +228,6 @@ fn create_status_payload(ssid: Option<&str>) -> serde_json::Value {
     let is_uabc = check_is_uabc(ssid);
     let connected = ssid.is_some();
     let network_state = resolve_sync_network_state(ssid, connected, is_uabc);
-
-    print!("[network-sync] Creando payload de estado:\n connected={},\n ssid={},\n is_uabc={},\n network_state={:?}",
-        connected,
-        ssid.unwrap_or("<none>"),
-        is_uabc,
-        network_state
-    );
 
     log_state_transition(network_state, ssid, connected, is_uabc);
 
@@ -256,12 +241,25 @@ fn create_status_payload(ssid: Option<&str>) -> serde_json::Value {
 }
 
 pub fn get_current_network_status() -> serde_json::Value {
-    let guard = match LAST_STATE.lock() {
-        Ok(g) => g,
-        Err(poisoned) => poisoned.into_inner(),
-    };
-    let ssid = guard.as_ref().and_then(|state| state.ssid.as_deref());
-    create_status_payload(ssid)
+    #[cfg(target_os = "android")]
+    {
+        let guard = match ANDROID_SSID.lock() {
+            Ok(g) => g,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        let ssid = guard.as_deref();
+        return create_status_payload(ssid);
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let guard = match LAST_STATE.lock() {
+            Ok(g) => g,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        let ssid = guard.as_ref().and_then(|state| state.ssid.as_deref());
+        create_status_payload(ssid)
+    }
 }
 
 #[cfg(any(target_os = "windows", target_os = "macos"))]
@@ -302,11 +300,6 @@ fn parse_ssid_line(line: &str) -> Option<String> {
     } else {
         None
     }
-}
-
-#[cfg(target_os = "android")]
-fn get_wifi_ssid(_interface_name: &str) -> Option<String> {
-    None
 }
 
 #[cfg(not(target_os = "android"))]
@@ -376,19 +369,10 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
                             return Some(ssid);
                         }
                     }
-                } else {
-                    eprintln!(
-                        "[network-sync] 'netsh wlan show interfaces' falló (status: {:?}): {}",
-                        output.status,
-                        String::from_utf8_lossy(&output.stderr)
-                    );
                 }
             }
             Err(e) => {
-                eprintln!(
-                    "[network-sync] Error al ejecutar 'netsh wlan show interfaces': {}",
-                    e
-                );
+                eprintln!("[network-sync] Error netsh: {}", e);
             }
         }
 
@@ -411,19 +395,10 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
                     if !ssid.is_empty() {
                         return Some(ssid);
                     }
-                } else {
-                    eprintln!(
-                        "[network-sync] PowerShell Get-NetConnectionProfile falló (status: {:?}): {}",
-                        output.status,
-                        String::from_utf8_lossy(&output.stderr)
-                    );
                 }
             }
             Err(e) => {
-                eprintln!(
-                    "[network-sync] Error al ejecutar PowerShell Get-NetConnectionProfile: {}",
-                    e
-                );
+                eprintln!("[network-sync] Error PowerShell: {}", e);
             }
         }
     }
@@ -493,15 +468,11 @@ fn get_wifi_ssid(interface_name: &str) -> Option<String> {
         }
     }
 
-    #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
-    {
-        eprintln!("[network-sync] get_wifi_ssid no implementado para este SO");
-    }
-
     Some("SSID no disponible".to_string())
 }
 
 #[inline]
+#[cfg(not(target_os = "android"))]
 fn is_wifi_interface(name: &str) -> bool {
     let name_lower = name.to_lowercase();
 
@@ -538,105 +509,223 @@ fn is_wifi_interface(name: &str) -> bool {
     }
 }
 
-pub fn start_network_monitor(app: tauri::AppHandle) {
-    MONITOR_ONCE.call_once(|| {
-        thread::spawn(move || monitor_loop(app));
-    });
-}
-
-fn monitor_loop(app: tauri::AppHandle) {
-    #[cfg(target_os = "android")]
-    {
-        android_monitor_loop(app);
-        return;
-    }
-
-    #[cfg(not(target_os = "android"))]
-    {
-        let is_first_update = Arc::new(Mutex::new(true));
-        let is_first_clone = Arc::clone(&is_first_update);
-        let app_clone = app.clone();
-
-        match watch_interfaces(move |update: Update| {
-            handle_network_update(update, &is_first_clone, &app_clone);
-        }) {
-            Ok(_handle) => {
-                loop {
-                    thread::park();
-                }
-            }
-            Err(err) => {
-                eprintln!("[network-sync] Error al iniciar el monitor de red: {err}");
-                let _ = app.emit("network-status", serde_json::json!({
-                    "connected": false,
-                    "ssid": null,
-                    "is_uabc": false,
-                    "error": format!("No se pudo iniciar el monitor de red: {}", err)
-                }));
-
-                loop {
-                    thread::sleep(Duration::from_secs(30));
-
-                    let is_first_retry = Arc::new(Mutex::new(true));
-                    let is_first_retry_clone = Arc::clone(&is_first_retry);
-                    let app_retry = app.clone();
-
-                    match watch_interfaces(move |update: Update| {
-                        handle_network_update(update, &is_first_retry_clone, &app_retry);
-                    }) {
-                        Ok(_new_handle) => {
-                            eprintln!("[network-sync] Monitor de red reiniciado exitosamente");
-                            loop {
-                                thread::park();
-                            }
-                        }
-                        Err(retry_err) => {
-                            eprintln!("[network-sync] Reintento fallido: {retry_err}");
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-#[cfg(target_os = "android")]
-fn android_monitor_loop(app: tauri::AppHandle) {
-    // netwatcher no soporta Android. Usamos polling HTTP + SSID del frontend.
-    // El frontend reporta el SSID via update_android_ssid(); este loop re-emite
-    // inmediatamente al recibir ese trigger, o cada POLL_SECS como heartbeat.
-    const POLL_SECS: u64 = 5;
-
-    let (tx, rx) = std::sync::mpsc::channel::<()>();
-    {
-        let mut guard = ANDROID_TRIGGER_TX.lock().unwrap_or_else(|p| p.into_inner());
-        *guard = Some(tx);
-    }
-
-    let emit_current = || {
-        let ssid_owned: Option<String> = {
-            let guard = ANDROID_SSID.lock().unwrap_or_else(|p| p.into_inner());
-            guard.as_deref().map(|s| s.to_string())
-        };
-        emit_network_status(&app, ssid_owned.as_deref());
-    };
-
-    emit_current();
-
-    loop {
-        match rx.recv_timeout(Duration::from_secs(POLL_SECS)) {
-            Ok(()) | Err(std::sync::mpsc::RecvTimeoutError::Timeout) => emit_current(),
-            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
-        }
-    }
-}
-
 fn emit_network_status(app: &tauri::AppHandle, ssid: Option<&str>) {
     let payload = create_status_payload(ssid);
     let _ = app.emit("network-status", payload);
 
     if check_is_uabc(ssid) {
         let _ = app.emit("uabc-detected", ());
+    }
+}
+
+/// Fast-path: Android ya validó la conexión (hasInternet + hasValidated = true).
+/// Si la red es UABC y hay internet según el sistema operativo, emitimos FineConnection
+/// sin hacer ningún HTTP adicional. Si no cumple las condiciones, cae al check normal.
+#[cfg(target_os = "android")]
+fn emit_with_android_hint(app: &tauri::AppHandle, ssid: Option<&str>, os_validated_internet: bool) {
+    let is_uabc = check_is_uabc(ssid);
+    let connected = ssid.is_some();
+
+    let network_state = if os_validated_internet && connected && is_uabc {
+        // El SO ya confirmó internet + red UABC → directamente autenticado
+        SyncNetworkState::FineConnection
+    } else {
+        // Verificación completa (HTTP check)
+        resolve_sync_network_state(ssid, connected, is_uabc)
+    };
+
+    log_state_transition(network_state, ssid, connected, is_uabc);
+
+    let payload = serde_json::json!({
+        "connected": connected,
+        "ssid": ssid,
+        "is_uabc": is_uabc,
+        "network_state": network_state.as_key(),
+        "status_text": network_state.as_status_text()
+    });
+
+    let _ = app.emit("network-status", payload);
+    if is_uabc {
+        let _ = app.emit("uabc-detected", ());
+    }
+}
+
+pub fn start_network_monitor(app: tauri::AppHandle) {
+    MONITOR_ONCE.call_once(|| {
+        #[cfg(target_os = "android")]
+        tauri::async_runtime::spawn(android_monitor_loop(app));
+
+        #[cfg(not(target_os = "android"))]
+        thread::spawn(move || desktop_monitor_loop(app));
+    });
+}
+
+// -------------------------------------------------------
+// Android: monitor reactivo puro — cero polling
+// -------------------------------------------------------
+
+/// Intervalo del heartbeat de polling en Android.
+/// El observer cubre cambios inmediatos; el polling garantiza consistencia
+/// si se pierde algún evento del NetworkCallback.
+const ANDROID_POLL_SECS: u64 = 12;
+
+#[cfg(target_os = "android")]
+async fn android_monitor_loop(app: tauri::AppHandle) {
+    use tauri_plugin_wifi_interface::{WifiEventBusExt, WifiInterfaceExt};
+    use tokio::sync::broadcast::error::RecvError;
+    use tokio::time::{interval, Duration as TokioDuration};
+
+    // Activar Android NetworkCallback (JNI blocking → spawn_blocking)
+    {
+        let wifi = app.wifi_interface().clone();
+        match tauri::async_runtime::spawn_blocking(move || wifi.start_observing()).await {
+            Ok(Ok(_)) => println!("[network-sync] Observer WiFi Android activado"),
+            Ok(Err(e)) => eprintln!("[network-sync] Error activando observer: {e}"),
+            Err(e) => eprintln!("[network-sync] Panic en start_observing: {e}"),
+        }
+    }
+
+    // Estado inicial mientras llega el primer evento
+    {
+        let app_c = app.clone();
+        tauri::async_runtime::spawn_blocking(move || emit_network_status(&app_c, None)).await.ok();
+    }
+
+    let mut rx = app.wifi_events();
+
+    // Heartbeat de polling — fallback si el observer pierde algún evento
+    let mut poll_ticker = interval(TokioDuration::from_secs(ANDROID_POLL_SECS));
+    poll_ticker.tick().await; // consumir el tick inmediato inicial
+
+    // Estado local para deduplicar — evita HTTP check en cambios de RSSI
+    let mut last_ssid: Option<String> = None;
+    let mut last_has_internet: Option<bool> = None;
+    let mut last_has_validated: Option<bool> = None;
+
+    loop {
+        tokio::select! {
+            // ── RAMA 1: evento push del observer ─────────────────────────
+            recv_result = rx.recv() => {
+                let event = match recv_result {
+                    Ok(e) => e,
+                    Err(RecvError::Lagged(n)) => {
+                        eprintln!("[network-sync] WiFi bus lagged {n} eventos — re-emitiendo estado");
+                        let ssid = last_ssid.clone();
+                        let app_c = app.clone();
+                        tauri::async_runtime::spawn_blocking(move || {
+                            emit_network_status(&app_c, ssid.as_deref())
+                        }).await.ok();
+                        continue;
+                    }
+                    Err(RecvError::Closed) => {
+                        eprintln!("[network-sync] WiFi event bus cerrado — solo queda polling");
+                        // El observer falló; el heartbeat sigue corriendo
+                        continue;
+                    }
+                };
+
+                let (new_ssid, needs_eval) = match event.event.as_str() {
+                    "available" => (last_ssid.clone(), true),
+                    "lost" | "unavailable" => (None, true),
+                    "capabilitiesChanged" => {
+                        let ssid = event.ssid.clone();
+                        let hi = event.has_internet;
+                        let hv = event.has_validated;
+                        // Ignorar si solo cambió RSSI/linkSpeed
+                        let changed = ssid != last_ssid
+                            || hi != last_has_internet
+                            || hv != last_has_validated;
+                        (ssid, changed)
+                    }
+                    _ => continue,
+                };
+
+                if !needs_eval {
+                    continue;
+                }
+
+                last_ssid = new_ssid.clone();
+                last_has_internet = event.has_internet;
+                last_has_validated = event.has_validated;
+
+                {
+                    let mut guard = ANDROID_SSID.lock().unwrap_or_else(|p| p.into_inner());
+                    *guard = new_ssid.as_deref().map(Box::from);
+                }
+
+                let ssid_owned = new_ssid.clone();
+                let app_c = app.clone();
+                let android_validated = event.has_validated.unwrap_or(false)
+                    && event.has_internet.unwrap_or(false);
+
+                tauri::async_runtime::spawn_blocking(move || {
+                    emit_with_android_hint(&app_c, ssid_owned.as_deref(), android_validated);
+                }).await.ok();
+            }
+
+            // ── RAMA 2: heartbeat de polling ──────────────────────────────
+            _ = poll_ticker.tick() => {
+                // Re-verificar el estado actual sin importar si llegó o no un evento.
+                // Sirve como red de seguridad contra eventos perdidos o bugs del SO.
+                let ssid = last_ssid.clone();
+                let app_c = app.clone();
+                tauri::async_runtime::spawn_blocking(move || {
+                    emit_network_status(&app_c, ssid.as_deref());
+                }).await.ok();
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------
+// Desktop: monitor basado en netwatcher (sin cambios)
+// -------------------------------------------------------
+
+#[cfg(not(target_os = "android"))]
+fn desktop_monitor_loop(app: tauri::AppHandle) {
+    let is_first_update = Arc::new(Mutex::new(true));
+    let is_first_clone = Arc::clone(&is_first_update);
+    let app_clone = app.clone();
+
+    match watch_interfaces(move |update: Update| {
+        handle_network_update(update, &is_first_clone, &app_clone);
+    }) {
+        Ok(_handle) => {
+            loop {
+                thread::park();
+            }
+        }
+        Err(err) => {
+            eprintln!("[network-sync] Error al iniciar el monitor de red: {err}");
+            let _ = app.emit("network-status", serde_json::json!({
+                "connected": false,
+                "ssid": null,
+                "is_uabc": false,
+                "error": format!("No se pudo iniciar el monitor de red: {}", err)
+            }));
+
+            loop {
+                thread::sleep(Duration::from_secs(30));
+
+                let is_first_retry = Arc::new(Mutex::new(true));
+                let is_first_retry_clone = Arc::clone(&is_first_retry);
+                let app_retry = app.clone();
+
+                match watch_interfaces(move |update: Update| {
+                    handle_network_update(update, &is_first_retry_clone, &app_retry);
+                }) {
+                    Ok(_new_handle) => {
+                        eprintln!("[network-sync] Monitor de red reiniciado exitosamente");
+                        loop {
+                            thread::park();
+                        }
+                    }
+                    Err(retry_err) => {
+                        eprintln!("[network-sync] Reintento fallido: {retry_err}");
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -647,7 +736,7 @@ fn handle_network_update(
     app: &tauri::AppHandle,
 ) {
     let current_state = WifiState::from_interfaces(&update.interfaces);
-    
+
     let is_first = match is_first_update.lock() {
         Ok(mut guard) => std::mem::replace(&mut *guard, false),
         Err(poisoned) => {

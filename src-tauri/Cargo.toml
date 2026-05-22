@@ -52,6 +52,7 @@ tauri-plugin-autostart = "2"
 secrecy = { version = "0.10", features = ["serde"] }
 zeroize = { version = "1.8", features = ["derive"] }
 regex = "1.10"
+tokio = { version = "1", features = ["sync", "time", "macros"] }
 
 # Widgets
 tauri-plugin-widget = "0.1.2"
