@@ -147,6 +147,26 @@
 		"unavailable": "Cimarrón WI-FI Not Available",
 		"noConnection": "No connection to university network"
 	},
+	"Header": {
+		"connected": "Connected",
+		"disconnected": "No connection",
+		"initSession": "Log in"
+	},
+	"Profile": {
+		"title": "My Credentials",
+		"encrypted": "Stored encrypted on device",
+		"save": "Save",
+		"saveSuccess": "Saved",
+		"setCredentials": "Set up"
+	},
+	"CimaSyncMode": {
+		"title": "CimaSync Mode",
+		"subtitle": "Move freely around campus with WiFi connection",
+		"activate": "Activate",
+		"stop": "Stop",
+		"active": "Service active",
+		"landing": "Website"
+	},
 	"CertificateAlert": {
 		"buttonTitle": "Update available",
 		"title": "Update required",

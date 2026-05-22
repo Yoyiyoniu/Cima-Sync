@@ -147,6 +147,26 @@
 		"unavailable": "WI-FI Cimarrón No Disponible",
 		"noConnection": "Sin conexión a la red de la universidad"
 	},
+	"Header": {
+		"connected": "Con conexión",
+		"disconnected": "Sin conexión",
+		"initSession": "Inicia sesión"
+	},
+	"Profile": {
+		"title": "Mis Credenciales",
+		"encrypted": "Guardadas de forma encriptada",
+		"save": "Guardar",
+		"saveSuccess": "Guardado",
+		"setCredentials": "Configurar"
+	},
+	"CimaSyncMode": {
+		"title": "Modo CimaSync",
+		"subtitle": "Muévete libremente por el campus con conexión wifi",
+		"activate": "Activar",
+		"stop": "Detener",
+		"active": "Servicio activo",
+		"landing": "Sitio web"
+	},
 	"CertificateAlert": {
 		"buttonTitle": "Actualización disponible",
 		"title": "Actualización requerida",

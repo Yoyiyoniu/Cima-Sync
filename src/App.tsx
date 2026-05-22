@@ -1,9 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
-
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 
 import { useAppBootstrap } from "./hooks/useAppBootstrap";
 import { useDisableContextMenu } from "./hooks/disableContextMenu";
@@ -11,28 +10,28 @@ import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { useTourAutoOpen } from "./hooks/useTourAutoOpen";
 import { useDeviceStore } from "./store/deviceStore";
 import { useUiStore } from "./store/uiStore";
+import { useSessionStore } from "./store/sessionStore";
 import type { AppProps, AppState } from "./types";
 
-import { setRememberSessionConfig } from "./controller/DbController";
-import { LoadingText } from "./components/LoadingText";
 import { BugModal } from "./components/BugModal";
 import { CertificateAlert } from "./components/CertificateAlert";
-import { CopyRightMenu } from "./components/ContactMe";
-import { Input } from "./components/Input";
+import { CimaSyncModeCard } from "./components/CimaSyncModeCard";
+import { ProfileModal } from "./components/ProfileModal";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { SuccessModal } from "./components/SuccessModal";
+import { LoadingText } from "./components/LoadingText";
 import {
 	CIMA_SYNC_STOPPED_TOAST_DURATION,
 	NetworkStateToastManager,
 	showAuthErrorToast,
 	showCimaSyncActiveToast,
 	showCimaSyncStoppedToast,
-	showFineConnectionToast
+	showFineConnectionToast,
 } from "./components/ToastManager";
 
 import BugIcon from "./assets/icons/BugIcon";
-import StopIcon from "./assets/icons/StopIcon";
-import CheckIcon from "./assets/icons/CheckIcon";
+import OptionsIcon from "./assets/icons/OptionsIcon";
+import ProfileIcon from "./assets/icons/ProfileIcon";
 import img from "./assets/img/cima-sync-logo.avif";
 
 import "@fontsource-variable/nunito";
@@ -43,13 +42,63 @@ import {
 	stopBackgroundService,
 } from "./controller/backgroundService";
 
+type NetworkSyncState =
+	| "fineConnection"
+	| "haveCautivePortal"
+	| "invalidConnection"
+	| "mobileConnection"
+	| "mobileConnectionRequiereAuth";
+
+const STATUS_CONFIG: Record<
+	NetworkSyncState,
+	{ label: (t: (k: string) => string) => string; color: string; dot: string; glow: string }
+> = {
+	fineConnection: {
+		label: (t) => t("Header.connected"),
+		color: "bg-[#00723f]/20 border-[#00723f]/50",
+		dot: "bg-emerald-400 shadow-[0_0_6px_#34d399]",
+		glow: "rgba(0,114,63,0.3)",
+	},
+	haveCautivePortal: {
+		label: (t) => t("Header.initSession"),
+		color: "bg-amber-500/15 border-amber-500/40",
+		dot: "bg-amber-400",
+		glow: "rgba(245,158,11,0.2)",
+	},
+	mobileConnectionRequiereAuth: {
+		label: (t) => t("Header.initSession"),
+		color: "bg-amber-500/15 border-amber-500/40",
+		dot: "bg-amber-400",
+		glow: "rgba(245,158,11,0.2)",
+	},
+	invalidConnection: {
+		label: (t) => t("Header.disconnected"),
+		color: "bg-white/8 border-white/15",
+		dot: "bg-white/30",
+		glow: "transparent",
+	},
+	mobileConnection: {
+		label: (t) => t("Header.disconnected"),
+		color: "bg-white/8 border-white/15",
+		dot: "bg-white/30",
+		glow: "transparent",
+	},
+};
+
+const ORBIT_RADIUS = 116;
+const ORBIT_DURATION = 13.0;
+
+const ORBIT_DOTS = [0, 1, 2, 3].map((i) => ({
+	startAngle: (i / 4) * 360,
+	delay: i * 0.18,
+}));
+
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
-
 	const { setIsOpen } = useTour();
 
-	const { credentials, setCredentials, rememberSession, setRememberSession, isBootstrapping } =
-		useAppBootstrap();
+	const { rememberSession, isBootstrapping } = useAppBootstrap();
+	const credentials = useSessionStore((state) => state.credentials);
 
 	const [appState, setAppState] = useState<AppState>({
 		loading: false,
@@ -60,64 +109,53 @@ function App({ showTourFirstTime = false }: AppProps) {
 	const showSuccessModal = useUiStore((state) => state.showSuccessModal);
 	const openSuccessModal = useUiStore((state) => state.openSuccessModal);
 	const closeSuccessModal = useUiStore((state) => state.closeSuccessModal);
-	const openCertificateAlert = useUiStore(
-		(state) => state.openCertificateAlert,
-	);
+	const openCertificateAlert = useUiStore((state) => state.openCertificateAlert);
 	const openBugModal = useUiStore((state) => state.openBugModal);
 	const closeBugModal = useUiStore((state) => state.closeBugModal);
-
-	const showCertificateAlert = useUiStore(
-		(state) => state.showCertificateAlert,
-	);
+	const showCertificateAlert = useUiStore((state) => state.showCertificateAlert);
 	const showBugModal = useUiStore((state) => state.showBugModal);
+	const openSettingsMenu = useUiStore((state) => state.openSettingsMenu);
+	const showProfileModal = useUiStore((state) => state.showProfileModal);
+	const openProfileModal = useUiStore((state) => state.openProfileModal);
+	const closeProfileModal = useUiStore((state) => state.closeProfileModal);
 
-	const { isUabcConnected, networkState } =
-		useNetworkStatus();
+	const { isUabcConnected, networkState } = useNetworkStatus();
 	const [isCimaSyncActive, setIsCimaSyncActive] = useState(false);
-	const isBackendAuthenticated = networkState === "fineConnection";
 
 	const isMobile = useDeviceStore((state) => state.isMobile);
 	const platform = useDeviceStore((state) => state.platform);
 	const isAndroid = platform === "android";
 
-	const isFormDisabled = appState.loading || isCimaSyncActive;
-
 	const isLoginDisabled =
-		isFormDisabled ||
-		(!isMobile &&
-			(!credentials.email || !credentials.password || !isUabcConnected));
+		appState.loading ||
+		isCimaSyncActive ||
+		(!isMobile && (!credentials.email || !credentials.password || !isUabcConnected));
+
+	const status = STATUS_CONFIG[networkState as NetworkSyncState] ?? STATUS_CONFIG.invalidConnection;
 
 	const refreshAuthStatus = useCallback(async () => {
 		try {
-			const status = await invoke<{ is_active?: boolean }>("get_auth_status");
-			setIsCimaSyncActive(Boolean(status?.is_active));
+			const res = await invoke<{ is_active?: boolean }>("get_auth_status");
+			setIsCimaSyncActive(Boolean(res?.is_active));
 		} catch (error) {
 			console.error("Error getting auth status:", error);
 		}
 	}, []);
 
 	useDisableContextMenu();
-
 	useTourAutoOpen({ showTourFirstTime, setIsOpen });
 
 	useEffect(() => {
 		void refreshAuthStatus();
 	}, [refreshAuthStatus]);
 
-	const handleLogin = async (e: FormEvent) => {
-		e.preventDefault();
+	const handleLogin = useCallback(async () => {
+		if (!credentials.email || !credentials.password) {
+			openProfileModal();
+			return;
+		}
 		setAppState({ loading: true, error: null, success: false });
 		try {
-			await setRememberSessionConfig(rememberSession);
-
-			// Guardar primero para que persista incluso si falla la autenticación.
-			if (rememberSession) {
-				await invoke("save_credentials", {
-					email: credentials.email,
-					password: credentials.password,
-				});
-			}
-
 			if (isMobile) {
 				await forceWifi({
 					function: async () =>
@@ -128,8 +166,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 				});
 			}
 
-			// El foreground service mantiene el proceso Android vivo en background,
-			// garantizando que el loop de reautenticación de Rust no sea matado por el SO.
 			if (isAndroid) {
 				await startBackgroundService();
 			}
@@ -163,9 +199,17 @@ function App({ showTourFirstTime = false }: AppProps) {
 		} finally {
 			setAppState((prev) => ({ ...prev, loading: false }));
 		}
-	};
+	}, [
+		credentials,
+		rememberSession,
+		isMobile,
+		isAndroid,
+		openProfileModal,
+		openSuccessModal,
+		openCertificateAlert,
+	]);
 
-	const handleLogout = async () => {
+	const handleLogout = useCallback(async () => {
 		if (isAndroid) {
 			await stopBackgroundService().catch(() => {});
 		}
@@ -174,33 +218,21 @@ function App({ showTourFirstTime = false }: AppProps) {
 		if (!isAndroid) {
 			showCimaSyncStoppedToast();
 			setTimeout(() => {
-				if (isUabcConnected) {
-					showFineConnectionToast();
-				}
+				if (isUabcConnected) showFineConnectionToast();
 			}, CIMA_SYNC_STOPPED_TOAST_DURATION);
 		}
 		setAppState({ loading: false, error: null, success: false });
-	};
+	}, [isAndroid, isUabcConnected]);
 
-	const handleRememberChange = async (checked: boolean) => {
-		setRememberSession(checked);
-		await setRememberSessionConfig(checked);
-
-		if (!checked) {
-			setCredentials({ email: "", password: "" });
-			try {
-				await invoke("delete_credentials");
-			} catch (_error) {
-				console.error("Error deleting credentials:");
-			}
-		}
-	};
+	const ringGlow = isCimaSyncActive
+		? "0 0 55px rgba(0,220,100,0.65), 0 0 110px rgba(0,160,60,0.35), 0 0 170px rgba(0,100,40,0.18)"
+		: isUabcConnected
+			? "0 0 30px rgba(0,114,63,0.25)"
+			: "none";
 
 	return (
 		<main
-			className={`flex flex-col h-screen items-center justify-center 
-			text-white gap-5 p-4 relative bg-linear-to-r from-slate-900 via-gray-800 to-gray-900 overflow-hidden
-			${isMobile ? "pt-12" : ""}`}
+			className={`flex flex-col h-screen text-white overflow-hidden relative select-none ${isMobile ? "pt-12" : ""}`}
 		>
 			{!isAndroid && (
 				<NetworkStateToastManager
@@ -209,174 +241,277 @@ function App({ showTourFirstTime = false }: AppProps) {
 				/>
 			)}
 
-			<img
-				src={img}
-				alt=""
-				className="blur absolute max-h-[800px] object-fit"
+			<motion.header
+				initial={{ opacity: 0, y: -10 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+				className="relative z-10 flex items-start justify-between px-4 py-3"
+			>
+				<button
+					type="button"
+					onClick={openSettingsMenu}
+					className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
+				>
+					<OptionsIcon width={24} height={24} className="text-white/80" />
+				</button>
+
+				<motion.div
+					key={networkState}
+					initial={{ opacity: 0, scale: 0.9 }}
+					animate={{ opacity: 1, scale: 1 }}
+					transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+					className={`flex items-center gap-2.5 px-5 py-2.5 rounded-full border text-base font-semibold transition-all duration-500 ${status.color}`}
+				>
+					<span
+						className={`w-2.5 h-2.5 rounded-full shrink-0 ${status.dot} ${networkState === "fineConnection" || isCimaSyncActive ? "animate-pulse" : ""}`}
+					/>
+					{isBootstrapping ? (
+						<span className="text-white/40">{t("ConnectionStatus.loading")}</span>
+					) : (
+						<span className="text-white/90">{status.label(t)}</span>
+					)}
+				</motion.div>
+
+				<div className="flex flex-col items-center gap-2">
+					<button
+						type="button"
+						onClick={openProfileModal}
+						className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
+					>
+						<ProfileIcon width={24} height={24} className="text-white/80" />
+					</button>
+					<button
+						type="button"
+						title={t("Settings.help.reportBug")}
+						onClick={openBugModal}
+						className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
+					>
+						<BugIcon width={24} height={24} className="text-white/80" />
+					</button>
+				</div>
+			</motion.header>
+
+			{/* ── Main content ──────────────────────────────────────── */}
+			<div className="flex-1 relative z-10 flex flex-col items-center justify-center px-6 gap-4">
+
+				{/* Label above the circle */}
+				<motion.div
+					initial={{ opacity: 0, y: -8 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.45, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+					className="h-8 flex items-center justify-center"
+				>
+					<AnimatePresence mode="wait">
+						{appState.loading ? (
+							<motion.span
+								key="loading-label"
+								initial={{ opacity: 0, y: 4 }}
+								animate={{ opacity: 1, y: 0 }}
+								exit={{ opacity: 0, y: -4 }}
+								transition={{ duration: 0.18 }}
+							>
+								<LoadingText
+									isActive={appState.loading}
+									className="text-white/60 text-base font-medium"
+									messages={[t("App.connecting"), "Desbloqueando...", "Autenticando..."]}
+								/>
+							</motion.span>
+						) : isCimaSyncActive ? (
+							<motion.span
+								key="active-label"
+								initial={{ opacity: 0, y: 4 }}
+								animate={{ opacity: 1, y: 0 }}
+								exit={{ opacity: 0, y: -4 }}
+								transition={{ duration: 0.18 }}
+								className="text-emerald-400 text-base font-bold tracking-wide"
+							>
+								{t("App.connected")}
+							</motion.span>
+						) : isUabcConnected || isMobile ? (
+							<motion.span
+								key="activate-label"
+								initial={{ opacity: 0, y: 4 }}
+								animate={{ opacity: 1, y: 0 }}
+								exit={{ opacity: 0, y: -4 }}
+								transition={{ duration: 0.18 }}
+								className="text-white/55 text-base font-medium"
+							>
+								{/* {!credentials.email ? t("Profile.setCredentials") : t("App.activateCimaSync")} */}
+								{t("App.activateCimaSync")}
+							</motion.span>
+						) : (
+							<motion.span
+								key="no-conn-label"
+								initial={{ opacity: 0, y: 4 }}
+								animate={{ opacity: 1, y: 0 }}
+								exit={{ opacity: 0, y: -4 }}
+								transition={{ duration: 0.18 }}
+								className="text-white/30 text-base"
+							>
+								{t("App.networkUnavailable")}
+							</motion.span>
+						)}
+					</AnimatePresence>
+				</motion.div>
+
+				{/* Logo circle — IS the activate button */}
+				<div className="relative">
+					{/* Orbiting dots layer */}
+					<div className="absolute inset-0 pointer-events-none">
+						<AnimatePresence>
+							{!isCimaSyncActive && !appState.loading &&
+								ORBIT_DOTS.map((dot, i) => (
+									<motion.div
+										key={`orbit-dot-${i}`}
+										className="absolute rounded-full"
+										style={{
+											top: "50%",
+											left: "50%",
+											width: 12,
+											height: 12,
+											marginLeft: ORBIT_RADIUS - 6,
+											marginTop: -6,
+											transformOrigin: `${6 - ORBIT_RADIUS}px 6px`,
+											background:
+												"radial-gradient(circle, rgba(0,220,130,0.95) 0%, rgba(0,160,80,0.7) 100%)",
+											boxShadow:
+												"0 0 10px rgba(0,220,100,0.75), 0 0 22px rgba(0,160,80,0.45)",
+										}}
+										initial={{ rotate: dot.startAngle, opacity: 0, scale: 0 }}
+										animate={{ rotate: dot.startAngle + 360, opacity: 1, scale: 1 }}
+										transition={{
+											rotate: {
+												duration: ORBIT_DURATION,
+												repeat: Infinity,
+												ease: "linear",
+											},
+											opacity: { duration: 0.5, delay: dot.delay },
+											scale: {
+												duration: 0.4,
+												delay: dot.delay,
+												type: "spring",
+												stiffness: 300,
+												damping: 20,
+											},
+										}}
+										exit={{ opacity: 0, scale: 0, transition: { duration: 0.45 } }}
+									/>
+								))}
+						</AnimatePresence>
+					</div>
+
+					<motion.button
+						type="button"
+						initial={{ opacity: 0, scale: 0.8 }}
+						animate={{ opacity: 1, scale: 1 }}
+						transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+						onClick={handleLogin}
+						disabled={isLoginDisabled}
+						className="relative rounded-full transition-transform duration-200 active:scale-95 disabled:cursor-not-allowed focus:outline-none"
+						style={{ WebkitTapHighlightColor: "transparent" }}
+					>
+						{/* Outer glow ring */}
+						<div
+							className="absolute inset-[-8px] rounded-full transition-all duration-700 pointer-events-none"
+							style={{
+								boxShadow: ringGlow,
+								border: isCimaSyncActive
+									? "1px solid rgba(0,220,100,0.4)"
+									: isUabcConnected
+										? "1px solid rgba(0,114,63,0.2)"
+										: "1px solid rgba(255,255,255,0.06)",
+								borderRadius: "50%",
+							}}
+						/>
+
+						<div
+							className="relative w-52 h-52 rounded-full flex items-center justify-center overflow-hidden transition-all duration-700"
+							style={{
+								background: isCimaSyncActive
+									? "radial-gradient(circle at 35% 35%, rgba(0,210,100,0.38) 0%, rgba(0,100,50,0.58) 100%)"
+									: isUabcConnected
+										? "radial-gradient(circle at 35% 35%, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.28) 100%)"
+										: "radial-gradient(circle at 35% 35%, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.35) 100%)",
+								border: isCimaSyncActive
+									? "1.5px solid rgba(0,220,100,0.55)"
+									: "1px solid rgba(255,255,255,0.12)",
+								backdropFilter: "blur(12px)",
+								boxShadow: isCimaSyncActive
+									? "inset 0 0 40px rgba(0,180,80,0.22), inset 0 0 80px rgba(0,100,50,0.12)"
+									: "none",
+							}}
+						>
+							<img
+								src={img}
+								alt="CimaSync"
+								className={`w-32 h-32 object-cover rounded-full animate-logo-pop transition-opacity duration-500 ${
+									isCimaSyncActive ? "opacity-50" : isLoginDisabled && !isMobile ? "opacity-30" : "opacity-100"
+								}`}
+							/>
+
+							<AnimatePresence>
+								{isCimaSyncActive && (
+									<motion.div
+										key="active-overlay"
+										initial={{ opacity: 0, scale: 0.5 }}
+										animate={{ opacity: 1, scale: 1 }}
+										exit={{ opacity: 0, scale: 0.5 }}
+										transition={{ type: "spring", stiffness: 400, damping: 28 }}
+										className="absolute inset-0 flex items-center justify-center"
+									>
+										<div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width={32}
+												height={32}
+												fill="none"
+												stroke="currentColor"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2.5}
+												viewBox="0 0 24 24"
+												className="text-emerald-400"
+												aria-hidden="true"
+											>
+												<polyline points="20 6 9 17 4 12" />
+											</svg>
+										</div>
+									</motion.div>
+								)}
+							</AnimatePresence>
+
+							<AnimatePresence>
+								{appState.loading && (
+									<motion.div
+										key="loading-overlay"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+										exit={{ opacity: 0 }}
+										transition={{ duration: 0.2 }}
+										className="absolute inset-0 flex items-center justify-center rounded-full"
+										style={{ background: "rgba(0,0,0,0.45)" }}
+									>
+										<div className="w-12 h-12 rounded-full border-[3px] border-white/15 border-t-white/80 animate-spin" />
+									</motion.div>
+								)}
+							</AnimatePresence>
+						</div>
+
+					</motion.button>
+				</div>
+			</div>
+
+			<CimaSyncModeCard
+				isCimaSyncActive={isCimaSyncActive}
+				isLoading={appState.loading}
+				isDisabled={isLoginDisabled}
+				onActivate={handleLogin}
+				onDeactivate={handleLogout}
 			/>
 
 			<SettingsMenu />
-
-			<motion.div
-				initial={{ opacity: 0, y: 12 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-				className="w-full p-5 relative z-10 flex flex-col items-center justify-center"
-			>
-				<CopyRightMenu />
-
-				<form
-					className={`login-form w-full max-w-sm flex flex-col gap-3 mb-8 ${isFormDisabled ? "is-loading" : ""}`}
-					onSubmit={handleLogin}
-					aria-busy={appState.loading}
-				>
-					<div className="text-center mb-8">
-						<h1 className={`app-title show text-2xl font-medium`}>
-							{t("App.title")}
-						</h1>
-						<p className={`app-subtitle show`}>{t("App.subtitle")}</p>
-					</div>
-
-					<fieldset
-						disabled={isFormDisabled}
-						className={`login-fieldset flex flex-col gap-3 ${isFormDisabled ? "is-disabled" : ""}`}
-					>
-						<div className={`form-element show`}>
-							<Input
-								id="email"
-								type="email"
-								label={t("App.email")}
-								placeholder={t("Input.emailPlaceholder")}
-								value={credentials.email}
-								onChange={(e) => {
-									setCredentials((prev) => ({
-										...prev,
-										email: e.target.value,
-									}));
-								}}
-								disabled={isFormDisabled}
-								loading={isBootstrapping}
-							/>
-						</div>
-
-						<div className={`form-element show`}>
-							<Input
-								id="password"
-								type="password"
-								label={t("App.password")}
-								placeholder={t("Input.passwordPlaceholder")}
-								value={credentials.password}
-								onChange={(e) => {
-									setCredentials((prev) => ({
-										...prev,
-										password: e.target.value,
-									}));
-								}}
-								disabled={isFormDisabled}
-								loading={isBootstrapping}
-							/>
-						</div>
-
-						<div className={`form-element show flex items-center`}>
-							<div className="relative flex items-center">
-								<input
-									type="checkbox"
-									id="remember"
-									checked={rememberSession}
-									onChange={(e) => handleRememberChange(e.target.checked)}
-									disabled={isFormDisabled}
-									className="peer h-4 w-4 appearance-none rounded border border-[#006633]/30 bg-black/40 
-                        checked:bg-[#006633] checked:border-[#006633] 
-                          focus:outline-none focus:ring-2 focus:ring-[#006633]/50
-                          disabled:opacity-50 disabled:cursor-not-allowed"
-								/>
-								<div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										className="h-3 w-3"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-										aria-hidden="true"
-									>
-										<path
-											fillRule="evenodd"
-											d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-											clipRule="evenodd"
-										/>
-									</svg>
-								</div>
-							</div>
-							<label
-								htmlFor="remember"
-								title={t("App.rememberTitle")}
-								className="ml-2 text-sm text-gray-300 cursor-pointer select-none"
-							>
-								{t("App.remember")}
-							</label>
-						</div>
-
-					</fieldset>
-					<div className="form-element show flex w-full max-w-sm justify-center items-center gap-2">
-						{isUabcConnected && !appState.loading && isBackendAuthenticated && (
-							<div
-								className="h-11 px-3 flex items-center justify-center rounded-md font-medium bg-[#22c55e] hover:bg-[#16a34a] text-white transition-all duration-300 shadow-sm cursor-default"
-								title={t("App.alreadyAuthenticatedTooltip")}
-							>
-								<CheckIcon className="w-5 h-5" />
-							</div>
-						)}
-						<button
-							id="login-button"
-							type="submit"
-							title={
-								!isUabcConnected && !isMobile
-									? t("App.networkUnavailable")
-									: t("App.alreadyAuthenticatedTooltip")
-							}
-							disabled={isLoginDisabled}
-							className="login-button h-11 flex-1 items-center justify-center rounded-md font-medium bg-[#22c55e] hover:bg-[#16a34a] text-white disabled:cursor-not-allowed transition-all duration-300 shadow-sm cursor-pointer w-full"
-						>
-							<span className="login-button-glow" aria-hidden="true" />
-							<span className="login-button-text flex items-center justify-center gap-2">
-								{appState.loading ? (
-									<LoadingText
-										isActive={appState.loading}
-										className="inline-block"
-										messages={[
-											`${t("App.connecting")}...`,
-											"Desbloqueando limitaciones cimarronas...",
-											"Puliendo credenciales interestelares...",
-											"Calibrando señal extraterrestre...",
-										]}
-									/>
-								) : isCimaSyncActive ? (
-									t("App.connected")
-								) : !isUabcConnected && !isMobile ? (
-									t("App.networkUnavailable")
-								) : (
-									t("App.activateCimaSync")
-								)}
-							</span>
-							<span className="login-button-sheen" aria-hidden="true" />
-						</button>
-						<button
-							title={t("App.logout")}
-							onClick={handleLogout}
-							type="button"
-							className={`h-11 flex items-center justify-center rounded-md font-medium
-                      bg-red-600 hover:bg-red-700 text-white
-                      disabled:opacity-70 disabled:cursor-not-allowed
-                      transition-all duration-300 shadow-sm cursor-pointer
-									${isCimaSyncActive ? "w-20 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-0 pointer-events-none"}`}
-						>
-							<StopIcon />
-						</button>
-					</div>
-				</form>
-			</motion.div>
-
+			<ProfileModal isOpen={showProfileModal} onClose={closeProfileModal} />
 			<SuccessModal isOpen={showSuccessModal} onClose={closeSuccessModal} />
-
 			<CertificateAlert isVisible={showCertificateAlert} />
 
 			<BugModal
@@ -384,14 +519,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 				setShowModal={(show) => (show ? openBugModal() : closeBugModal())}
 			/>
 
-			<button
-				type="button"
-				title={t("Settings.help.reportBug")}
-				onClick={openBugModal}
-				className="fixed bottom-5 right-5 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white shadow-lg transition-all duration-300 hover:scale-105"
-			>
-				<BugIcon width={24} height={24} />
-			</button>
 		</main>
 	);
 }

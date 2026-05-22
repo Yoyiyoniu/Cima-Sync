@@ -154,7 +154,7 @@ export function Onboarding() {
 	const isLast = step === steps.length - 1;
 
 	return (
-		<main className="min-h-screen w-full text-white bg-linear-to-br from-gray-950 via-slate-950 to-gray-900 overflow-hidden relative">
+		<main className="min-h-screen w-full text-white overflow-hidden relative">
 			{/* Fondo estático — sin animaciones de blur en mobile */}
 			<div className="absolute inset-0 pointer-events-none">
 				<div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />

@@ -9,6 +9,8 @@ export const AppWrapper = () => {
 	const [searchParams] = useSearchParams();
 	const showTour = searchParams.get("tour") === "true";
 	const isMobile = useDeviceStore((state) => state.isMobile);
+	const platform = useDeviceStore((state) => state.platform);
+	const isAndroid = platform === "android";
 
 	return (
 		<TourProvider
@@ -21,20 +23,22 @@ export const AppWrapper = () => {
 			disableKeyboardNavigation={false}
 			styles={tourStyles}
 		>
-			<Toaster
-				position="top-right"
-				offset={isMobile ? { top: "3rem", left: "5rem" } : undefined}
-				theme="dark"
-				options={{
-					duration: null,
-					fill: "#00000000",
-					roundness: 12,
-					styles: {
-						title: "text-white!",
-						description: "text-white/75!",
-					},
-				}}
-			/>
+			{!isAndroid && (
+				<Toaster
+					position="top-right"
+					offset={isMobile ? { top: "3rem", left: "5rem" } : undefined}
+					theme="dark"
+					options={{
+						duration: null,
+						fill: "#00000000",
+						roundness: 12,
+						styles: {
+							title: "text-white!",
+							description: "text-white/75!",
+						},
+					}}
+				/>
+			)}
 			<App showTourFirstTime={showTour} />
 		</TourProvider>
 	);
