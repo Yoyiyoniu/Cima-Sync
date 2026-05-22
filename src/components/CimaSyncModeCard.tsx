@@ -64,23 +64,35 @@ export const CimaSyncModeCard = ({
 					{/* Animated toggle ↔ stop button */}
 					<div className="flex items-center gap-3 shrink-0 mt-0.5">
 						{isLoading && (
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={{ opacity: 0 }}
-								className="w-5 h-5 border-2 border-white/20 border-t-white/70 rounded-full animate-spin"
-							/>
+							<div className="w-5 h-5 border-2 border-white/20 border-t-white/70 rounded-full animate-spin" />
 						)}
 
-						<AnimatePresence mode="wait" initial={false}>
-							{isCimaSyncActive ? (
-								<motion.button
-									key="stop-btn"
+						<div
+							className="t-icon-swap"
+							data-state={isCimaSyncActive ? "b" : "a"}
+						>
+							<span className="t-icon" data-icon="a">
+								<button
 									type="button"
-									initial={{ opacity: 0, scale: 0.7, filter: "blur(4px)" }}
-									animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-									exit={{ opacity: 0, scale: 0.7, filter: "blur(4px)" }}
-									transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+									onClick={onActivate}
+									disabled={isLoading || isDisabled}
+									title={
+										isDisabled
+											? t("App.networkUnavailable")
+											: t("CimaSyncMode.activate")
+									}
+									className="relative w-[68px] h-[36px] rounded-full border transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+									style={{
+										background: "rgba(255,255,255,0.1)",
+										borderColor: "rgba(255,255,255,0.2)",
+									}}
+								>
+									<div className="absolute top-[5px] left-[3px] w-[26px] h-[26px] rounded-full bg-white/80 shadow-sm" />
+								</button>
+							</span>
+							<span className="t-icon" data-icon="b">
+								<button
+									type="button"
 									onClick={onDeactivate}
 									disabled={isLoading}
 									className="flex items-center gap-2 px-5 py-3 rounded-full border text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
@@ -92,35 +104,9 @@ export const CimaSyncModeCard = ({
 								>
 									<StopIcon className="w-4 h-4" />
 									{t("CimaSyncMode.stop")}
-								</motion.button>
-							) : (
-								<motion.button
-									key="toggle-slider"
-									type="button"
-									initial={{ opacity: 0, scale: 0.7, filter: "blur(4px)" }}
-									animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-									exit={{ opacity: 0, scale: 0.7, filter: "blur(4px)" }}
-									transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-									onClick={onActivate}
-									disabled={isLoading || isDisabled}
-									title={
-										isDisabled
-											? t("App.networkUnavailable")
-											: t("CimaSyncMode.activate")
-									}
-									className="relative w-[68px] h-[36px] rounded-full border transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-									style={{
-										background: "rgba(255,255,255,0.1)",
-										borderColor: "rgba(255,255,255,0.2)",
-									}}
-								>
-									<motion.div
-										animate={{ x: 3 }}
-										className="absolute top-[5px] left-0 w-[26px] h-[26px] rounded-full bg-white/80 shadow-sm"
-									/>
-								</motion.button>
-							)}
-						</AnimatePresence>
+								</button>
+							</span>
+						</div>
 					</div>
 				</div>
 

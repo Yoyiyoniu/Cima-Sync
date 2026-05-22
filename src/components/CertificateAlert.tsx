@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import XIcon from "../assets/icons/XIcon";
@@ -12,6 +12,31 @@ interface CertificateAlertProps {
 export function CertificateAlert({ isVisible }: CertificateAlertProps) {
 	const { t } = useTranslation();
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isRendered, setIsRendered] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
+	const [isClosing, setIsClosing] = useState(false);
+	const closeMs = 150;
+	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(() => {
+		if (isModalOpen) {
+			setIsRendered(true);
+			const frame = requestAnimationFrame(() => setIsOpen(true));
+			return () => cancelAnimationFrame(frame);
+		}
+	}, [isModalOpen]);
+
+	const closeModal = () => {
+		setIsOpen(false);
+		setIsClosing(true);
+		closeTimerRef.current = setTimeout(() => {
+			setIsRendered(false);
+			setIsClosing(false);
+			setIsModalOpen(false);
+		}, closeMs);
+	};
+
+	useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); }, []);
 
 	if (!isVisible) return null;
 
@@ -27,8 +52,8 @@ export function CertificateAlert({ isVisible }: CertificateAlertProps) {
 		<>
 			<button
 				onClick={() => setIsModalOpen(true)}
-				className="fixed bottom-4 right-4 z-50 
-					bg-red-600 hover:bg-red-500 
+				className="fixed bottom-4 right-4 z-50
+					bg-red-600 hover:bg-red-500
 					text-white p-3 rounded-full shadow-lg
 					transition-all duration-300 hover:scale-110
 					animate-pulse hover:animate-none"
@@ -49,21 +74,21 @@ export function CertificateAlert({ isVisible }: CertificateAlertProps) {
 				</svg>
 			</button>
 
-			{isModalOpen && (
+			{isRendered && (
 				<div
-					className="fixed inset-0 z-100 flex items-center justify-center p-4"
-					onClick={() => setIsModalOpen(false)}
+					className={`fixed inset-0 z-100 flex items-center justify-center p-4 transition-opacity duration-[150ms] ${isOpen ? "opacity-100" : "opacity-0"}`}
+					onClick={closeModal}
 				>
 					<div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
 					<div
-						className="relative bg-linear-to-br from-gray-900 to-gray-800 
-							border border-red-500/30 rounded-xl shadow-2xl 
-							max-w-md w-full p-6"
+						className={`relative bg-linear-to-br from-gray-900 to-gray-800
+							border border-red-500/30 rounded-xl shadow-2xl
+							max-w-md w-full p-6 t-modal${isOpen ? " is-open" : ""}${isClosing ? " is-closing" : ""}`}
 						onClick={(e) => e.stopPropagation()}
 					>
 						<button
-							onClick={() => setIsModalOpen(false)}
+							onClick={closeModal}
 							className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
 						>
 							<XIcon className="w-5 h-5" />

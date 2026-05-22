@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 
 import { setRememberSessionConfig } from "../controller/DbController";
 import { useSessionStore } from "../store/sessionStore";
@@ -30,14 +30,34 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 	const [saved, setSaved] = useState(false);
 	const [keyboardOffset, setKeyboardOffset] = useState(0);
 
+	// Panel reveal state
+	const [isRendered, setIsRendered] = useState(false);
+	const [sheetOpen, setSheetOpen] = useState(false);
+	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// t-text-swap for save button
+	const saveLabelRef = useRef<HTMLSpanElement>(null);
+	type SaveState = "save" | "saving" | "saved";
+	const [displaySaveState, setDisplaySaveState] = useState<SaveState>("save");
+
 	useEffect(() => {
 		if (isOpen) {
 			setLocalEmail(storeCredentials.email);
 			setLocalPassword(storeCredentials.password);
 			setLocalRemember(storeRemember);
 			setSaved(false);
+			setDisplaySaveState("save");
+			setIsRendered(true);
+			const frame = requestAnimationFrame(() => setSheetOpen(true));
+			return () => cancelAnimationFrame(frame);
+		} else if (isRendered) {
+			setSheetOpen(false);
+			if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+			closeTimerRef.current = setTimeout(() => setIsRendered(false), 350);
 		}
 	}, [isOpen, storeCredentials, storeRemember]);
+
+	useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); }, []);
 
 	useEffect(() => {
 		if (!isOpen || !window.visualViewport) return;
@@ -66,6 +86,22 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 		window.addEventListener("keydown", handleEsc);
 		return () => window.removeEventListener("keydown", handleEsc);
 	}, [isOpen, onClose]);
+
+	useEffect(() => {
+		const next: SaveState = saved ? "saved" : saving ? "saving" : "save";
+		if (next === displaySaveState) return;
+		const el = saveLabelRef.current;
+		if (!el) { setDisplaySaveState(next); return; }
+		el.classList.add("is-exit");
+		const timer = setTimeout(() => {
+			setDisplaySaveState(next);
+			el.classList.remove("is-exit");
+			el.classList.add("is-enter-start");
+			void el.offsetHeight;
+			el.classList.remove("is-enter-start");
+		}, 150);
+		return () => clearTimeout(timer);
+	}, [saving, saved]);
 
 	const handleSave = async () => {
 		setSaving(true);
@@ -99,34 +135,29 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 
 	const canSave = localEmail.trim().length > 0 && localPassword.length > 0;
 
-	return (
-		<AnimatePresence>
-			{isOpen && (
-				<>
-					<motion.div
-						key="profile-backdrop"
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						transition={{ duration: 0.2 }}
-						className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-						onClick={onClose}
-					/>
+	if (!isRendered) return null;
 
-					<motion.div
-						key="profile-sheet"
-						initial={{ opacity: 0, y: "100%" }}
-						animate={{ opacity: 1, y: 0 }}
-						exit={{ opacity: 0, y: "100%" }}
-						transition={{ type: "spring", stiffness: 320, damping: 32 }}
-						className="fixed left-0 right-0 z-50 rounded-t-3xl border-t border-white/15 overflow-hidden"
-						style={{
-							bottom: keyboardOffset,
-							transition: "bottom 0.25s ease-out",
-							background: "linear-gradient(160deg, rgba(15,20,30,0.98) 0%, rgba(8,14,22,0.98) 100%)",
-							backdropFilter: "blur(24px)",
-						}}
-					>
+	return (
+		<>
+			<div
+				className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-[200ms] ${sheetOpen ? "opacity-100" : "opacity-0"}`}
+				onClick={onClose}
+			/>
+
+			{/* Outer div handles keyboard-offset animation independently */}
+			<div
+				className="fixed left-0 right-0 z-50"
+				style={{ bottom: keyboardOffset, transition: "bottom 0.25s ease-out" }}
+			>
+				<div
+					data-open={sheetOpen ? "true" : "false"}
+					className="rounded-t-3xl border-t border-white/15 overflow-hidden t-panel-slide"
+					style={{
+						"--panel-translate-y": "100%",
+						background: "linear-gradient(160deg, rgba(15,20,30,0.98) 0%, rgba(8,14,22,0.98) 100%)",
+						backdropFilter: "blur(24px)",
+					} as React.CSSProperties}
+				>
 						{/* Handle bar */}
 						<div className="flex justify-center pt-3 pb-1">
 							<div className="w-10 h-1 rounded-full bg-white/25" />
@@ -221,45 +252,25 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 										color: "white",
 									}}
 								>
-									<AnimatePresence mode="wait" initial={false}>
-										{saved ? (
-											<motion.span
-												key="saved"
-												initial={{ scale: 0, opacity: 0 }}
-												animate={{ scale: 1, opacity: 1 }}
-												exit={{ scale: 0, opacity: 0 }}
-												className="flex items-center gap-2"
-											>
+									<span className="t-text-swap" ref={saveLabelRef}>
+										{displaySaveState === "saved" ? (
+											<span className="flex items-center gap-2">
 												<CheckIcon className="w-4 h-4" />
 												{t("Profile.saveSuccess")}
-											</motion.span>
-										) : saving ? (
-											<motion.span
-												key="saving"
-												initial={{ opacity: 0 }}
-												animate={{ opacity: 1 }}
-												exit={{ opacity: 0 }}
-												className="flex items-center gap-2"
-											>
+											</span>
+										) : displaySaveState === "saving" ? (
+											<span className="flex items-center justify-center">
 												<div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-											</motion.span>
+											</span>
 										) : (
-											<motion.span
-												key="save"
-												initial={{ opacity: 0 }}
-												animate={{ opacity: 1 }}
-												exit={{ opacity: 0 }}
-											>
-												{t("Profile.save")}
-											</motion.span>
+											<>{t("Profile.save")}</>
 										)}
-									</AnimatePresence>
+									</span>
 								</button>
 							</div>
 						</div>
-					</motion.div>
-				</>
-			)}
-		</AnimatePresence>
+					</div>
+				</div>
+			</>
 	);
 };

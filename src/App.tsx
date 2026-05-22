@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTour } from "@reactour/tour";
 import { AnimatePresence, motion } from "motion/react";
@@ -19,14 +19,6 @@ import { CimaSyncModeCard } from "./components/CimaSyncModeCard";
 import { ProfileModal } from "./components/ProfileModal";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { SuccessModal } from "./components/SuccessModal";
-import {
-	CIMA_SYNC_STOPPED_TOAST_DURATION,
-	NetworkStateToastManager,
-	showAuthErrorToast,
-	showCimaSyncActiveToast,
-	showCimaSyncStoppedToast,
-	showFineConnectionToast,
-} from "./components/ToastManager";
 
 import BugIcon from "./assets/icons/BugIcon";
 import OptionsIcon from "./assets/icons/OptionsIcon";
@@ -179,7 +171,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 			});
 
 			setIsCimaSyncActive(true);
-			showCimaSyncActiveToast();
 			setAppState((prev) => ({ ...prev, success: true }));
 			openSuccessModal();
 
@@ -188,7 +179,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 			}
 		} catch (error) {
 			console.error("Login error:", error);
-			showAuthErrorToast(String(error));
 			const errorStr = String(error).toLowerCase();
 			if (
 				errorStr.includes("certificate") ||
@@ -231,7 +221,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 			});
 
 			setIsCimaSyncActive(true);
-			showCimaSyncActiveToast();
 			setAppState((prev) => ({ ...prev, success: true }));
 
 			if (!rememberSession) {
@@ -239,7 +228,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 			}
 		} catch (error) {
 			console.error("Activate mode error:", error);
-			showAuthErrorToast(String(error));
 			setAppState((prev) => ({ ...prev, error: String(error) }));
 		} finally {
 			setAppState((prev) => ({ ...prev, loading: false }));
@@ -258,14 +246,8 @@ function App({ showTourFirstTime = false }: AppProps) {
 		}
 		await invoke("stop_auth");
 		setIsCimaSyncActive(false);
-		if (!isAndroid) {
-			showCimaSyncStoppedToast();
-			setTimeout(() => {
-				if (isUabcConnected) showFineConnectionToast();
-			}, CIMA_SYNC_STOPPED_TOAST_DURATION);
-		}
 		setAppState({ loading: false, error: null, success: false });
-	}, [isAndroid, isUabcConnected]);
+	}, [isAndroid]);
 
 	useEffect(() => {
 		if (
@@ -298,17 +280,51 @@ function App({ showTourFirstTime = false }: AppProps) {
 			? "0 0 30px rgba(0,114,63,0.25)"
 			: "none";
 
+	// Label above circle — t-text-swap state
+	const currentLabelText = appState.loading
+		? t("App.connecting")
+		: appState.error
+			? (appState.error.length > 48 ? `${appState.error.slice(0, 48)}…` : appState.error)
+			: isCimaSyncActive
+				? t("App.connected")
+				: (isUabcConnected || isMobile) ? t("App.activateCimaSync")
+					: t("App.networkUnavailable");
+	const currentLabelCls = appState.loading ? "text-white/70 font-medium"
+		: appState.error ? "text-red-400 text-sm font-medium"
+		: isCimaSyncActive ? "text-emerald-400 font-bold"
+		: (isUabcConnected || isMobile) ? "text-white/55 font-medium"
+		: "text-white/30";
+
+	const labelRef = useRef<HTMLSpanElement>(null);
+	const prevLabelTextRef = useRef(currentLabelText);
+	const [displayedLabelText, setDisplayedLabelText] = useState(currentLabelText);
+	const [displayedLabelCls, setDisplayedLabelCls] = useState(currentLabelCls);
+
+	useEffect(() => {
+		if (currentLabelText === prevLabelTextRef.current) return;
+		const el = labelRef.current;
+		prevLabelTextRef.current = currentLabelText;
+		if (!el) {
+			setDisplayedLabelText(currentLabelText);
+			setDisplayedLabelCls(currentLabelCls);
+			return;
+		}
+		el.classList.add("is-exit");
+		const timer = setTimeout(() => {
+			setDisplayedLabelText(currentLabelText);
+			setDisplayedLabelCls(currentLabelCls);
+			el.classList.remove("is-exit");
+			el.classList.add("is-enter-start");
+			void el.offsetHeight;
+			el.classList.remove("is-enter-start");
+		}, 150);
+		return () => clearTimeout(timer);
+	}, [currentLabelText, currentLabelCls]);
+
 	return (
 		<main
 			className={`flex flex-col h-screen text-white overflow-hidden relative select-none ${isMobile ? "pt-12" : ""}`}
 		>
-			{!isAndroid && (
-				<NetworkStateToastManager
-					networkState={networkState}
-					isUabcConnected={isUabcConnected}
-				/>
-			)}
-
 			<motion.header
 				initial={{ opacity: 0, y: -10 }}
 				animate={{ opacity: 1, y: 0 }}
@@ -372,68 +388,13 @@ function App({ showTourFirstTime = false }: AppProps) {
 					transition={{ duration: 0.45, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
 					className="h-8 flex items-center justify-center"
 				>
-					<AnimatePresence mode="wait">
-						{appState.loading ? (
-							<motion.span
-								key="loading-label"
-								initial={{ opacity: 0, y: 4 }}
-								animate={{ opacity: [0.45, 0.9, 0.45] }}
-								exit={{ opacity: 0, y: -4 }}
-								transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-								className="text-white/70 text-base font-medium"
-							>
-								{t("App.connecting")}
-							</motion.span>
-						) : appState.error ? (
-							<motion.span
-								key="error-label"
-								initial={{ opacity: 0, y: 6 }}
-								animate={{ opacity: 1, y: 0 }}
-								exit={{ opacity: 0, y: -6 }}
-								transition={{ duration: 0.25 }}
-								className="text-red-400 text-sm font-medium text-center leading-tight"
-								style={{ maxWidth: 220 }}
-							>
-								{appState.error.length > 48
-									? `${appState.error.slice(0, 48)}…`
-									: appState.error}
-							</motion.span>
-						) : isCimaSyncActive ? (
-							<motion.span
-								key="active-label"
-								initial={{ opacity: 0, y: 4 }}
-								animate={{ opacity: 1, y: 0 }}
-								exit={{ opacity: 0, y: -4 }}
-								transition={{ duration: 0.18 }}
-								className="text-emerald-400 text-base font-bold tracking-wide"
-							>
-								{t("App.connected")}
-							</motion.span>
-						) : isUabcConnected || isMobile ? (
-							<motion.span
-								key="activate-label"
-								initial={{ opacity: 0, y: 4 }}
-								animate={{ opacity: 1, y: 0 }}
-								exit={{ opacity: 0, y: -4 }}
-								transition={{ duration: 0.18 }}
-								className="text-white/55 text-base font-medium"
-							>
-								{/* {!credentials.email ? t("Profile.setCredentials") : t("App.activateCimaSync")} */}
-								{t("App.activateCimaSync")}
-							</motion.span>
-						) : (
-							<motion.span
-								key="no-conn-label"
-								initial={{ opacity: 0, y: 4 }}
-								animate={{ opacity: 1, y: 0 }}
-								exit={{ opacity: 0, y: -4 }}
-								transition={{ duration: 0.18 }}
-								className="text-white/30 text-base"
-							>
-								{t("App.networkUnavailable")}
-							</motion.span>
-						)}
-					</AnimatePresence>
+					<span
+						ref={labelRef}
+						className={`t-text-swap text-base text-center ${displayedLabelCls}`}
+						style={{ maxWidth: 220 }}
+					>
+						{displayedLabelText}
+					</span>
 				</motion.div>
 
 				{/* Logo circle — IS the activate button */}
@@ -564,36 +525,29 @@ function App({ showTourFirstTime = false }: AppProps) {
 								}`}
 							/>
 
-							<AnimatePresence>
-								{isCimaSyncActive && (
-									<motion.div
-										key="active-overlay"
-										initial={{ opacity: 0, scale: 0.5 }}
-										animate={{ opacity: 1, scale: 1 }}
-										exit={{ opacity: 0, scale: 0.5 }}
-										transition={{ type: "spring", stiffness: 160, damping: 22 }}
-										className="absolute inset-0 flex items-center justify-center"
+							<span
+								className="t-success-check absolute inset-0 flex items-center justify-center"
+								data-state={isCimaSyncActive ? "in" : "out"}
+								aria-hidden="true"
+							>
+								<span className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width={32}
+										height={32}
+										fill="none"
+										stroke="currentColor"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2.5}
+										viewBox="0 0 24 24"
+										className="text-emerald-400"
+										aria-hidden="true"
 									>
-										<div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												width={32}
-												height={32}
-												fill="none"
-												stroke="currentColor"
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2.5}
-												viewBox="0 0 24 24"
-												className="text-emerald-400"
-												aria-hidden="true"
-											>
-												<polyline points="20 6 9 17 4 12" />
-											</svg>
-										</div>
-									</motion.div>
-								)}
-							</AnimatePresence>
+										<polyline points="20 6 9 17 4 12" />
+									</svg>
+								</span>
+							</span>
 
 						</motion.div>
 
