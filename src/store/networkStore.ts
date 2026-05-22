@@ -92,7 +92,7 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 	isListening: false,
 	networkError: null,
 	unlistenFns: [],
-	startListening: async (_isMobile) => {
+	startListening: async (isMobile) => {
 		const { isListening, unlistenFns } = get();
 		if (isListening || unlistenFns.length > 0) return;
 
@@ -104,8 +104,28 @@ export const useNetworkStore = create<NetworkState>((set, get) => ({
 				},
 			);
 
+			let unlistenWifiPoll: () => void = () => {};
+			if (isMobile) {
+				let lastSsid: string | null = undefined as unknown as null;
+				const wifiPollId = setInterval(async () => {
+					try {
+						const wifiStatus = await invoke<{ isBound: boolean; ssid: string }>(
+							"plugin:wifi-interface|get_wifi_status",
+						);
+						const ssid =
+							wifiStatus.isBound && wifiStatus.ssid ? wifiStatus.ssid : null;
+						if (ssid !== lastSsid) {
+							lastSsid = ssid;
+							await invoke("set_mobile_wifi_info", { ssid });
+						}
+					} catch {
+					}
+				}, 4000);
+				unlistenWifiPoll = () => clearInterval(wifiPollId);
+			}
+
 			set({
-				unlistenFns: [unlistenStatus],
+				unlistenFns: [unlistenStatus, unlistenWifiPoll],
 				isListening: true,
 				networkError: null,
 			});

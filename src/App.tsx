@@ -38,6 +38,10 @@ import img from "./assets/img/cima-sync-logo.avif";
 import "@fontsource-variable/nunito";
 import "./css/Global.css";
 import { forceWifi } from "./controller/forceWifi";
+import {
+	startBackgroundService,
+	stopBackgroundService,
+} from "./controller/backgroundService";
 
 function App({ showTourFirstTime = false }: AppProps) {
 	const { t } = useTranslation();
@@ -124,6 +128,12 @@ function App({ showTourFirstTime = false }: AppProps) {
 				});
 			}
 
+			// El foreground service mantiene el proceso Android vivo en background,
+			// garantizando que el loop de reautenticación de Rust no sea matado por el SO.
+			if (isAndroid) {
+				await startBackgroundService();
+			}
+
 			await invoke("auto_auth", {
 				email: credentials.email,
 				password: credentials.password,
@@ -156,6 +166,9 @@ function App({ showTourFirstTime = false }: AppProps) {
 	};
 
 	const handleLogout = async () => {
+		if (isAndroid) {
+			await stopBackgroundService().catch(() => {});
+		}
 		await invoke("stop_auth");
 		setIsCimaSyncActive(false);
 		if (!isAndroid) {

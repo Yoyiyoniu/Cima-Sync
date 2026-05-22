@@ -5,7 +5,7 @@ use crate::keyring_controller::keyring::{
 };
 
 use crate::auth::Auth;
-use crate::network_controller::network_sync::get_current_network_status;
+use crate::network_controller::network_sync::{get_current_network_status, update_android_ssid};
 
 use regex::Regex;
 use std::sync::Arc;
@@ -220,4 +220,9 @@ pub fn set_crypto_key(_key_b64: &str) -> Result<String, String> {
 #[tauri::command]
 pub fn get_network_status() -> serde_json::Value {
     get_current_network_status()
+}
+
+#[tauri::command]
+pub fn set_mobile_wifi_info(ssid: Option<String>) {
+    update_android_ssid(ssid);
 }

@@ -19,6 +19,27 @@ lazy_static! {
     static ref LAST_SYNC_NETWORK_STATE: Mutex<Option<SyncNetworkState>> = Mutex::new(None);
     static ref INTERFACE_NAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_\-\. ]+$")
         .expect("Regex de interfaz inválido");
+    static ref ANDROID_SSID: Mutex<Option<Box<str>>> = Mutex::new(None);
+    static ref ANDROID_TRIGGER_TX: Mutex<Option<std::sync::mpsc::Sender<()>>> = Mutex::new(None);
+}
+
+/// Actualiza el SSID en Android (llamado desde el frontend vía comando Tauri).
+/// Si el SSID cambió, despierta el monitor para re-emitir el estado de red sin esperar el poll.
+pub fn update_android_ssid(ssid: Option<String>) {
+    let new_ssid = ssid.as_deref().map(Box::from);
+    let mut guard = match ANDROID_SSID.lock() {
+        Ok(g) => g,
+        Err(p) => p.into_inner(),
+    };
+    if *guard != new_ssid {
+        *guard = new_ssid;
+        drop(guard);
+        if let Ok(tx_guard) = ANDROID_TRIGGER_TX.lock() {
+            if let Some(tx) = tx_guard.as_ref() {
+                let _ = tx.send(());
+            }
+        }
+    }
 }
 
 const SSID_RETRY_DELAY_MS: u64 = 500;
@@ -581,33 +602,32 @@ fn monitor_loop(app: tauri::AppHandle) {
 
 #[cfg(target_os = "android")]
 fn android_monitor_loop(app: tauri::AppHandle) {
-    // netwatcher no soporta Android y crashea con 'android context was not initialized'.
-    // En Android usamos polling HTTP puro para detectar conectividad.
-    // El SSID se obtiene via tauri-plugin-wifi-interface desde el frontend.
-    const POLL_INTERVAL_SECS: u64 = 8;
+    // netwatcher no soporta Android. Usamos polling HTTP + SSID del frontend.
+    // El frontend reporta el SSID via update_android_ssid(); este loop re-emite
+    // inmediatamente al recibir ese trigger, o cada POLL_SECS como heartbeat.
+    const POLL_SECS: u64 = 5;
 
-    let emit_state = |has_internet: bool| {
-        let state = if has_internet {
-            SyncNetworkState::MobileConnection
-        } else {
-            SyncNetworkState::InvalidConnection
+    let (tx, rx) = std::sync::mpsc::channel::<()>();
+    {
+        let mut guard = ANDROID_TRIGGER_TX.lock().unwrap_or_else(|p| p.into_inner());
+        *guard = Some(tx);
+    }
+
+    let emit_current = || {
+        let ssid_owned: Option<String> = {
+            let guard = ANDROID_SSID.lock().unwrap_or_else(|p| p.into_inner());
+            guard.as_deref().map(|s| s.to_string())
         };
-        let payload = serde_json::json!({
-            "connected": false,
-            "ssid": null,
-            "is_uabc": false,
-            "network_state": state.as_key(),
-            "status_text": state.as_status_text()
-        });
-        let _ = app.emit("network-status", payload);
+        emit_network_status(&app, ssid_owned.as_deref());
     };
 
-    // Estado inicial
-    emit_state(has_internet_access());
+    emit_current();
 
     loop {
-        thread::sleep(Duration::from_secs(POLL_INTERVAL_SECS));
-        emit_state(has_internet_access());
+        match rx.recv_timeout(Duration::from_secs(POLL_SECS)) {
+            Ok(()) | Err(std::sync::mpsc::RecvTimeoutError::Timeout) => emit_current(),
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+        }
     }
 }
 
