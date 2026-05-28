@@ -36,6 +36,8 @@
 		"subtitle": "Cimarrón Institutional System",
 		"success": "Connection established successfully.",
 		"activateCimaSync": "Activate Cima Sync mode",
+		"desktopTitle": "Click to sign in",
+		"desktopSubtitle": "Automatic authentication · Cimarrón WiFi",
 		"alreadyAuthenticatedTooltip": "You are already authenticated on the Cimarrón network",
 		"connectedWifiMessage": "You are already connected to the Cimarrón WiFi.",
 		"email": "Email",
@@ -166,6 +168,10 @@
 		"stop": "Stop",
 		"active": "Service active",
 		"landing": "Website"
+	},
+	"DesktopStatus": {
+		"title": "Active session",
+		"subtitle": "Cimarrón connection established — monitoring active"
 	},
 	"CertificateAlert": {
 		"buttonTitle": "Update available",

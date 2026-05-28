@@ -36,6 +36,8 @@
 		"subtitle": "Sistema Cimarrón de inicio de sesión",
 		"success": "Conexión establecida correctamente.",
 		"activateCimaSync": "Activar modo Cima Sync",
+		"desktopTitle": "Haz clic para iniciar sesión",
+		"desktopSubtitle": "Autenticación automática · WiFi Cimarrón",
 		"alreadyAuthenticatedTooltip": "Ya estás autenticado en la red Cimarrón",
 		"connectedWifiMessage": "Ya te encuentras conectado al WiFi Cimarrón.",
 		"email": "Correo",
@@ -166,6 +168,10 @@
 		"stop": "Detener",
 		"active": "Servicio activo",
 		"landing": "Sitio web"
+	},
+	"DesktopStatus": {
+		"title": "Sesión activa",
+		"subtitle": "Conexión Cimarrón establecida — monitoreo activo"
 	},
 	"CertificateAlert": {
 		"buttonTitle": "Actualización disponible",

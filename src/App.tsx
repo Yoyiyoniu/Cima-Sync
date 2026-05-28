@@ -16,6 +16,7 @@ import type { AppProps, AppState } from "./types";
 import { BugModal } from "./components/BugModal";
 import { CertificateAlert } from "./components/CertificateAlert";
 import { CimaSyncModeCard } from "./components/CimaSyncModeCard";
+import { DesktopStatusCard } from "./components/DesktopStatusCard";
 import { ProfileModal } from "./components/ProfileModal";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { SuccessModal } from "./components/SuccessModal";
@@ -329,16 +330,18 @@ function App({ showTourFirstTime = false }: AppProps) {
 				initial={{ opacity: 0, y: -10 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-				className="relative z-10 flex items-start justify-between px-4 py-3"
+				className="relative z-10 flex items-center px-4 py-3"
 			>
-				<button
-					id="tour-settings-btn"
-					type="button"
-					onClick={openSettingsMenu}
-					className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
-				>
-					<OptionsIcon width={24} height={24} className="text-white/80" />
-				</button>
+				<div className="flex-1 flex items-center">
+					<button
+						id="tour-settings-btn"
+						type="button"
+						onClick={openSettingsMenu}
+						className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
+					>
+						<OptionsIcon width={24} height={24} className="text-white/80" />
+					</button>
+				</div>
 
 				<motion.div
 					id="tour-network-status"
@@ -358,15 +361,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 					)}
 				</motion.div>
 
-				<div className="flex flex-col items-center gap-2">
-					<button
-						id="tour-profile-btn"
-						type="button"
-						onClick={openProfileModal}
-						className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
-					>
-						<ProfileIcon width={24} height={24} className="text-white/80" />
-					</button>
+				<div className={`flex-1 flex items-center justify-end gap-2 ${isMobile ? "flex-col items-end" : ""}`}>
 					<button
 						type="button"
 						title={t("Settings.help.reportBug")}
@@ -375,11 +370,36 @@ function App({ showTourFirstTime = false }: AppProps) {
 					>
 						<BugIcon width={24} height={24} className="text-white/80" />
 					</button>
+					<button
+						id="tour-profile-btn"
+						type="button"
+						onClick={openProfileModal}
+						className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
+					>
+						<ProfileIcon width={24} height={24} className="text-white/80" />
+					</button>
 				</div>
 			</motion.header>
 
 			{/* ── Main content ──────────────────────────────────────── */}
-			<div className="flex-1 relative z-10 flex flex-col items-center justify-center px-6 gap-4">
+			<div className="flex-1 relative z-10 flex flex-col items-center justify-center px-6 gap-4 pb-[170px]">
+
+				{/* Desktop hero title */}
+				{!isMobile && !isCimaSyncActive && (
+					<motion.div
+						initial={{ opacity: 0, y: -14 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+						className="text-center"
+					>
+						<h1 className="text-2xl font-bold tracking-tight text-white/90">
+							{t("App.desktopTitle")}
+						</h1>
+						<p className="text-sm text-white/35 mt-1 tracking-wide">
+							{t("App.desktopSubtitle")}
+						</p>
+					</motion.div>
+				)}
 
 				{/* Label above the circle */}
 				<motion.div
@@ -555,13 +575,21 @@ function App({ showTourFirstTime = false }: AppProps) {
 				</div>
 			</div>
 
-			<CimaSyncModeCard
-				isCimaSyncActive={isCimaSyncActive}
-				isLoading={appState.loading}
-				isDisabled={isLoginDisabled}
-				onActivate={handleActivateMode}
-				onDeactivate={handleLogout}
-			/>
+			{isMobile ? (
+				<CimaSyncModeCard
+					isCimaSyncActive={isCimaSyncActive}
+					isLoading={appState.loading}
+					isDisabled={isLoginDisabled}
+					onActivate={handleActivateMode}
+					onDeactivate={handleLogout}
+				/>
+			) : (
+				<DesktopStatusCard
+					isCimaSyncActive={isCimaSyncActive}
+					isLoading={appState.loading}
+					onDeactivate={handleLogout}
+				/>
+			)}
 
 			<SettingsMenu />
 			<ProfileModal isOpen={showProfileModal} onClose={closeProfileModal} />

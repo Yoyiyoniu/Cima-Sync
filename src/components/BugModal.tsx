@@ -65,7 +65,7 @@ export const BugModal = ({ showModal, setShowModal }: BugModalProps) => {
 	return (
 		<button
 			type="button"
-			className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center transition-opacity duration-[150ms] ${isOpen ? "opacity-100" : "opacity-0"}`}
+			className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-9999 flex items-center justify-center transition-opacity duration-150 ${isOpen ? "opacity-100" : "opacity-0"}`}
 			onClick={handleClose}
 		>
 			<button

@@ -5,6 +5,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 
 import { Modal } from "./Modal";
 import StopIcon from "../assets/icons/StopIcon";
+import { useDeviceStore } from "../store/deviceStore";
 
 interface CimaSyncModeCardProps {
 	isCimaSyncActive: boolean;
@@ -23,6 +24,7 @@ export const CimaSyncModeCard = ({
 }: CimaSyncModeCardProps) => {
 	const { t } = useTranslation();
 	const [showLandingModal, setShowLandingModal] = useState(false);
+	const isDesktop = useDeviceStore((state) => state.isDesktop);
 
 	const handleOpenLanding = useCallback(async () => {
 		await openUrl("https://www.honeyfix.solutions");
@@ -43,7 +45,11 @@ export const CimaSyncModeCard = ({
 				initial={{ opacity: 0, y: 40 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-				className="relative z-10 w-full rounded-t-3xl border-t border-white/12 px-6 pt-6 pb-7"
+				className={
+					isDesktop
+						? "relative z-10 rounded-3xl border border-white/12 px-6 py-5 mx-4 mb-5"
+						: "relative z-10 w-full rounded-t-3xl border-t border-white/12 px-6 pt-6 pb-7"
+				}
 				style={{
 					background:
 						"linear-gradient(160deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.04) 100%)",
