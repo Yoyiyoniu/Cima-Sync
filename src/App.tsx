@@ -43,7 +43,12 @@ type NetworkSyncState =
 
 const STATUS_CONFIG: Record<
 	NetworkSyncState,
-	{ label: (t: (k: string) => string) => string; color: string; dot: string; glow: string }
+	{
+		label: (t: (k: string) => string) => string;
+		color: string;
+		dot: string;
+		glow: string;
+	}
 > = {
 	fineConnection: {
 		label: (t) => t("Header.connected"),
@@ -97,15 +102,21 @@ function App({ showTourFirstTime = false }: AppProps) {
 		error: null,
 		success: false,
 	});
-	const [pendingSource, setPendingSource] = useState<"login" | "activate" | null>(null);
+	const [pendingSource, setPendingSource] = useState<
+		"login" | "activate" | null
+	>(null);
 
 	const showSuccessModal = useUiStore((state) => state.showSuccessModal);
 	const openSuccessModal = useUiStore((state) => state.openSuccessModal);
 	const closeSuccessModal = useUiStore((state) => state.closeSuccessModal);
-	const openCertificateAlert = useUiStore((state) => state.openCertificateAlert);
+	const openCertificateAlert = useUiStore(
+		(state) => state.openCertificateAlert,
+	);
 	const openBugModal = useUiStore((state) => state.openBugModal);
 	const closeBugModal = useUiStore((state) => state.closeBugModal);
-	const showCertificateAlert = useUiStore((state) => state.showCertificateAlert);
+	const showCertificateAlert = useUiStore(
+		(state) => state.showCertificateAlert,
+	);
 	const showBugModal = useUiStore((state) => state.showBugModal);
 	const openSettingsMenu = useUiStore((state) => state.openSettingsMenu);
 	const showProfileModal = useUiStore((state) => state.showProfileModal);
@@ -123,9 +134,12 @@ function App({ showTourFirstTime = false }: AppProps) {
 		appState.loading ||
 		isBootstrapping ||
 		isCimaSyncActive ||
-		(!isMobile && (!credentials.email || !credentials.password || !isUabcConnected));
+		(!isMobile &&
+			(!credentials.email || !credentials.password || !isUabcConnected));
 
-	const status = STATUS_CONFIG[networkState as NetworkSyncState] ?? STATUS_CONFIG.invalidConnection;
+	const status =
+		STATUS_CONFIG[networkState as NetworkSyncState] ??
+		STATUS_CONFIG.invalidConnection;
 
 	const refreshAuthStatus = useCallback(async () => {
 		try {
@@ -233,13 +247,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 		} finally {
 			setAppState((prev) => ({ ...prev, loading: false }));
 		}
-	}, [
-		credentials,
-		rememberSession,
-		isAndroid,
-		openProfileModal,
-		openSuccessModal,
-	]);
+	}, [credentials, rememberSession, isAndroid, openProfileModal]);
 
 	const handleLogout = useCallback(async () => {
 		if (isAndroid) {
@@ -267,11 +275,23 @@ function App({ showTourFirstTime = false }: AppProps) {
 				void handleActivateMode();
 			}
 		}
-	}, [pendingSource, showProfileModal, credentials.email, credentials.password, appState.loading, isCimaSyncActive, handleLogin, handleActivateMode]);
+	}, [
+		pendingSource,
+		showProfileModal,
+		credentials.email,
+		credentials.password,
+		appState.loading,
+		isCimaSyncActive,
+		handleLogin,
+		handleActivateMode,
+	]);
 
 	useEffect(() => {
 		if (!appState.error) return;
-		const timer = setTimeout(() => setAppState((prev) => ({ ...prev, error: null })), 4000);
+		const timer = setTimeout(
+			() => setAppState((prev) => ({ ...prev, error: null })),
+			4000,
+		);
 		return () => clearTimeout(timer);
 	}, [appState.error]);
 
@@ -285,20 +305,28 @@ function App({ showTourFirstTime = false }: AppProps) {
 	const currentLabelText = appState.loading
 		? t("App.connecting")
 		: appState.error
-			? (appState.error.length > 48 ? `${appState.error.slice(0, 48)}…` : appState.error)
+			? appState.error.length > 48
+				? `${appState.error.slice(0, 48)}…`
+				: appState.error
 			: isCimaSyncActive
 				? t("App.connected")
-				: (isUabcConnected || isMobile) ? t("App.activateCimaSync")
+				: isUabcConnected || isMobile
+					? t("App.activateCimaSync")
 					: t("App.networkUnavailable");
-	const currentLabelCls = appState.loading ? "text-white/70 font-medium"
-		: appState.error ? "text-red-400 text-sm font-medium"
-		: isCimaSyncActive ? "text-emerald-400 font-bold"
-		: (isUabcConnected || isMobile) ? "text-white/55 font-medium"
-		: "text-white/30";
+	const currentLabelCls = appState.loading
+		? "text-white/70 font-medium"
+		: appState.error
+			? "text-red-400 text-sm font-medium"
+			: isCimaSyncActive
+				? "text-emerald-400 font-bold"
+				: isUabcConnected || isMobile
+					? "text-white/55 font-medium"
+					: "text-white/30";
 
 	const labelRef = useRef<HTMLSpanElement>(null);
 	const prevLabelTextRef = useRef(currentLabelText);
-	const [displayedLabelText, setDisplayedLabelText] = useState(currentLabelText);
+	const [displayedLabelText, setDisplayedLabelText] =
+		useState(currentLabelText);
 	const [displayedLabelCls, setDisplayedLabelCls] = useState(currentLabelCls);
 
 	useEffect(() => {
@@ -355,13 +383,17 @@ function App({ showTourFirstTime = false }: AppProps) {
 						className={`w-2.5 h-2.5 rounded-full shrink-0 ${status.dot} ${networkState === "fineConnection" || isCimaSyncActive ? "animate-pulse" : ""}`}
 					/>
 					{isBootstrapping ? (
-						<span className="text-white/40">{t("ConnectionStatus.loading")}</span>
+						<span className="text-white/40">
+							{t("ConnectionStatus.loading")}
+						</span>
 					) : (
 						<span className="text-white/90">{status.label(t)}</span>
 					)}
 				</motion.div>
 
-				<div className={`flex-1 flex items-center justify-end gap-2 ${isMobile ? "flex-col items-end" : ""}`}>
+				<div
+					className={`flex-1 flex items-center justify-end gap-2 ${isMobile ? "flex-col items-end" : ""}`}
+				>
 					<button
 						type="button"
 						title={t("Settings.help.reportBug")}
@@ -383,7 +415,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 			{/* ── Main content ──────────────────────────────────────── */}
 			<div className="flex-1 relative z-10 flex flex-col items-center justify-center px-6 gap-4 pb-[170px]">
-
 				{/* Desktop hero title */}
 				{!isMobile && !isCimaSyncActive && (
 					<motion.div
@@ -434,9 +465,9 @@ function App({ showTourFirstTime = false }: AppProps) {
 										opacity: { duration: 0.5 },
 									}}
 								>
-									{ORBIT_DOTS.map((dot, i) => (
+									{ORBIT_DOTS.map((dot) => (
 										<motion.div
-											key={`orbit-dot-${i}`}
+											key={dot.startAngle}
 											className="absolute rounded-full"
 											style={{
 												top: "50%",
@@ -481,18 +512,23 @@ function App({ showTourFirstTime = false }: AppProps) {
 						{/* Outer glow ring */}
 						<motion.div
 							className="absolute inset-[-8px] rounded-full pointer-events-none"
-							animate={appState.loading ? {
-								boxShadow: [
-									"0 0 0px rgba(0,220,100,0)",
-									"0 0 45px rgba(0,220,100,0.65), 0 0 90px rgba(0,180,80,0.3)",
-									"0 0 0px rgba(0,220,100,0)",
-								],
-							} : {
-								boxShadow: ringGlow,
-							}}
-							transition={appState.loading
-								? { duration: 2, repeat: Infinity, ease: "easeInOut" }
-								: { duration: 1.1 }
+							animate={
+								appState.loading
+									? {
+											boxShadow: [
+												"0 0 0px rgba(0,220,100,0)",
+												"0 0 45px rgba(0,220,100,0.65), 0 0 90px rgba(0,180,80,0.3)",
+												"0 0 0px rgba(0,220,100,0)",
+											],
+										}
+									: {
+											boxShadow: ringGlow,
+										}
+							}
+							transition={
+								appState.loading
+									? { duration: 2, repeat: Infinity, ease: "easeInOut" }
+									: { duration: 1.1 }
 							}
 							style={{
 								border: isCimaSyncActive
@@ -508,20 +544,25 @@ function App({ showTourFirstTime = false }: AppProps) {
 
 						<motion.div
 							className="relative w-52 h-52 rounded-full flex items-center justify-center overflow-hidden"
-							animate={appState.loading ? {
-								boxShadow: [
-									"0 0 0px rgba(0,220,100,0), inset 0 0 0px rgba(0,220,100,0)",
-									"0 0 20px rgba(0,220,100,0.35), inset 0 0 30px rgba(0,180,80,0.22)",
-									"0 0 0px rgba(0,220,100,0), inset 0 0 0px rgba(0,220,100,0)",
-								],
-							} : {
-								boxShadow: isCimaSyncActive
-									? "inset 0 0 40px rgba(0,180,80,0.22), inset 0 0 80px rgba(0,100,50,0.12)"
-									: "none",
-							}}
-							transition={appState.loading
-								? { duration: 2, repeat: Infinity, ease: "easeInOut" }
-								: { duration: 1.1 }
+							animate={
+								appState.loading
+									? {
+											boxShadow: [
+												"0 0 0px rgba(0,220,100,0), inset 0 0 0px rgba(0,220,100,0)",
+												"0 0 20px rgba(0,220,100,0.35), inset 0 0 30px rgba(0,180,80,0.22)",
+												"0 0 0px rgba(0,220,100,0), inset 0 0 0px rgba(0,220,100,0)",
+											],
+										}
+									: {
+											boxShadow: isCimaSyncActive
+												? "inset 0 0 40px rgba(0,180,80,0.22), inset 0 0 80px rgba(0,100,50,0.12)"
+												: "none",
+										}
+							}
+							transition={
+								appState.loading
+									? { duration: 2, repeat: Infinity, ease: "easeInOut" }
+									: { duration: 1.1 }
 							}
 							style={{
 								background: isCimaSyncActive
@@ -541,7 +582,11 @@ function App({ showTourFirstTime = false }: AppProps) {
 								src={img}
 								alt="CimaSync"
 								className={`w-32 h-32 object-cover rounded-full animate-logo-pop transition-opacity duration-500 ${
-									isCimaSyncActive ? "opacity-50" : isLoginDisabled && !isMobile ? "opacity-30" : "opacity-100"
+									isCimaSyncActive
+										? "opacity-50"
+										: isLoginDisabled && !isMobile
+											? "opacity-30"
+											: "opacity-100"
 								}`}
 							/>
 
@@ -568,9 +613,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 									</svg>
 								</span>
 							</span>
-
 						</motion.div>
-
 					</motion.button>
 				</div>
 			</div>
@@ -600,7 +643,6 @@ function App({ showTourFirstTime = false }: AppProps) {
 				showModal={showBugModal}
 				setShowModal={(show) => (show ? openBugModal() : closeBugModal())}
 			/>
-
 		</main>
 	);
 }

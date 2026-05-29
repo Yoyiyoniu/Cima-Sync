@@ -50,7 +50,7 @@ export const SettingsMenu = () => {
 		invoke<{ running: boolean }>("plugin:android-services|is_running")
 			.then((res) => setServiceRunning(res.running))
 			.catch(() => setServiceRunning(false));
-	}, [isDebug, isAndroid, isOpen]);
+	}, [isAndroid, isOpen]);
 
 	const handleToggleService = async () => {
 		setServiceLoading(true);
@@ -255,10 +255,16 @@ export const SettingsMenu = () => {
 							<div className="rounded-lg border border-white/10 bg-black/30 p-3 space-y-3">
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-2">
-										<span className={`h-2 w-2 rounded-full ${serviceRunning ? "bg-emerald-400 shadow-[0_0_6px_#34d399]" : "bg-white/20"}`} />
-										<span className="text-xs text-white/70">Foreground Service</span>
+										<span
+											className={`h-2 w-2 rounded-full ${serviceRunning ? "bg-emerald-400 shadow-[0_0_6px_#34d399]" : "bg-white/20"}`}
+										/>
+										<span className="text-xs text-white/70">
+											Foreground Service
+										</span>
 									</div>
-									<span className={`text-xs font-medium ${serviceRunning ? "text-emerald-400" : "text-white/30"}`}>
+									<span
+										className={`text-xs font-medium ${serviceRunning ? "text-emerald-400" : "text-white/30"}`}
+									>
 										{serviceRunning ? "ACTIVO" : "INACTIVO"}
 									</span>
 								</div>
@@ -268,30 +274,63 @@ export const SettingsMenu = () => {
 									disabled={serviceLoading}
 									onClick={handleToggleService}
 									className={`w-full flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
-										${serviceRunning
-											? "bg-red-500/20 border border-red-500/40 text-red-300 hover:bg-red-500/30"
-											: "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30"
+										${
+											serviceRunning
+												? "bg-red-500/20 border border-red-500/40 text-red-300 hover:bg-red-500/30"
+												: "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30"
 										}`}
 								>
 									{serviceLoading ? (
-										<svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+										<svg
+											className="animate-spin h-3 w-3"
+											fill="none"
+											viewBox="0 0 24 24"
+											aria-hidden="true"
+										>
+											<circle
+												className="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												strokeWidth="4"
+											/>
+											<path
+												className="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+											/>
 										</svg>
 									) : serviceRunning ? (
-										<svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+										<svg
+											className="h-3 w-3"
+											fill="currentColor"
+											viewBox="0 0 20 20"
+											aria-hidden="true"
+										>
 											<rect x="4" y="4" width="12" height="12" rx="1" />
 										</svg>
 									) : (
-										<svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+										<svg
+											className="h-3 w-3"
+											fill="currentColor"
+											viewBox="0 0 20 20"
+											aria-hidden="true"
+										>
 											<path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
 										</svg>
 									)}
-									{serviceLoading ? "Procesando..." : serviceRunning ? "Detener servicio" : "Iniciar servicio"}
+									{serviceLoading
+										? "Procesando..."
+										: serviceRunning
+											? "Detener servicio"
+											: "Iniciar servicio"}
 								</button>
 
 								{serviceError && (
-									<p className="text-[10px] text-red-400/80 break-all">{serviceError}</p>
+									<p className="text-[10px] text-red-400/80 break-all">
+										{serviceError}
+									</p>
 								)}
 							</div>
 						</div>
