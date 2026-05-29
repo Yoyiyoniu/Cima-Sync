@@ -3,33 +3,38 @@ import { TourStep } from "./components/TourStep";
 
 export const tourSteps: StepType[] = [
 	{
-		selector: ".app-title",
+		selector: "#tour-activate-btn",
+		position: "top",
 		content: (
-			<TourStep content="¡Bienvenido a Cima Sync! Esta aplicación te ayudará a conectarte automáticamente a la red de UABC." />
+			<TourStep content="Este es el botón principal de Cima Sync. Cuando estés en la red Cimarrón, tócalo para iniciar la autenticación automática." />
 		),
 	},
 	{
-		selector: "#email",
+		selector: "#tour-network-status",
+		position: "bottom",
 		content: (
-			<TourStep content="Aquí debes ingresar tu correo electrónico de UABC (ejemplo: tu.nombre@uabc.edu.mx) o tu nombre de usuario institucional." />
+			<TourStep content="Aquí ves el estado de tu conexión. 'Inicia sesión' significa que estás en la red Cimarrón pero aún no autenticado. 'Con conexión' indica que ya estás conectado." />
 		),
 	},
 	{
-		selector: "#password",
+		selector: "#tour-profile-btn",
+		position: "bottom",
 		content: (
-			<TourStep content="Ingresa tu contraseña de UABC. Esta se guardará de forma segura en tu dispositivo." />
+			<TourStep content="Toca aquí para configurar tu correo y contraseña de UABC. Activa 'Recordar sesión' para que no tengas que ingresarlos de nuevo." />
 		),
 	},
 	{
-		selector: "#remember",
+		selector: "#tour-cimasync-card",
+		position: "top",
 		content: (
-			<TourStep content="Marca esta casilla si quieres que la aplicación recuerde tu sesión y se conecte automáticamente en el futuro." />
+			<TourStep content="Activa o detén el Modo Cima Sync desde esta tarjeta. El switch inicia la autenticación automática; el botón rojo la detiene cuando quieras." />
 		),
 	},
 	{
-		selector: "#login-button",
+		selector: "#tour-settings-btn",
+		position: "right",
 		content: (
-			<TourStep content="¡Perfecto! Ahora haz clic en este botón para conectarte a la red de UABC. La aplicación se encargará de todo automáticamente." />
+			<TourStep content="Accede a los ajustes desde aquí: idioma, inicio automático con el sistema, eliminar datos y repetir este tour cuando quieras." />
 		),
 	},
 ];
@@ -37,26 +42,46 @@ export const tourSteps: StepType[] = [
 export const tourStyles = {
 	popover: (base: Record<string, unknown>) => ({
 		...base,
-		backgroundColor: "#1e293b",
+		background: "linear-gradient(160deg, rgba(12,16,24,0.97) 0%, rgba(8,12,20,0.97) 100%)",
+		border: "1px solid rgba(255,255,255,0.12)",
+		backdropFilter: "blur(20px)",
+		WebkitBackdropFilter: "blur(20px)",
+		borderRadius: 20,
+		boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)",
+		padding: "18px 20px",
 		color: "white",
-		borderRadius: "8px",
-		boxShadow: "0 10px 25px rgba(0, 0, 0, 0.3)",
-		padding: "20px",
 	}),
 	badge: (base: Record<string, unknown>) => ({
 		...base,
-		backgroundColor: "#006633",
+		background: "linear-gradient(135deg, #006633 0%, #00a854 100%)",
+		borderRadius: 99,
+		fontWeight: 700,
 	}),
 	controls: (base: Record<string, unknown>) => ({
 		...base,
 		color: "white",
+		display: "none",
 	}),
 	arrow: (base: Record<string, unknown>) => ({
 		...base,
-		color: "#1e293b",
+		color: "rgba(12,16,24,0.97)",
+	}),
+	dot: (base: Record<string, unknown>, state?: { current?: boolean }) => ({
+		...base,
+		background: state?.current ? "#00a854" : "rgba(255,255,255,0.2)",
+		width: 6,
+		height: 6,
 	}),
 	navigation: (base: Record<string, unknown>) => ({
 		...base,
-		marginTop: "15px",
+		display: "none",
+	}),
+	maskArea: (base: Record<string, unknown>) => ({
+		...base,
+		rx: 12,
+	}),
+	maskWrapper: (base: Record<string, unknown>) => ({
+		...base,
+		color: "rgba(0,0,0,0.55)",
 	}),
 };

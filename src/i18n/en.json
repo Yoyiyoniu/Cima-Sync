@@ -36,6 +36,8 @@
 		"subtitle": "Cimarrón Institutional System",
 		"success": "Connection established successfully.",
 		"activateCimaSync": "Activate Cima Sync mode",
+		"desktopTitle": "Click to sign in",
+		"desktopSubtitle": "Automatic authentication · Cimarrón WiFi",
 		"alreadyAuthenticatedTooltip": "You are already authenticated on the Cimarrón network",
 		"connectedWifiMessage": "You are already connected to the Cimarrón WiFi.",
 		"email": "Email",
@@ -146,6 +148,30 @@
 		"loading": "Checking connection...",
 		"unavailable": "Cimarrón WI-FI Not Available",
 		"noConnection": "No connection to university network"
+	},
+	"Header": {
+		"connected": "Connected",
+		"disconnected": "No connection",
+		"initSession": "Log in"
+	},
+	"Profile": {
+		"title": "My Credentials",
+		"encrypted": "Stored encrypted on device",
+		"save": "Save",
+		"saveSuccess": "Saved",
+		"setCredentials": "Set up"
+	},
+	"CimaSyncMode": {
+		"title": "CimaSync Mode",
+		"subtitle": "Move freely around campus with WiFi connection",
+		"activate": "Activate",
+		"stop": "Stop",
+		"active": "Service active",
+		"landing": "Website"
+	},
+	"DesktopStatus": {
+		"title": "Active session",
+		"subtitle": "Cimarrón connection established — monitoring active"
 	},
 	"CertificateAlert": {
 		"buttonTitle": "Update available",
