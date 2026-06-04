@@ -358,9 +358,9 @@ function App({ showTourFirstTime = false }: AppProps) {
 				initial={{ opacity: 0, y: -10 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-				className="relative z-10 flex items-center px-4 py-3"
+				className={`relative z-10 flex px-4 py-3 ${isMobile ? "items-start" : "items-center"}`}
 			>
-				<div className="flex-1 flex items-center">
+				<div className="flex-1 flex items-start">
 					<button
 						id="tour-settings-btn"
 						type="button"
@@ -392,16 +392,8 @@ function App({ showTourFirstTime = false }: AppProps) {
 				</motion.div>
 
 				<div
-					className={`flex-1 flex items-center justify-end gap-2 ${isMobile ? "flex-col items-end" : ""}`}
+					className={`flex-1 flex justify-end gap-2 ${isMobile ? "flex-col items-end" : "flex-row items-center"}`}
 				>
-					<button
-						type="button"
-						title={t("Settings.help.reportBug")}
-						onClick={openBugModal}
-						className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
-					>
-						<BugIcon width={24} height={24} className="text-white/80" />
-					</button>
 					<button
 						id="tour-profile-btn"
 						type="button"
@@ -410,11 +402,19 @@ function App({ showTourFirstTime = false }: AppProps) {
 					>
 						<ProfileIcon width={24} height={24} className="text-white/80" />
 					</button>
+					<button
+						type="button"
+						title={t("Settings.help.reportBug")}
+						onClick={openBugModal}
+						className="w-12 h-12 flex items-center justify-center rounded-full border border-white/15 bg-white/6 hover:bg-white/12 hover:border-white/25 transition-all duration-200 active:scale-95"
+					>
+						<BugIcon width={24} height={24} className="text-white/80" />
+					</button>
 				</div>
 			</motion.header>
 
 			{/* ── Main content ──────────────────────────────────────── */}
-			<div className="flex-1 relative z-10 flex flex-col items-center justify-center px-6 gap-4 pb-[170px]">
+			<div className="flex-1 relative z-10 flex flex-col items-center justify-center px-6 gap-4 min-h-0">
 				{/* Desktop hero title */}
 				{!isMobile && !isCimaSyncActive && (
 					<motion.div

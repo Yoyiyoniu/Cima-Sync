@@ -48,7 +48,7 @@ export const CimaSyncModeCard = ({
 				className={
 					isDesktop
 						? "relative z-10 rounded-3xl border border-white/12 px-6 py-5 mx-4 mb-5"
-						: "relative z-10 w-full rounded-t-3xl border-t border-white/12 px-6 pt-6 pb-7"
+						: "relative z-10 w-full shrink-0 rounded-t-3xl border-t border-white/12 px-6 pb-7"
 				}
 				style={{
 					background:
@@ -56,19 +56,21 @@ export const CimaSyncModeCard = ({
 					backdropFilter: "blur(20px)",
 				}}
 			>
-				{/* Top row: title + toggle/stop */}
-				<div className="flex items-start justify-between gap-4 mb-1">
-					<div className="flex-1 min-w-0">
-						<h3 className="text-white font-bold text-lg leading-tight">
-							{t("CimaSyncMode.title")}
-						</h3>
-						<p className="text-white/50 text-sm mt-1 leading-snug">
-							{t("CimaSyncMode.subtitle")}
-						</p>
+				{!isDesktop && (
+					<div className="flex justify-center pt-3 pb-2">
+						<div
+							className="w-10 h-1 rounded-full bg-white/25"
+							aria-hidden="true"
+						/>
 					</div>
+				)}
 
-					{/* Animated toggle ↔ stop button */}
-					<div className="flex items-center gap-3 shrink-0 mt-0.5">
+				<div className="flex w-full items-center justify-between gap-4 mb-1">
+					<h3 className="text-white font-bold text-lg leading-tight min-w-0">
+						{t("CimaSyncMode.title")}
+					</h3>
+
+					<div className="flex items-center gap-3 shrink-0">
 						{isLoading && (
 							<div className="w-5 h-5 border-2 border-white/20 border-t-white/70 rounded-full animate-spin" />
 						)}
@@ -116,6 +118,10 @@ export const CimaSyncModeCard = ({
 					</div>
 				</div>
 
+				<p className="text-white/50 text-sm leading-snug mb-1">
+					{t("CimaSyncMode.subtitle")}
+				</p>
+
 				{/* Active status indicator */}
 				<AnimatePresence>
 					{isCimaSyncActive && (
@@ -126,9 +132,7 @@ export const CimaSyncModeCard = ({
 							className="overflow-hidden"
 						>
 							<div className="flex items-center gap-2 mt-2 mb-1">
-								<span
-									className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse"
-								/>
+								<span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
 								<span className="text-emerald-400 text-sm font-medium">
 									{t("CimaSyncMode.active")}
 								</span>

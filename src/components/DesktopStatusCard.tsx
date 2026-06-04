@@ -23,7 +23,7 @@ export const DesktopStatusCard = ({
 					animate={{ opacity: 1, y: 0 }}
 					exit={{ opacity: 0, y: 32 }}
 					transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-					className="relative z-10 rounded-3xl border border-emerald-500/20 px-5 py-4 mx-4 mb-5"
+					className="absolute bottom-5 left-4 right-4 z-20 rounded-3xl border border-emerald-500/20 px-5 py-4"
 					style={{
 						background:
 							"linear-gradient(160deg, rgba(0,180,80,0.09) 0%, rgba(255,255,255,0.04) 100%)",
@@ -32,10 +32,8 @@ export const DesktopStatusCard = ({
 					}}
 				>
 					<div className="flex items-center justify-between gap-4">
-						<div className="flex items-center gap-3 min-w-0">
-							<div className="relative shrink-0">
-								<span className="block h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
-							</div>
+						<div className="flex items-start gap-3 min-w-0">
+							<span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
 							<div className="min-w-0">
 								<p className="text-white font-semibold text-sm leading-tight">
 									{t("DesktopStatus.title")}
