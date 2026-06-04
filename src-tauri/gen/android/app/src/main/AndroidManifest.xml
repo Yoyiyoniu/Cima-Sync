@@ -5,7 +5,9 @@
     <!-- Requerido en Android 13+ para mostrar notificaciones del foreground service -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- bindProcessToNetwork en android_wifi.rs (forzar uso de WiFi para cuando el usuario tenga datos móviles) -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <!-- Animación fluida del widget (~600ms) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
