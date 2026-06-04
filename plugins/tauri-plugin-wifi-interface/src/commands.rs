@@ -28,3 +28,11 @@ pub(crate) async fn start_observing<R: Runtime>(app: AppHandle<R>) -> Result<Obs
 pub(crate) async fn stop_observing<R: Runtime>(app: AppHandle<R>) -> Result<ObserveResult> {
     app.wifi_interface().stop_observing()
 }
+
+#[command]
+pub(crate) async fn connect_to_network<R: Runtime>(app: AppHandle<R>) -> Result<ConnectResult> {
+    let wifi = app.wifi_interface().clone();
+    tauri::async_runtime::spawn_blocking(move || wifi.connect_to_network())
+        .await
+        .map_err(|e| crate::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?
+}

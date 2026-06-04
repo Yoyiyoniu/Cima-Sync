@@ -42,4 +42,8 @@ impl<R: Runtime> WifiInterface<R> {
     pub fn next_wifi_event(&self) -> crate::Result<WifiEvent> {
         Err(crate::Error::NotSupported)
     }
+
+    pub fn connect_to_network(&self) -> crate::Result<ConnectResult> {
+        Err(crate::Error::NotSupported)
+    }
 }

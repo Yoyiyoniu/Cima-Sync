@@ -19,6 +19,12 @@ pub struct ObserveResult {
     pub status: String,
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConnectResult {
+    pub connected: bool,
+}
+
 /// Evento emitido por Android ConnectivityManager.NetworkCallback.
 /// Todos los campos opcionales están presentes según el tipo de evento:
 /// - available / lost / unavailable: solo networkId

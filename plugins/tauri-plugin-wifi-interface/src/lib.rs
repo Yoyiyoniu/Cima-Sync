@@ -67,6 +67,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::get_wifi_status,
             commands::start_observing,
             commands::stop_observing,
+            commands::connect_to_network,
         ])
         .setup(|app, api| {
             #[cfg(mobile)]

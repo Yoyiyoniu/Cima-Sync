@@ -8,6 +8,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
+import android.net.wifi.WifiNetworkSpecifier
 import android.os.Build
 import app.tauri.annotation.Command
 import app.tauri.annotation.Permission
@@ -16,13 +17,15 @@ import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 @TauriPlugin(
     permissions = [
         Permission(strings = ["android.permission.ACCESS_WIFI_STATE"], alias = "wifiState"),
-        Permission(strings = ["android.permission.CHANGE_NETWORK_STATE"], alias = "changeNetwork")
+        Permission(strings = ["android.permission.CHANGE_NETWORK_STATE"], alias = "changeNetwork"),
+        Permission(strings = ["android.permission.CHANGE_WIFI_STATE"], alias = "changeWifiState")
     ]
 )
 class NetworkBindPlugin(private val activity: Activity) : Plugin(activity) {
@@ -34,6 +37,7 @@ class NetworkBindPlugin(private val activity: Activity) : Plugin(activity) {
         get() = activity.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
     private var observerCallback: ConnectivityManager.NetworkCallback? = null
+    private var connectNetworkCallback: ConnectivityManager.NetworkCallback? = null
 
     // -------------------------------------------------------
     // Long-poll queue — canal directo Android → Rust
@@ -192,6 +196,68 @@ class NetworkBindPlugin(private val activity: Activity) : Plugin(activity) {
             connectivityManager.bindProcessToNetwork(null)
         }
         invoke.resolve(JSObject().apply { put("success", true) })
+    }
+
+    // -------------------------------------------------------
+    // Comando — Conectar a red WiFi específica (API 29+)
+    // WifiNetworkSpecifier no requiere ACCESS_FINE_LOCATION
+    // porque no hay escaneo: el SSID está hardcodeado.
+    // Android muestra un diálogo de confirmación del sistema;
+    // una vez confirmado, onAvailable vincula el proceso a la red.
+    // -------------------------------------------------------
+
+    @Command
+    fun connectToNetwork(invoke: Invoke) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            invoke.reject("connectToNetwork requires Android 10 (API 29+)")
+            return
+        }
+
+        val ssid = "YOUR_SSID"          // ← reemplaza con tu SSID real
+        val password = "YOUR_PASSWORD"  // ← reemplaza con tu contraseña real
+
+        val specifier = WifiNetworkSpecifier.Builder()
+            .setSsid(ssid)
+            .setWpa2Passphrase(password)
+            .build()
+
+        val request = NetworkRequest.Builder()
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .setNetworkSpecifier(specifier)
+            .build()
+
+        val cm = connectivityManager
+
+        // Cancela cualquier solicitud anterior pendiente
+        connectNetworkCallback?.let {
+            try { cm.unregisterNetworkCallback(it) } catch (_: Exception) {}
+        }
+
+        val resolved = AtomicBoolean(false)
+
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                if (resolved.compareAndSet(false, true)) {
+                    cm.bindProcessToNetwork(network)
+                    invoke.resolve(JSObject().put("connected", true))
+                }
+            }
+
+            override fun onUnavailable() {
+                if (resolved.compareAndSet(false, true)) {
+                    connectNetworkCallback = null
+                    invoke.reject("No se pudo conectar a la red WiFi (timeout o denegado)")
+                }
+            }
+
+            override fun onLost(network: Network) {
+                // Red perdida después de conectar — no re-resolvemos el invoke
+            }
+        }
+
+        connectNetworkCallback = callback
+        // Timeout de 30 segundos; Android llamará onUnavailable si no se conecta
+        cm.requestNetwork(request, callback, 30_000)
     }
 
     @Command

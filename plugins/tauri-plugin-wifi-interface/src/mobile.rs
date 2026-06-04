@@ -67,4 +67,13 @@ impl<R: Runtime> WifiInterface<R> {
             .run_mobile_plugin("nextWifiEvent", ())
             .map_err(Into::into)
     }
+
+    /// Solicita conexión a la red WiFi hardcodeada en el plugin Kotlin.
+    /// Bloquea hasta que Android confirma la conexión (hasta 30 s).
+    /// Usar siempre dentro de `tauri::async_runtime::spawn_blocking`.
+    pub fn connect_to_network(&self) -> crate::Result<ConnectResult> {
+        self.0
+            .run_mobile_plugin("connectToNetwork", ())
+            .map_err(Into::into)
+    }
 }
