@@ -5,6 +5,11 @@
 @import "./App.css" layer(theme);
 @import "./AppAnimations.css" layer(theme);
 
+/* Debug Css on all elements */
+* {
+	border: 1px solid red;
+}
+
 body {
 	font-family: "Nunito Variable", sans-serif;
 }
@@ -55,4 +60,3 @@ body {
 .animate-logo-pop {
 	animation: logo-pop 600ms ease-out both;
 }
-

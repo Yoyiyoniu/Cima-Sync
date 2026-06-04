@@ -282,9 +282,12 @@ form {
 .t-icon-swap {
   position: relative;
   display: inline-grid;
+  justify-items: end;
 }
 .t-icon-swap .t-icon {
   grid-area: 1 / 1;
+  width: fit-content;
+  justify-self: end;
   transition:
     opacity   var(--icon-swap-dur) var(--icon-swap-ease),
     filter    var(--icon-swap-dur) var(--icon-swap-ease),
@@ -299,6 +302,9 @@ form {
 }
 .t-icon-swap[data-state="a"] .t-icon[data-icon="b"],
 .t-icon-swap[data-state="b"] .t-icon[data-icon="a"] {
+  position: absolute;
+  top: 0;
+  right: 0;
   opacity: 0;
   filter: blur(var(--icon-swap-blur));
   transform: scale(var(--icon-swap-start-scale));

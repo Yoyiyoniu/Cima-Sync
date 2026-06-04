@@ -77,7 +77,7 @@ export const CimaSyncModeCard = ({
 							className="t-icon-swap"
 							data-state={isCimaSyncActive ? "b" : "a"}
 						>
-							<span className="t-icon" data-icon="a">
+							<span className="t-icon inline-flex" data-icon="a">
 								<button
 									type="button"
 									onClick={onActivate}
@@ -96,7 +96,7 @@ export const CimaSyncModeCard = ({
 									<div className="absolute top-[5px] left-[3px] w-[26px] h-[26px] rounded-full bg-white/80 shadow-sm" />
 								</button>
 							</span>
-							<span className="t-icon" data-icon="b">
+							<span className="t-icon inline-flex" data-icon="b">
 								<button
 									type="button"
 									onClick={onDeactivate}
