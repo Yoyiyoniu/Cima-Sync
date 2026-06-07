@@ -639,10 +639,7 @@ function App({ showTourFirstTime = false }: AppProps) {
 			<SuccessModal isOpen={showSuccessModal} onClose={closeSuccessModal} />
 			<CertificateAlert isVisible={showCertificateAlert} />
 
-			<BugModal
-				showModal={showBugModal}
-				setShowModal={(show) => (show ? openBugModal() : closeBugModal())}
-			/>
+			<BugModal isOpen={showBugModal} onClose={closeBugModal} />
 		</main>
 	);
 }

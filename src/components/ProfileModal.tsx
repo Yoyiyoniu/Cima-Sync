@@ -9,7 +9,6 @@ import { useDeviceStore } from "../store/deviceStore";
 import { Input } from "./Input";
 import XIcon from "../assets/icons/XIcon";
 import CheckIcon from "../assets/icons/CheckIcon";
-import LockIcon from "../assets/icons/LockIcon";
 
 interface ProfileModalProps {
 	isOpen: boolean;
@@ -23,7 +22,9 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 	const storeCredentials = useSessionStore((state) => state.credentials);
 	const setCredentials = useSessionStore((state) => state.setCredentials);
 	const storeRemember = useSessionStore((state) => state.rememberSession);
-	const setRememberSession = useSessionStore((state) => state.setRememberSession);
+	const setRememberSession = useSessionStore(
+		(state) => state.setRememberSession,
+	);
 
 	const [localEmail, setLocalEmail] = useState("");
 	const [localPassword, setLocalPassword] = useState("");
@@ -57,9 +58,14 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 			if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
 			closeTimerRef.current = setTimeout(() => setIsRendered(false), 350);
 		}
-	}, [isOpen, storeCredentials, storeRemember]);
+	}, [isOpen, storeCredentials, storeRemember, isRendered]);
 
-	useEffect(() => () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); }, []);
+	useEffect(
+		() => () => {
+			if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+		},
+		[],
+	);
 
 	useEffect(() => {
 		if (!isOpen || !window.visualViewport) return;
@@ -93,7 +99,10 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 		const next: SaveState = saved ? "saved" : saving ? "saving" : "save";
 		if (next === displaySaveState) return;
 		const el = saveLabelRef.current;
-		if (!el) { setDisplaySaveState(next); return; }
+		if (!el) {
+			setDisplaySaveState(next);
+			return;
+		}
 		el.classList.add("is-exit");
 		const timer = setTimeout(() => {
 			setDisplaySaveState(next);
@@ -103,7 +112,7 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 			el.classList.remove("is-enter-start");
 		}, 150);
 		return () => clearTimeout(timer);
-	}, [saving, saved]);
+	}, [saving, saved, displaySaveState]);
 
 	const handleSave = async () => {
 		setSaving(true);
@@ -144,11 +153,8 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 			{/* Header */}
 			<div className="flex items-center justify-between mb-5">
 				<div>
-					<h2 className="text-xl font-bold text-white">
-						{t("Profile.title")}
-					</h2>
+					<h2 className="text-xl font-bold text-white">{t("Profile.title")}</h2>
 					<div className="flex items-center gap-1.5 mt-0.5">
-						<LockIcon width={11} height={11} className="text-green-400/70" />
 						<span className="text-xs text-white/45">
 							{t("Profile.encrypted")}
 						</span>
@@ -249,7 +255,8 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 	);
 
 	const panelStyle = {
-		background: "linear-gradient(160deg, rgba(15,20,30,0.98) 0%, rgba(8,14,22,0.98) 100%)",
+		background:
+			"linear-gradient(160deg, rgba(15,20,30,0.98) 0%, rgba(8,14,22,0.98) 100%)",
 		backdropFilter: "blur(24px)",
 	} as React.CSSProperties;
 
@@ -288,7 +295,12 @@ export const ProfileModal = ({ isOpen, onClose }: ProfileModalProps) => {
 				<div
 					data-open={sheetOpen ? "true" : "false"}
 					className="rounded-t-3xl border-t border-white/15 overflow-hidden t-panel-slide"
-					style={{ "--panel-translate-y": "100%", ...panelStyle } as React.CSSProperties}
+					style={
+						{
+							"--panel-translate-y": "100%",
+							...panelStyle,
+						} as React.CSSProperties
+					}
 				>
 					<div className="flex justify-center pt-3 pb-1">
 						<div className="w-10 h-1 rounded-full bg-white/25" />
