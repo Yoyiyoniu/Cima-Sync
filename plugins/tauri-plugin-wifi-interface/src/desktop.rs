@@ -43,7 +43,7 @@ impl<R: Runtime> WifiInterface<R> {
         Err(crate::Error::NotSupported)
     }
 
-    pub fn connect_to_network(&self) -> crate::Result<ConnectResult> {
+    pub fn connect_to_network(&self, _args: ConnectNetworkArgs) -> crate::Result<ConnectResult> {
         Err(crate::Error::NotSupported)
     }
 }

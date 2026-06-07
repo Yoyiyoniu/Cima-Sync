@@ -29,6 +29,7 @@ import img from "./assets/img/cima-sync-logo.avif";
 import "@fontsource-variable/nunito";
 import "./css/Global.css";
 import { forceWifi } from "./controller/forceWifi";
+import { androidWifiAuth } from "./controller/androidWifiAuth";
 import {
 	startBackgroundService,
 	stopBackgroundService,
@@ -166,7 +167,15 @@ function App({ showTourFirstTime = false }: AppProps) {
 		setPendingSource(null);
 		setAppState({ loading: true, error: null, success: false });
 		try {
-			if (isMobile) {
+			if (isAndroid) {
+				await androidWifiAuth({
+					login: async () =>
+						await invoke("login", {
+							email: credentials.email,
+							password: credentials.password,
+						}),
+				});
+			} else if (isMobile) {
 				await forceWifi({
 					function: async () =>
 						await invoke("login", {

@@ -11,6 +11,7 @@ import android.net.wifi.WifiManager
 import android.net.wifi.WifiNetworkSpecifier
 import android.os.Build
 import app.tauri.annotation.Command
+import app.tauri.annotation.InvokeArg
 import app.tauri.annotation.Permission
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
@@ -20,6 +21,12 @@ import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+
+@InvokeArg
+class ConnectNetworkArgs {
+    var ssid: String = ""
+    var password: String? = null
+}
 
 @TauriPlugin(
     permissions = [
@@ -199,12 +206,21 @@ class NetworkBindPlugin(private val activity: Activity) : Plugin(activity) {
     }
 
     // -------------------------------------------------------
-    // Comando — Conectar a red WiFi específica (API 29+)
+    // Comando — Conectar a red WiFi específica por SSID (API 29+)
     // WifiNetworkSpecifier no requiere ACCESS_FINE_LOCATION
-    // porque no hay escaneo: el SSID está hardcodeado.
+    // porque no hay escaneo: el SSID se pasa como argumento.
     // Android muestra un diálogo de confirmación del sistema;
     // una vez confirmado, onAvailable vincula el proceso a la red.
     // -------------------------------------------------------
+
+    private fun cancelPendingNetworkRequest() {
+        connectNetworkCallback?.let {
+            try {
+                connectivityManager.unregisterNetworkCallback(it)
+            } catch (_: Exception) {}
+            connectNetworkCallback = null
+        }
+    }
 
     @Command
     fun connectToNetwork(invoke: Invoke) {
@@ -213,13 +229,19 @@ class NetworkBindPlugin(private val activity: Activity) : Plugin(activity) {
             return
         }
 
-        val ssid = "YOUR_SSID"          // ← reemplaza con tu SSID real
-        val password = "YOUR_PASSWORD"  // ← reemplaza con tu contraseña real
+        val args = invoke.parseArgs(ConnectNetworkArgs::class.java)
+        val ssid = args.ssid.trim()
+        if (ssid.isEmpty()) {
+            invoke.reject("SSID requerido")
+            return
+        }
 
-        val specifier = WifiNetworkSpecifier.Builder()
-            .setSsid(ssid)
-            .setWpa2Passphrase(password)
-            .build()
+        val specifierBuilder = WifiNetworkSpecifier.Builder().setSsid(ssid)
+        val password = args.password?.trim().orEmpty()
+        if (password.isNotEmpty()) {
+            specifierBuilder.setWpa2Passphrase(password)
+        }
+        val specifier = specifierBuilder.build()
 
         val request = NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
@@ -228,10 +250,7 @@ class NetworkBindPlugin(private val activity: Activity) : Plugin(activity) {
 
         val cm = connectivityManager
 
-        // Cancela cualquier solicitud anterior pendiente
-        connectNetworkCallback?.let {
-            try { cm.unregisterNetworkCallback(it) } catch (_: Exception) {}
-        }
+        cancelPendingNetworkRequest()
 
         val resolved = AtomicBoolean(false)
 
@@ -239,7 +258,10 @@ class NetworkBindPlugin(private val activity: Activity) : Plugin(activity) {
             override fun onAvailable(network: Network) {
                 if (resolved.compareAndSet(false, true)) {
                     cm.bindProcessToNetwork(network)
-                    invoke.resolve(JSObject().put("connected", true))
+                    invoke.resolve(JSObject().apply {
+                        put("connected", true)
+                        put("ssid", ssid)
+                    })
                 }
             }
 

@@ -23,6 +23,14 @@ pub struct ObserveResult {
 #[serde(rename_all = "camelCase")]
 pub struct ConnectResult {
     pub connected: bool,
+    pub ssid: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConnectNetworkArgs {
+    pub ssid: String,
+    pub password: Option<String>,
 }
 
 /// Evento emitido por Android ConnectivityManager.NetworkCallback.

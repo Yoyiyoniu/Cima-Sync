@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-connect-to-network"
+description = "Enables the connect_to_network command without any pre-configured scope."
+commands.allow = ["connect_to_network"]
+
+[[permission]]
+identifier = "deny-connect-to-network"
+description = "Denies the connect_to_network command without any pre-configured scope."
+commands.deny = ["connect_to_network"]

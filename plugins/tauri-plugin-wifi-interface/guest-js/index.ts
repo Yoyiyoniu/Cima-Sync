@@ -43,6 +43,18 @@ export async function stopObserving(): Promise<void> {
   await invoke('plugin:wifi-interface|stop_observing')
 }
 
+export async function connectToNetwork(ssid: string, password?: string): Promise<ConnectResult> {
+  return await invoke<ConnectResult>('plugin:wifi-interface|connect_to_network', {
+    ssid,
+    password: password ?? null,
+  })
+}
+
+export interface ConnectResult {
+  connected: boolean
+  ssid?: string
+}
+
 export async function onWifiStateChange(
   callback: (event: WifiEvent) => void
 ): Promise<() => void> {

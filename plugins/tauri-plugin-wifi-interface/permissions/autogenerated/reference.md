@@ -7,6 +7,7 @@ Default permissions for the wifi-interface plugin
 - `allow-bind-to-wifi`
 - `allow-unbind-network`
 - `allow-get-wifi-status`
+- `allow-connect-to-network`
 
 ## Permission Table
 
@@ -65,6 +66,32 @@ Enables the bind_to_wifi command without any pre-configured scope.
 <td>
 
 Denies the bind_to_wifi command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:allow-connect-to-network`
+
+</td>
+<td>
+
+Enables the connect_to_network command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`wifi-interface:deny-connect-to-network`
+
+</td>
+<td>
+
+Denies the connect_to_network command without any pre-configured scope.
 
 </td>
 </tr>
