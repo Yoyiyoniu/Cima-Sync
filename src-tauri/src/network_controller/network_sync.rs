@@ -564,6 +564,7 @@ pub fn start_network_monitor(app: tauri::AppHandle) {
 // Android: monitor reactivo puro — cero polling
 // -------------------------------------------------------
 
+#[cfg(target_os = "android")]
 /// Intervalo del heartbeat de polling en Android.
 /// El observer cubre cambios inmediatos; el polling garantiza consistencia
 /// si se pierde algún evento del NetworkCallback.
