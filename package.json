@@ -22,6 +22,9 @@
 		"dev": "vite --host",
 		"build": "tsc && vite build",
 		"preview": "vite preview",
+		"docs:dev": "vitepress dev docs",
+		"docs:build": "vitepress build docs",
+		"docs:preview": "vitepress preview docs",
 		"tauri": "tauri",
 		"build:windows": "PATH=\"$HOME/.cargo/bin:$PATH\" bun tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc && ./scripts/check-builds-windows.sh",
 		"build:linux": "./scripts/build-linux.sh && ./scripts/check-builds-linux.sh",
@@ -52,7 +55,10 @@
 		"@types/react": "^18.3.29",
 		"@types/react-dom": "^18.3.7",
 		"@vitejs/plugin-react": "^4.7.0",
+		"mermaid": "^11.15.0",
 		"typescript": "~5.6.3",
-		"vite": "^7.3.3"
+		"vite": "^7.3.3",
+		"vitepress": "^1.6.4",
+		"vitepress-mermaid-viewer": "^0.4.0"
 	}
 }

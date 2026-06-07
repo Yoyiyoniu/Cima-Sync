@@ -1,3 +1,6 @@
+# Private Documentation
+docs/*
+
 # build
 OutApps/
 ~/
@@ -10,6 +13,10 @@ node_modules/
 # Optional npm and yarn cache directory
 .npm/
 .yarn/
+
+# VitePress
+docs/.vitepress/cache
+docs/.vitepress/dist
 dist/*
 
 # Output of 'npm pack'
