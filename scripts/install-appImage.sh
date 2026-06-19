@@ -1,4 +1,6 @@
 #!/bin/bash
+# Script to install the AppImage package on Linux by copying files to /opt/cima-sync and creating desktop entries
+
 set -e
 
 RED='\033[0;31m'

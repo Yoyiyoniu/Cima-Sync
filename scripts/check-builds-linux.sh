@@ -1,4 +1,5 @@
 #!/bin/bash
+# Script to check the integrity of built Linux packages
 
 # Colors
 GREEN='\033[0;32m'

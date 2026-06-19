@@ -1,4 +1,6 @@
 #!/bin/bash
+# If you want to uninstall the AppImage package, simply run this script.
+
 set -e
 
 RED='\033[0;31m'

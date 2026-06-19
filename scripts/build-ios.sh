@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# This script builds the IOS on the cloud using BUILDER with GitHub actions and copies the resulting IPA file to the release/ios directory. 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'

@@ -1,4 +1,5 @@
 #!/bin/bash
+# Script to check the integrity of built Windows packages
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'

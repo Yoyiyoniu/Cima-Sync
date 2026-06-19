@@ -1,6 +1,5 @@
 #!/bin/bash
 # Script to build the Tauri application on Linux with stripping disabled
-# This avoids errors with libraries containing the .relr.dyn section
 
 # Create a temporary directory for our strip wrapper
 TEMP_DIR=$(mktemp -d)

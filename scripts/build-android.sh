@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# This script builds the Android version of the Tauri app and copies the resulting APK and AAB files to the release/android directory.
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
