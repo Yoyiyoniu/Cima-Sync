@@ -155,12 +155,23 @@ jobs:
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
           echo "Certificate and provisioning profile installed"
 
-      - name: Setup Tauri iOS
+      - name: Install frontend dependencies
+        if: steps.detect.outputs.type == 'tauri'
+        run: npm install
+
+      - name: Initialize iOS project
+        if: steps.detect.outputs.type == 'tauri'
+        run: npx tauri ios init
+        env:
+          CI: "true"
+
+      - name: Build iOS app
+        if: steps.detect.outputs.type == 'tauri'
+        run: npx tauri ios build --no-sign
+
+      - name: Copy IPA artifact
         if: steps.detect.outputs.type == 'tauri'
         run: |
-          npm install
-          npx tauri ios init
-          npx tauri ios build --no-sign
           mkdir -p build
           find src-tauri/gen/apple/build -name "*.ipa" -exec cp {} build/${{ inputs.build_id }}.ipa \; 2>/dev/null || true
 
