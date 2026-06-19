@@ -152,6 +152,7 @@ jobs:
         if: steps.detect.outputs.type == 'tauri'
         run: |
           set -e
+          npm install -g bun
           npx tauri ios init
           npx tauri ios build --no-sign
           mkdir -p build
