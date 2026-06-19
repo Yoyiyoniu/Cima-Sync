@@ -36,6 +36,9 @@
 			"icons/icon.icns",
 			"icons/icon.ico"
 		],
+		"apple": {
+			"developmentTeam": "123456789"
+		},
 		"linux": {
 			"deb": {
 				"depends": ["wireless-tools", "network-manager"]

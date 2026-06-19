@@ -155,7 +155,6 @@ jobs:
           npm install -g bun
           npx tauri ios init
         env:
-          APPLE_DEVELOPMENT_TEAM: ""
           CI: "true"
 
       - name: Build iOS
