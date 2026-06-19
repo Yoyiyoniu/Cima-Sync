@@ -152,9 +152,8 @@ jobs:
         if: steps.detect.outputs.type == 'tauri'
         run: |
           set -e
-          npm install
-          npx @tauri-apps/cli@latest ios init
-          npx @tauri-apps/cli@latest ios build --no-sign
+          npx tauri ios init
+          npx tauri ios build --no-sign
           mkdir -p build
           find src-tauri/gen/apple/build -name "*.ipa" -type f 2>/dev/null | head -1 | while read f; do
             cp "$f" "build/${{ inputs.build_id }}.ipa"
