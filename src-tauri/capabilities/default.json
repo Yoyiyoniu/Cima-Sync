@@ -13,7 +13,6 @@
     "autostart:allow-enable",
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
-    "sql:allow-execute",
-    "widget:default"
+    "sql:allow-execute"
   ]
 }

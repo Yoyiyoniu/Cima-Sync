@@ -11,6 +11,7 @@
     "opener:default",
     "sql:default",
     "sql:allow-execute",
+    "widget:default",
     "wifi-interface:default",
     "android-services:default"
   ]

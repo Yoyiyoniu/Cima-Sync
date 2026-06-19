@@ -54,14 +54,12 @@ zeroize = { version = "1.8", features = ["derive"] }
 regex = "1.10"
 tokio = { version = "1", features = ["sync", "time", "macros"] }
 
-# Widgets
-tauri-plugin-widget = "0.1.2"
-
 # Local plugins
 tauri-plugin-wifi-interface = { path = "../plugins/tauri-plugin-wifi-interface" }
 tauri-plugin-android-services = { path = "../plugins/tauri-plugin-android-services" }
 
 [target.'cfg(target_os = "android")'.dependencies]
+tauri-plugin-widget = "0.1.2"
 android-native-keyring-store = "1.0.0"
 keyring-core = "1"
 ndk-context = "0.1"
