@@ -1,0 +1,14 @@
+{
+  "project": "Cima-Sync",
+  "platform": "ios",
+  "github": {
+    "owner": "Yoyiyoniu",
+    "repo": "Cima-Sync"
+  },
+  "ios": {},
+  "flutter": {
+    "watch": {}
+  },
+  "reactNative": {},
+  "mobai": {}
+}
