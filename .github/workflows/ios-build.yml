@@ -36,7 +36,7 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
@@ -65,9 +65,17 @@ jobs:
             echo "type=expo" >> $GITHUB_OUTPUT
           elif [ -f "package.json" ] && grep -q '"react-native"' package.json; then
             echo "type=reactnative" >> $GITHUB_OUTPUT
+          elif [ -f "src-tauri/Cargo.toml" ] && grep -q 'tauri' src-tauri/Cargo.toml; then
+            echo "type=tauri" >> $GITHUB_OUTPUT
           else
             echo "type=native" >> $GITHUB_OUTPUT
           fi
+
+      - name: Setup Rust
+        if: steps.detect.outputs.type == 'tauri'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
 
       - name: Setup Flutter
         if: steps.detect.outputs.type == 'flutter'
@@ -147,7 +155,18 @@ jobs:
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
           echo "Certificate and provisioning profile installed"
 
+      - name: Setup Tauri iOS
+        if: steps.detect.outputs.type == 'tauri'
+        run: |
+          npm install
+          npx tauri ios init --ci
+          npx tauri ios build --ios-ipa
+          mkdir -p build
+          cp src-tauri/gen/apple/build/*.ipa build/${{ inputs.build_id }}.ipa 2>/dev/null || \
+          cp src-tauri/target/ios/*.ipa build/${{ inputs.build_id }}.ipa 2>/dev/null || true
+
       - name: Build IPA
+        if: steps.detect.outputs.type != 'tauri'
         env:
           BUILD_ID: ${{ inputs.build_id }}
           IOS_PATH: ${{ inputs.ios_path }}
@@ -317,7 +336,7 @@ jobs:
 
       - name: Save DerivedData cache
         uses: actions/cache/save@v4
-        if: always()
+        if: always() && steps.detect.outputs.type != 'tauri'
         with:
           path: DerivedData
           key: deriveddata-${{ github.run_id }}
