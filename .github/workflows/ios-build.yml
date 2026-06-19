@@ -154,19 +154,27 @@ jobs:
           set -e
           npm install -g bun
           npx tauri ios init
-          npx tauri ios build --no-sign
+        env:
+          APPLE_DEVELOPMENT_TEAM: ""
+          CI: "true"
+
+      - name: Build iOS
+        if: steps.detect.outputs.type == 'tauri'
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app
+          CI=true npx tauri ios build --no-sign 2>&1
+
+      - name: Copy IPA
+        if: steps.detect.outputs.type == 'tauri'
+        run: |
           mkdir -p build
           find src-tauri/gen/apple/build -name "*.ipa" -type f 2>/dev/null | head -1 | while read f; do
             cp "$f" "build/${{ inputs.build_id }}.ipa"
           done
-          if ls build/*.ipa 2>/dev/null; then
-            echo "IPA found in build/"
-          else
-            echo "IPA not found in gen/apple/build, checking target..."
-            find src-tauri/target -name "*.ipa" -type f 2>/dev/null | head -1 | while read f; do
-              cp "$f" "build/${{ inputs.build_id }}.ipa"
-            done
-          fi
+          find src-tauri/target -name "*.ipa" -type f 2>/dev/null | head -1 | while read f; do
+            cp "$f" "build/${{ inputs.build_id }}.ipa"
+          done
+          ls -la build/ 2>/dev/null || true
 
       - name: Build IPA (non-Tauri)
         if: steps.detect.outputs.type != 'tauri'
