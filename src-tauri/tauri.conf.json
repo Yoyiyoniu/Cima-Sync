@@ -29,6 +29,9 @@
 	"bundle": {
 		"active": true,
 		"targets": "all",
+		"iOS": {
+			"developmentTeam": "123456789"
+		},
 		"icon": [
 			"icons/32x32.png",
 			"icons/128x128.png",
@@ -36,9 +39,6 @@
 			"icons/icon.icns",
 			"icons/icon.ico"
 		],
-		"apple": {
-			"developmentTeam": "123456789"
-		},
 		"linux": {
 			"deb": {
 				"depends": ["wireless-tools", "network-manager"]
