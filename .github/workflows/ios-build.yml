@@ -72,10 +72,14 @@ jobs:
           fi
 
       - name: Setup Rust
-        if: steps.detect.outputs.type == 'tauri'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-ios
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
 
       - name: Setup Flutter
         if: steps.detect.outputs.type == 'flutter'
@@ -90,26 +94,15 @@ jobs:
         run: flutter pub get
 
       - name: Setup Node.js
-        if: steps.detect.outputs.type == 'reactnative' || steps.detect.outputs.type == 'expo'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Restore node_modules cache
-        if: steps.detect.outputs.type == 'reactnative' || steps.detect.outputs.type == 'expo'
-        uses: actions/cache@v4
-        id: node-modules-cache
-        with:
-          path: node_modules
-          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json', 'yarn.lock') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-
-      - name: Install npm dependencies
-        if: (steps.detect.outputs.type == 'reactnative' || steps.detect.outputs.type == 'expo') && steps.node-modules-cache.outputs.cache-hit != 'true'
+      - name: Install frontend dependencies
         run: npm install
 
       - name: Restore Pods cache
+        if: steps.detect.outputs.type != 'tauri'
         uses: actions/cache@v4
         id: pods-cache
         with:
@@ -155,27 +148,27 @@ jobs:
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
           echo "Certificate and provisioning profile installed"
 
-      - name: Install frontend dependencies
-        if: steps.detect.outputs.type == 'tauri'
-        run: npm install
-
-      - name: Initialize iOS project
-        if: steps.detect.outputs.type == 'tauri'
-        run: npx tauri ios init
-        env:
-          CI: "true"
-
-      - name: Build iOS app
-        if: steps.detect.outputs.type == 'tauri'
-        run: npx tauri ios build --no-sign
-
-      - name: Copy IPA artifact
+      - name: Build IPA
         if: steps.detect.outputs.type == 'tauri'
         run: |
+          set -e
+          npm install
+          npx @tauri-apps/cli@latest ios init
+          npx @tauri-apps/cli@latest ios build --no-sign
           mkdir -p build
-          find src-tauri/gen/apple/build -name "*.ipa" -exec cp {} build/${{ inputs.build_id }}.ipa \; 2>/dev/null || true
+          find src-tauri/gen/apple/build -name "*.ipa" -type f 2>/dev/null | head -1 | while read f; do
+            cp "$f" "build/${{ inputs.build_id }}.ipa"
+          done
+          if ls build/*.ipa 2>/dev/null; then
+            echo "IPA found in build/"
+          else
+            echo "IPA not found in gen/apple/build, checking target..."
+            find src-tauri/target -name "*.ipa" -type f 2>/dev/null | head -1 | while read f; do
+              cp "$f" "build/${{ inputs.build_id }}.ipa"
+            done
+          fi
 
-      - name: Build IPA
+      - name: Build IPA (non-Tauri)
         if: steps.detect.outputs.type != 'tauri'
         env:
           BUILD_ID: ${{ inputs.build_id }}
