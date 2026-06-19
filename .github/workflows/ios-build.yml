@@ -158,12 +158,11 @@ jobs:
       - name: Setup Tauri iOS
         if: steps.detect.outputs.type == 'tauri'
         run: |
-          npm install
-          npx tauri ios init --ci
-          npx tauri ios build --ios-ipa
+          bun install
+          bun tauri ios init
+          bun tauri ios build --no-sign
           mkdir -p build
-          cp src-tauri/gen/apple/build/*.ipa build/${{ inputs.build_id }}.ipa 2>/dev/null || \
-          cp src-tauri/target/ios/*.ipa build/${{ inputs.build_id }}.ipa 2>/dev/null || true
+          find src-tauri/gen/apple/build -name "*.ipa" -exec cp {} build/${{ inputs.build_id }}.ipa \; 2>/dev/null || true
 
       - name: Build IPA
         if: steps.detect.outputs.type != 'tauri'
